@@ -7,7 +7,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from soccerplots.radar_chart import Radar
 import seaborn as sns
-import plotly.express as px
 import matplotlib.cm as cm
 
 # Librerias de ML
