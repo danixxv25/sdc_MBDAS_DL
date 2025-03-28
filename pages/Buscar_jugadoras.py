@@ -587,7 +587,7 @@ if df_combined is not None and not df_combined.empty:
             st.write(f"- Ligas Disponibles: {len(df_combined['League'].unique())}")
             for x in df_combined['League'].unique():
                 st.write("""
-                * x
+                * f"{x}
                 """)
             #st.write(f"- Posiciones disponibles: {', '.join(all_posiciones)}")
         
