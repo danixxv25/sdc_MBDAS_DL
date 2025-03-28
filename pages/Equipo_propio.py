@@ -247,7 +247,7 @@ else:
                         'touch_Def 3rd', 
                         'touch_Mid 3rd',
                         'TO_Succ%',
-                        'CrsPA'
+                        'CrsPA',
                         'Tkl/90',
                         'Tkl%',
                         'Blocks',
