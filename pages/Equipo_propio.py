@@ -235,7 +235,7 @@ else:
                         'Min',
                         'Min%',
                         'Mn/Start',
-                        'Mn/Sub'
+                        'Mn/Sub',
                         'Mn/MP', 
                         'Gls',
                         'Cmp%_short',
@@ -306,7 +306,7 @@ else:
                         'Min',
                         'Min%',
                         'Mn/Start',
-                        'Mn/Sub'
+                        'Mn/Sub',
                         'Mn/MP',
                         'Gls',
                         'Ast',
