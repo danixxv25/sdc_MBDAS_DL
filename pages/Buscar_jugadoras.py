@@ -283,7 +283,7 @@ if df_combined is not None and not df_combined.empty:
             if not df_view.empty:
                 if 'Posición Principal' in df_view.columns and not pd.isna(df_view['Posición Principal'].iloc[0]):
                     datos_basicos.append(("Posición Principal", df_view['Posición Principal'].iloc[0]))
-                if (jugadora_info is not None and 'Birth_Date' in jugadora_info.columns and len(jugadora_info) > 0 and not pd.isna(jugadora_info['Birth_Date'].iloc[0]))
+                if (jugadora_info is not None and 'Birth_Date' in jugadora_info.columns and len(jugadora_info) > 0 and not pd.isna(jugadora_info['Birth_Date'].iloc[0])):
                     datos_basicos.append(("Fecha de Nacimiento", jugadora_info['Birth_Date'].iloc[0]))
                 if 'Nation' in df_view.columns and not pd.isna(df_view['Nation'].iloc[0]):
                     datos_basicos.append(("Nacionalidad", df_view['Nation'].iloc[0]))
