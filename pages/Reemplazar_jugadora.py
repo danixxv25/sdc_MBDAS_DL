@@ -224,7 +224,7 @@ if df_combined is not None and not df_combined.empty:
     
     jugadora_seleccionada = st.sidebar.selectbox(
         "Selecciona una jugadora del Atlético de Madrid:",
-        options=atm_players,
+        [""] +list(atm_players),
         index=0
     )
     
