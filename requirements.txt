@@ -2,3 +2,4 @@ matplotlib
 soccerplots
 seaborn
 plotly
+sklearn
