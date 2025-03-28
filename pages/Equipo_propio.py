@@ -229,7 +229,7 @@ else:
             
             # Definir métricas relevantes por posición
             position_metrics = {
-                    'GK': ['MP','Starts','Min','Min%','Mn/Start','Mn/Sub','Mn/MP', 'GA','GA90','SoTA','Save%','CS%','Save%_PK','PSxG','PSxG/SoT','PSxG-GA','Pass_Cmp_+40y%','Pass_AvgLen','Stp%','#OPA/90','AvgDist'],
+                    'GK': ['MP','Starts','Min','GA','GA90','SoTA','Save%','CS%','Save%_PK','PSxG','PSxG/SoT','PSxG-GA','Pass_Cmp_+40y%','Pass_AvgLen','Stp%','#OPA/90','AvgDist'],
                     'DF': ['MP',
                         'Starts',
                         'Min',
