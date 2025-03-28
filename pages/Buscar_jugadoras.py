@@ -497,7 +497,8 @@ if df_combined is not None and not df_combined.empty:
                     'Off.1': 'Fueras de juego', 
                     'carries_TotDist' : 'Distancia recorrida con el balón',
                     'carries_PrgDist' : 'Distancia progresiva recorrida con el balón',
-                    'PrgR' : 'Recepciones de balón en progresión', 
+                    'PrgR' : 'Recepciones de balón en progresión',
+                    'PPA' : 'Pases al área rival'
                 }
                 
                 # Obtener métricas relevantes para la posición
