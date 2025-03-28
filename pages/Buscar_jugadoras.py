@@ -289,7 +289,7 @@ if df_combined is not None and not df_combined.empty:
                     datos_basicos.append(("Nacionalidad", df_view['Nation'].iloc[0]))
                 if jugadora_info is not None and len(jugadora_info) > 0 and 'Height' in jugadora_info.columns and not pd.isna(jugadora_info['Height'].iloc[0]):
                     datos_basicos.append(("Altura", f"{jugadora_info['Height'].iloc[0]}"))
-                if jugadora_info is not None and 'Weight' in jugadora_info.columns and not pd.isna(jugadora_info['Weight'].iloc[0]):
+                if jugadora_info is not None and len(jugadora_info) > 0 and 'Weight' in jugadora_info.columns and not pd.isna(jugadora_info['Weight'].iloc[0]):
                     datos_basicos.append(("Peso", f"{jugadora_info['Weight'].iloc[0]} kg"))
                 if 'Squad' in df_view.columns and not pd.isna(df_view['Squad'].iloc[0]):
                     datos_basicos.append(("Club", df_view['Squad'].iloc[0]))
