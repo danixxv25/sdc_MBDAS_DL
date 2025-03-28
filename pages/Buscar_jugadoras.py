@@ -65,7 +65,7 @@ def cargar_datos():
         # Cargar los datos de jugadoras de campo
         df_players = pd.read_csv("data/data_gold/df_players_gold_1.csv")
         # Cargar datos de información adicional de jugadoras
-        df_players_info = pd.read_csv("data/players_info/df_230_players_info.csv")
+        df_players_info = pd.read_csv("data/players_info/df_players_info_global.csv")
         # Cargar datos de clubes 
         df_teams_info = pd.read_csv("data/teams_info/big/df_teams_info_global.csv")
         # Cargar datos de fotos de ATM 
