@@ -146,7 +146,7 @@ if df_combined is not None and not df_combined.empty:
     if df_players_info is not None and 'Birth_Date' in df_players_info.columns:
         # Convertir la fecha de nacimiento a año si está en formato fecha
         df_players_info['Birth_Year'] = pd.to_datetime(df_players_info['Birth_Date'], errors='coerce').dt.year
-        all_birth_years = sorted(df_players_info['Birth_Year'].dropna().unique(), reverse=True)
+        all_birth_years = sorted(df_combined['Born'].dropna().unique(), reverse=True)
     
     # Obtener nombres de jugadoras
     if 'Player' in df_combined.columns:
@@ -202,9 +202,9 @@ if df_combined is not None and not df_combined.empty:
     # Filtrar jugadoras según el rango de años de nacimiento
     if use_year_filter and df_players_info is not None:
         min_selected_year, max_selected_year = birth_year_range
-        year_players = df_players_info[
-            (df_players_info['Birth_Year'] >= min_selected_year) & 
-            (df_players_info['Birth_Year'] <= max_selected_year)
+        year_players = df_combined[
+            (df_combined['Born'] >= min_selected_year) & 
+            (df_combined['Born'] <= max_selected_year)
         ]['Player'].dropna().unique()
         filtered_players = [player for player in filtered_players if player in year_players]
         
