@@ -1,1 +1,3 @@
 matplotlib
+soccerplots
+seaborn
