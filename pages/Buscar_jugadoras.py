@@ -583,12 +583,12 @@ if df_combined is not None and not df_combined.empty:
             st.subheader("Resumen de datos disponibles")
             st.write(f"- Total de jugadoras disponible: {len(df_combined['Player'].unique())}")
             st.write(f"- Total de Equipos disponible: {len(df_combined['Squad'].unique())}")
-        with col2:
-            if df_combined is not None:
-                st.write(f"- Ligas Disponibles: {len(df_combined['League'].unique())}")
         with col3:
+            st.write(f"- Ligas Disponibles: {len(df_combined['League'].unique())}")
             for x in df_combined['League'].unique():
-                st.write(x)
+                st.write("""
+                * x
+                """)
             #st.write(f"- Posiciones disponibles: {', '.join(all_posiciones)}")
         
         #with col2:
