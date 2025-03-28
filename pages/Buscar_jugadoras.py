@@ -15,9 +15,9 @@ with col1:
     st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
     st.image(ligaF_img, width=75)
     st.image(ligaENG_img, width=75)
-    st.image(ligaFRA_img, width=75)
+    st.image(ligaFRA_img, width=50)
     st.image(ligaGER_img, width=75)
-    st.image(ligaITA_img, width=75)
+    st.image(ligaITA_img, width=50)
 
 with col2:
     st.title("Búsqueda de jugadoras")
