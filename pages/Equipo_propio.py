@@ -469,29 +469,44 @@ else:
                                 delta=None
                             )
                     
-                    # Si hay más de 5 métricas, crear una segunda fila
+                    # Si hay más de 5 métricas, crear filas adicionales
                     if num_metrics > 5:
-                        st.write("")  # Espacio
-                        cols2 = st.columns(min(5, num_metrics - 5))
+                        # Calcular cuántas filas adicionales se necesitan
+                        remaining_metrics = num_metrics - 5
+                        num_additional_rows = (remaining_metrics + 4) // 5  # División con techo para obtener el número de filas
                         
-                        for i, metric in enumerate(existing_metrics[5:10]):
-                            with cols2[i]:
-                                value = player_stats[metric].iloc[0]
-                                
-                                if 'percentage' in metric or 'rate' in metric or 'completion' in metric:
-                                    formatted_value = f"{value:.1f}%"
-                                elif 'distance' in metric:
-                                    formatted_value = f"{value:.1f} km"
-                                elif metric in ['xg', 'goals_conceded_per90']:
-                                    formatted_value = f"{value:.2f}"
-                                else:
-                                    formatted_value = f"{value:.1f}"
-                                
-                                st.metric(
-                                    label=metric_display_names.get(metric, metric),
-                                    value=formatted_value,
-                                    delta=None
-                                )
+                        # Crear cada fila adicional
+                        for row in range(num_additional_rows):
+                            st.write("")  # Espacio entre filas
+                            start_idx = 5 + (row * 5)  # Índice inicial para esta fila
+                            end_idx = min(start_idx + 5, num_metrics)  # Índice final para esta fila
+                            
+                            # Crear columnas para esta fila
+                            cols_row = st.columns(min(5, end_idx - start_idx))
+                            
+                            # Llenar las columnas con métricas
+                            for i, metric in enumerate(existing_metrics[start_idx:end_idx]):
+                                with cols_row[i]:
+                                    value = player_stats[metric].iloc[0]
+                                    
+                                    # Formatear valor según el tipo de métrica
+                                    if 'percentage' in metric or 'rate' in metric or 'completion' in metric or '%' in metric:
+                                        formatted_value = f"{value:.1f}%"
+                                    elif 'distance' in metric:
+                                        formatted_value = f"{value:.1f} km"
+                                    elif metric in ['xg', 'goals_conceded_per90', 'G/Sh', 'G/SoT']:
+                                        formatted_value = f"{value:.2f}"
+                                    else:
+                                        try:
+                                            formatted_value = f"{value:.1f}"
+                                        except:
+                                            formatted_value = str(value)
+                                    
+                                    st.metric(
+                                        label=metric_display_names.get(metric, metric),
+                                        value=formatted_value,
+                                        delta=None
+                                    )
                 else:
                     st.warning(f"No se encontraron métricas relevantes para la posición {player_position}.")
             else:
