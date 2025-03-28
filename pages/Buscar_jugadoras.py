@@ -584,11 +584,10 @@ if df_combined is not None and not df_combined.empty:
             st.write(f"- Total de jugadoras disponible: {len(df_combined['Player'].unique())}")
             st.write(f"- Total de Equipos disponible: {len(df_combined['Squad'].unique())}")
         with col3:
-            st.write(f"- Ligas Disponibles: {len(df_combined['League'].unique())}")
-            for x in df_combined['League'].unique():
-                st.write("""
-                * {x}
-                """)
+            ligas = df_combined['League'].unique()
+            st.write(f"- Ligas Disponibles: {len(ligas)}")
+            bullet_list = "".join([f"* {liga}\n" for liga in ligas])
+            st.markdown(bullet_list)
             #st.write(f"- Posiciones disponibles: {', '.join(all_posiciones)}")
         
         #with col2:
