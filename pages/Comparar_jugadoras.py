@@ -298,7 +298,7 @@ def mostrar_metricas_jugadora(df_view, container):
             return None
         
         # Obtener la posición de la jugadora
-        player_position = df_view['Pos'].iloc[0] if 'Pos' in df_view.columns else ""
+        player_position = df_view['Posición Principal'].iloc[0] if 'Pos' in df_view.columns else ""
         
         # Definir métricas relevantes por posición
         position_metrics = {
