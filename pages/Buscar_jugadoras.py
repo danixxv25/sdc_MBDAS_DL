@@ -579,9 +579,9 @@ if df_combined is not None and not df_combined.empty:
         st.divider()
 
         # Mostrar resumen de datos disponibles
+        st.subheader("Resumen de datos disponibles")
         col1, col2, col3 = st.columns(3)
         with col1:
-            st.subheader("Resumen de datos disponibles")
             st.write(f"Total de jugadoras disponible: {len(df_combined['Player'].unique())}")
             st.write(f"Total de Equipos disponible: {len(df_combined['Squad'].unique())}")
         with col3:
