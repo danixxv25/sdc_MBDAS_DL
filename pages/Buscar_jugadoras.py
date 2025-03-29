@@ -582,10 +582,9 @@ if df_combined is not None and not df_combined.empty:
         
         col1, col2, col3 = st.columns(3)
         with col1:
+            st.subheader("Resumen de datos disponibles")
             st.write(f"Total de jugadoras disponible: {len(df_combined['Player'].unique())}")
             st.write(f"Total de Equipos disponible: {len(df_combined['Squad'].unique())}")
-        with col2:
-            st.subheader("Resumen de datos disponibles")
         with col3:
             ligas = df_combined['League'].unique()
             st.write(f"Ligas Disponibles: {len(ligas)}")
