@@ -581,7 +581,7 @@ if df_combined is not None and not df_combined.empty:
                             
                             # Mostrar distancia respecto a la jugadora seleccionada
                             st.metric("Distancia", f"{distancia:.4f}", 
-                                    delta=f"{distancia - distancias_ordenadas[0][1]:.4f}" if i > 1 else "Más similar")
+                                    delta=f"{distancias_ordenadas[0][1] - distancia:.4f}" if i > 1 else "Más similar")
                             
                             st.write(f"**Posición:** {pos}")
                             st.write(f"**Club:** {squad}")
