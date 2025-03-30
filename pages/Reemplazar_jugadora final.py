@@ -533,7 +533,7 @@ if df_combined is not None and not df_combined.empty:
                 
                 # Crear un acordeón para cada jugadora similar
                 for i, (nombre, distancia, cluster, squad, pos) in enumerate(distancias_ordenadas[:10], 1):
-                    with st.expander(f"{i}. {nombre} - Distancia: {distancia:.4f} - Club: {squad}"):
+                    with st.expander(f"{i}. {nombre} - Distancia: {distancia:.4f} - {squad}"):
                         # Dividir en dos columnas para cada jugadora
                         col1, col2, col3 = st.columns([1, 1, 1])
                         
@@ -566,7 +566,6 @@ if df_combined is not None and not df_combined.empty:
                             # Buscar el logo del club
                             st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
                             squad = df_combined[df_combined['Player'] == nombre ]['Squad'].iloc[0]
-                            st.write(squad)
                             team_logo_url = None
                             if df_teams_info is not None and 'Squad' in df_teams_info.columns and 'Shield URL' in df_teams_info.columns:
                                 club_team = df_teams_info[df_teams_info['Squad'] == squad]
@@ -798,7 +797,7 @@ if df_combined is not None and not df_combined.empty:
                     st.write(f"Número de métricas a visualizar: {len(relevant_metrics)}")
                     
                     # Seleccionamos las jugadoras para el gráfico de radar
-                    jugadoras_radar = [jugadora_seleccionada] + [nombre for nombre, _, _, _, _ in distancias_ordenadas[:8]]
+                    jugadoras_radar = [jugadora_seleccionada] + [nombre for nombre, _, _, _, _ in distancias_ordenadas[:5]]
                     
                     # Verificar que las jugadoras existen en el DataFrame
                     jugadoras_disponibles = [j for j in jugadoras_radar if j in df_combined['Player'].values]
@@ -881,7 +880,7 @@ if df_combined is not None and not df_combined.empty:
                             
                             # Ajustar la leyenda y el título
                             plt.legend(loc='upper right', bbox_to_anchor=(0.1, 0.1))
-                            plt.title(f'Comparación de Métricas: {jugadora_seleccionada} vs Jugadoras Similares', size=15)
+                            plt.title(f'Comparación de Métricas: {jugadora_seleccionada} vs 5 Jugadoras más Similares', size=15)
                             
                             # Guardar figura Radar para el PDF
                             st.session_state.fig_radar_saved = fig_radar
