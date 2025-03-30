@@ -673,6 +673,65 @@ def calcular_similitud(metrics1, metrics2, position_metrics, position):
     
     return adjusted_similarity
 
+# Función para calcular la similitud entre dos jugadoras usando percentiles
+def calcular_similitud_percentiles(df_player1, df_player2, metrics_list, position):
+    if df_player1 is None or df_player2 is None or not metrics_list or not position:
+        return 0
+    
+    # Filtrar jugadoras de la misma posición
+    df_position = df_combined[df_combined['Posición Principal'] == position]
+    
+    # Obtener métricas relevantes para la posición
+    relevant_metrics = []
+    for level_metrics in position_metrics.get(position, {}).values():
+        relevant_metrics.extend(level_metrics)
+    
+    # Identificar métricas comunes que existen en ambas jugadoras y en las métricas relevantes
+    common_metrics = [m for m in relevant_metrics if m in df_player1.columns and m in df_player2.columns]
+    
+    if not common_metrics:
+        return 0
+    
+    # Calcular percentiles para cada jugadora
+    percentiles1 = {}
+    percentiles2 = {}
+    
+    for metric in common_metrics:
+        # Obtener valores de las jugadoras
+        player1_value = df_player1[metric].iloc[0]
+        player2_value = df_player2[metric].iloc[0]
+        
+        if not pd.isna(player1_value) and not pd.isna(player2_value):
+            # Obtener valores válidos para la métrica en esta posición
+            metric_values = df_position[metric].dropna()
+            
+            if not metric_values.empty:
+                # Calcular percentiles
+                percentile1 = stats.percentileofscore(metric_values, player1_value)
+                percentile2 = stats.percentileofscore(metric_values, player2_value)
+                
+                percentiles1[metric] = percentile1
+                percentiles2[metric] = percentile2
+    
+    # Calcular la similitud basada en la diferencia de percentiles
+    similarities = []
+    
+    for metric in percentiles1:
+        if metric in percentiles2:
+            # Calculamos qué tan similares son sus percentiles (100 - diferencia)
+            diff = abs(percentiles1[metric] - percentiles2[metric])
+            similarity = 100 - diff  # 100 significa percentiles idénticos
+            similarities.append(similarity)
+    
+    # Si no hay métricas con percentiles, devolver 0
+    if not similarities:
+        return 0
+    
+    # Calcular el promedio de similitud entre todas las métricas
+    avg_similarity = sum(similarities) / len(similarities)
+    
+    return avg_similarity
+
 # Función para crear gráfico radar
 def crear_grafico_radar(metrics1_data, metrics2_data, metrics_list, player1_name, player2_name, metric_names):
     if not metrics1_data or not metrics2_data or not metrics_list:
@@ -792,13 +851,18 @@ if df_combined is not None and not df_combined.empty:
         st.header("Visión General de la Comparativa")
         col1, col2, col3 = st.columns(3)
         with col2:
-            if metrics1_data and metrics2_data and player1_position == player2_position:
-                # Calcular similitud coseno
-                similarity = calcular_similitud(metrics1_data, metrics2_data, position_metrics, player1_position)
+            if df_player1 is not None and df_player2 is not None and player1_position == player2_position:
+                # Obtener todas las métricas para la posición
+                all_position_metrics = []
+                for metrics_list in position_metrics.get(player1_position, {}).values():
+                    all_position_metrics.extend(metrics_list)
+                
+                # Calcular similitud basada en percentiles
+                similarity = calcular_similitud_percentiles(df_player1, df_player2, all_position_metrics, player1_position)
                 
                 # Determinar la clase CSS según el valor de similitud
                 similarity_class = ""
-                if similarity > 75:  # Ajustamos los umbrales para la distancia euclidiana
+                if similarity > 75:
                     similarity_class = "similarity-high"
                 elif similarity >= 50:
                     similarity_class = "similarity-medium"
@@ -810,7 +874,7 @@ if df_combined is not None and not df_combined.empty:
                 <div class='similarity-container {similarity_class}'>
                     <div class='similarity-label'>Índice de Similitud</div>
                     <div class='similarity-value'>{similarity:.1f}%</div>
-                    <div style="font-size: 12px;">Basado en distancia euclidiana normalizada</div>
+                    <div style="font-size: 12px;">Basado en similitud de percentiles</div>
                 </div>
                 """, unsafe_allow_html=True)
         
