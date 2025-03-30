@@ -89,9 +89,9 @@ st.markdown("""
     
     /* Estilos para percentiles */
     .percentile-container {
-        padding: 1px;
+        padding: 10px;
         margin: 5px 0;
-        border-radius: 2px;
+        border-radius: 5px;
     }
 </style>
 """, unsafe_allow_html=True)
