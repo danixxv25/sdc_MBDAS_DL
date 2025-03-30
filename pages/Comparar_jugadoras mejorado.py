@@ -382,14 +382,14 @@ def mostrar_datos_jugadora(player_name, container):
                     jugadora_foto = df_atm_photos[df_atm_photos['Player'] == player_name]
                     if not jugadora_foto.empty:
                         photo_url_atm = jugadora_foto['url_photo'].iloc[0]
-                        st.image(photo_url_atm, width=100)
+                        st.image(photo_url_atm, width=150)
                 except Exception as e:
                     st.warning(f"No se pudo cargar la foto: {e}")
             elif (jugadora_info is not None and not jugadora_info.empty and 
                 'Photo' in jugadora_info.columns and 
                 len(jugadora_info) > 0 and not pd.isna(jugadora_info['Photo'].iloc[0])):
                 photo_url = jugadora_info['Photo'].iloc[0]
-                st.image(photo_url, width=100)
+                st.image(photo_url, width=150)
             st.markdown("</div>", unsafe_allow_html=True)
         
         with col2:
@@ -401,7 +401,7 @@ def mostrar_datos_jugadora(player_name, container):
                 club_team = df_teams_info[df_teams_info['Squad'] == club]
                 if not club_team.empty and not pd.isna(club_team['Shield URL'].iloc[0]):
                     team_logo_url = club_team['Shield URL'].iloc[0]
-                    st.image(team_logo_url, width=100)
+                    st.image(team_logo_url, width=150)
             st.markdown("</div>", unsafe_allow_html=True)
         
         # Mostrar datos básicos
