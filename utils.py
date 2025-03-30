@@ -79,6 +79,55 @@ def generar_radar(player1, player2, df, metrics):
     
 #------------------------------------------------------------------------------------------------------------------------------------------------------------------------------->
 
+def calcular_comparativa(df, metric, player_value, player_position, competition):
+    """
+    Calcula las medias de comparación y determina si el valor del jugador es mejor o peor.
+    
+    Args:
+        df: DataFrame con todas las jugadoras
+        metric: Nombre de la métrica a comparar
+        player_value: Valor de la métrica para la jugadora seleccionada
+        player_position: Posición de la jugadora
+        competition: Competición de la jugadora
+    
+    Returns:
+        dict: Diccionario con las medias y el estado de comparación
+    """
+    # Métricas donde un valor más bajo es mejor (invertir comparación)
+    lower_is_better = ['GA', 'GA90', 'Err', 'CrdY', 'CrdR', '2CrdY', 'Off.1']
+    
+   
+    # Calcular media de jugadoras de la misma posición en todas las ligas
+    position_df = df[df['Posición Principal'] == player_position]
+    liga_df = position_df[position_df['League'] == competition]
+    position_metric_values = position_df[metric].dropna()
+    liga_metric_values = liga_df[metric].dropna()
+
+    
+    # Obtener las medias
+    liga_mean = liga_metric_values.mean() if not liga_metric_values.empty else 0
+    position_mean = position_metric_values.mean() if not position_metric_values.empty else 0
+    
+    # Determinar si el valor es mejor que las medias
+    if metric in lower_is_better:
+        better_than_liga = player_value < liga_mean
+        better_than_position = player_value < position_mean
+    else:
+        better_than_liga = player_value > liga_mean
+        better_than_position = player_value > position_mean
+    
+    # Determinar el estado de comparación
+    if better_than_liga and better_than_position:
+        comparison_state = "better"
+    elif better_than_liga or better_than_position:
+        comparison_state = "mixed"
+    else:
+        comparison_state = "worse"
+    
+    return {
+        'liga_mean': liga_mean,
+        'position_mean': position_mean,
+        'comparison_state': comparison_state}
 
 #------------------------------------------------------------------------------------------------------------------------------------------------------------------------------->
 

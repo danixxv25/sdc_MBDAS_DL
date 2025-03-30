@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import os
-from utils import display_logo
+from utils import display_logo, calcular_comparativa
 
 
 # Aplicar estilos personalizados para los scorecards
