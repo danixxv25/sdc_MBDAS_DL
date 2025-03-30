@@ -389,7 +389,51 @@ def encontrar_jugadoras_similares(nombre_jugadora, df, n_similares=10):
 
 #------------------------------------------------------------------------------------------------------------------------------------------------------------------------------->
 
-
+# Función para crear gráficos comparativos
+def crear_graficos_comparativos(metrics1, metrics2, metrics_list, position, metric_names, player1_name, player2_name):
+    if not metrics1 or not metrics2 or not metrics_list:
+        st.warning("No hay suficientes datos para crear gráficos comparativos")
+        return
+    
+    st.subheader("Comparación de Métricas")
+    
+    # Organizar las métricas en filas de 3
+    metrics_per_row = 3
+    
+    # Procesar las métricas en grupos de 3
+    for i in range(0, len(metrics_list), metrics_per_row):
+        # Crear una fila con 3 columnas
+        cols = st.columns(metrics_per_row)
+        
+        # Procesar cada métrica de este grupo
+        for j, metric in enumerate(metrics_list[i:i+metrics_per_row]):
+            if metric in metrics1 and metric in metrics2 and j < len(cols):
+                with cols[j]:
+                    fig, ax = plt.subplots(figsize=(4, 5))
+                    
+                    # Datos para el gráfico
+                    labels = [player1_name, player2_name]
+                    values = [metrics1[metric], metrics2[metric]]
+                    
+                    # Definir colores
+                    colors = ['#1f77b4', '#ff7f0e']
+                    
+                    # Crear el gráfico de barras
+                    bars = ax.bar(labels, values, color=colors, width=0.6)
+                    
+                    # Añadir etiquetas y título
+                    ax.set_ylabel(metric)
+                    ax.set_title(f"{metric_names.get(metric, metric)}", fontsize=10)
+                    
+                    # Añadir valores sobre las barras
+                    for bar in bars:
+                        height = bar.get_height()
+                        ax.text(bar.get_x() + bar.get_width()/2., height + 0.1,
+                                f'{height:.1f}', ha='center', va='bottom', fontsize=9)
+                    
+                    # Ajustar los ejes y mostrar el gráfico
+                    plt.tight_layout()
+                    st.pyplot(fig)
 
 #------------------------------------------------------------------------------------------------------------------------------------------------------------------------------->
 

@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 import math
-from utils import display_logo
+from utils import display_logo, crear_graficos_comparativos
 from sklearn.metrics.pairwise import cosine_similarity
 from scipy import stats
 
@@ -732,12 +732,13 @@ if df_combined is not None and not df_combined.empty:
     df_player2 = mostrar_datos_jugadora(player2, col2)
     
     # Crear las tabs después de mostrar la información básica de las jugadoras
-    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
         "Visión General", 
         "Métricas Macro", 
         "Métricas Meso", 
         "Métricas Micro",
-        "Comparación por Percentiles"
+        "Comparación por Percentiles",
+        "Comparación gráfica por métricas"
     ])
     
     # Mostrar información de las jugadoras seleccionadas
@@ -926,9 +927,26 @@ if df_combined is not None and not df_combined.empty:
                 """)
             else:
                 st.info("No hay suficientes datos para calcular percentiles")
-                
+            
         elif player1 and player2 and player1_position != player2_position:
             st.warning("Las jugadoras tienen posiciones diferentes. Los percentiles solo son comparables entre jugadoras de la misma posición.")
+
+    with tab6:
+        # Crear gráficos comparativos si ambas jugadoras tienen datos
+        if metrics1_data and metrics2_data:
+            # Usar solo métricas que existen para ambas jugadoras
+            if position1 == position2:
+                # Si las jugadoras tienen la misma posición, podemos usar todas las métricas
+                metrics_list = [m for m in metrics_list1 if m in metrics_list2]
+                player_position = position1
+            else:
+                # Si tienen posiciones diferentes, buscar métricas comunes
+                metrics_list = [m for m in metrics_list1 if m in metrics_list2]
+                st.warning(f"Las jugadoras tienen posiciones diferentes ({position1} vs {position2}). Mostrando solo métricas compatibles.")
+        
+            # Crear los gráficos comparativos
+            crear_graficos_comparativos(metrics1_data, metrics2_data, metrics_list, player_position, metric_names, player1, player2)
+                
         else:
             st.info("Selecciona dos jugadoras para ver la comparación por percentiles")
 else:
