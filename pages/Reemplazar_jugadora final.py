@@ -686,7 +686,7 @@ if df_combined is not None and not df_combined.empty:
                                     ax_full.fill(angulos, datos_similar_norm, color='blue', alpha=0.1)
                                     
                                     # Etiquetas y leyenda (usando nombres descriptivos)
-                                    plt.xticks(angulos[:-1], [metric_display_names.get(m, m) for m in metricas_validas], size=7)
+                                    plt.xticks(angulos[:-1], [metric_display_names.get(m, m) for m in metricas_validas], size=5)
                                     plt.yticks([0.2, 0.4, 0.6, 0.8], ["0.2", "0.4", "0.6", "0.8"], color="grey", size=7)
                                     plt.ylim(0, 1)
                                     plt.legend(loc='upper right', bbox_to_anchor=(0.1, 0.1), fontsize=8)
