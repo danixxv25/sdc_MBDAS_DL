@@ -878,21 +878,24 @@ if df_combined is not None and not df_combined.empty:
                 else:
                     similarity_class = "similarity-low"
 
-                # Mostrar porcentaje de similitud con la clase correspondiente
-                st.markdown(f"""
-                <div class='similarity-container {similarity_class}'>
-                    <div class='similarity-label'>Índice de Similitud</div>
-                    <div class='similarity-value'>{similarity1:.1f}%</div>
-                    <div style="font-size: 12px;">Basado en distancia euclidiana normalizada</div>
-                </div>
-                """, unsafe_allow_html=True)
-                st.markdown(f"""
-                <div class='similarity-container {similarity_class}'>
-                    <div class='similarity-label'>Índice de Similitud</div>
-                    <div class='similarity-value'>{similarity2:.1f}%</div>
-                    <div style="font-size: 12px;">Basado en similitud de percentiles</div>
-                </div>
-                """, unsafe_allow_html=True)
+                col1, col2 = st.columns(2)
+                with col1:
+                    # Mostrar porcentaje de similitud con la clase correspondiente
+                    st.markdown(f"""
+                    <div class='similarity-container {similarity_class}'>
+                        <div class='similarity-label'>Índice de Similitud</div>
+                        <div class='similarity-value'>{similarity1:.1f}%</div>
+                        <div style="font-size: 12px;">Basado en distancia euclidiana normalizada</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                with col2:
+                    st.markdown(f"""
+                    <div class='similarity-container {similarity_class}'>
+                        <div class='similarity-label'>Índice de Similitud</div>
+                        <div class='similarity-value'>{similarity2:.1f}%</div>
+                        <div style="font-size: 12px;">Basado en similitud de percentiles</div>
+                    </div>
+                    """, unsafe_allow_html=True)
         
         if metrics1_data and metrics2_data and player1_position == player2_position:
             # Crear gráfico radar para visualizar similitudes
