@@ -875,6 +875,8 @@ if df_combined is not None and not df_combined.empty:
                     similarity_class = "similarity-medium"
                 else:
                     similarity_class = "similarity-low"
+                
+                st.subheader("Índices de similitud")
 
                 col1, col2 = st.columns([5,5])
                 with col1:
