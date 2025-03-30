@@ -1009,17 +1009,6 @@ if df_combined is not None and not df_combined.empty:
                     """)
                 else:
                     st.warning(f"No se encontraron métricas definidas para la posición {position} en position_metrics")
-                    
-                    # Información sobre la interpretación
-                    st.info("""
-                    **Comparación de métricas individuales:**
-                    - Las barras naranjas representan a la jugadora seleccionada
-                    - Las barras azules representan a las jugadoras similares
-                    - Estas comparaciones te permiten identificar fortalezas y debilidades específicas
-                    - Puedes usar esta información para decidir qué jugadoras podrían ser buenas alternativas o complementos
-                    """)
-                else:
-                    st.warning(f"No se encontraron métricas definidas para la posición {position} en position_metrics")
             
             # Pestaña 3: Análisis IA con DAFO y recomendaciones
             with tab3:
