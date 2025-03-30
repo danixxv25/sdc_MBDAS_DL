@@ -566,6 +566,7 @@ if df_combined is not None and not df_combined.empty:
                             # Buscar el logo del club
                             st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
                             squad = df_combined[df_combined['Player'] == nombre ]['Squad'].iloc[0]
+                            st.write(squad)
                             team_logo_url = None
                             if df_teams_info is not None and squad in df_teams_info.columns and 'Shield URL' in df_teams_info.columns:
                                 club_team = df_teams_info[df_teams_info['Squad'] == squad]
@@ -573,6 +574,7 @@ if df_combined is not None and not df_combined.empty:
                                     team_logo_url = club_team['Shield URL'].iloc[0]
                                     st.image(team_logo_url, width=150)
                             st.markdown("</div>", unsafe_allow_html=True)
+
                         with col3:
                             # Datos básicos de la jugadora similar
                             info_jugadora = df_combined[df_combined['Player'] == nombre]
