@@ -806,10 +806,10 @@ if df_combined is not None and not df_combined.empty:
                 st.pyplot(radar_fig)
                 st.caption("Gráfico radar que muestra el perfil de rendimiento de ambas jugadoras")
             
-        elif player1 and player2 and player1_position != player2_position:
-            st.warning(f"Las jugadoras tienen posiciones diferentes ({player1_position} vs {player2_position}). No es posible realizar una comparación directa del perfil de juego.")
-        else:
-            st.info("Selecciona dos jugadoras para ver su comparativa")
+            elif player1 and player2 and player1_position != player2_position:
+                st.warning(f"Las jugadoras tienen posiciones diferentes ({player1_position} vs {player2_position}). No es posible realizar una comparación directa del perfil de juego.")
+            else:
+                st.info("Selecciona dos jugadoras para ver su comparativa")
     
     # TAB 2: Métricas Macro
     with tab2:
