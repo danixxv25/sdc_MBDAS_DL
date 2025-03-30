@@ -896,18 +896,29 @@ if df_combined is not None and not df_combined.empty:
                 # Obtener las 10 jugadoras más similares de la clusterización en tab1
                 jugadoras_similares = [nombre for nombre, _, _, _, _ in distancias_ordenadas[:10]]
                 
+                # Usar session_state para mantener las selecciones entre recargas
+                if 'jugadoras_seleccionadas' not in st.session_state:
+                    st.session_state.jugadoras_seleccionadas = [jugadoras_similares[0]] if jugadoras_similares else []
+                
+                # Función para actualizar la selección sin reiniciar
+                def actualizar_seleccion(seleccion):
+                    st.session_state.jugadoras_seleccionadas = seleccion
+                
                 # Widget de selección múltiple para elegir jugadoras
                 jugadoras_seleccionadas = st.multiselect(
                     "Selecciona las jugadoras a comparar:",
                     options=jugadoras_similares,
-                    default=[jugadoras_similares[0]] if jugadoras_similares else []
+                    default=st.session_state.jugadoras_seleccionadas,
+                    on_change=actualizar_seleccion,
+                    args=(st.session_state.jugadoras_seleccionadas,)
                 )
                 
-                # Asegurarse de que la jugadora principal siempre esté incluida
+                # Asegurarse de que la jugadora principal esté incluida
+                jugadoras_comparar = []
                 if jugadora_seleccionada not in jugadoras_seleccionadas:
                     jugadoras_comparar = [jugadora_seleccionada] + jugadoras_seleccionadas
                 else:
-                    jugadoras_comparar = jugadoras_seleccionadas
+                    jugadoras_comparar = jugadoras_seleccionadas.copy()
                 
                 # Obtener todas las métricas relevantes según la posición desde position_metrics
                 if position in position_metrics:
