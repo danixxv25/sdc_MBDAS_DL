@@ -382,7 +382,7 @@ def mostrar_datos_jugadora(player_name, container):
                     jugadora_foto = df_atm_photos[df_atm_photos['Player'] == player_name]
                     if not jugadora_foto.empty:
                         photo_url_atm = jugadora_foto['url_photo'].iloc[0]
-                        st.image(photo_url_atm, use_container_width=True)
+                        st.image(photo_url_atm, uwidth=100)
                 except Exception as e:
                     st.warning(f"No se pudo cargar la foto: {e}")
             elif (jugadora_info is not None and not jugadora_info.empty and 
