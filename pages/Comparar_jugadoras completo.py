@@ -894,11 +894,11 @@ if df_combined is not None and not df_combined.empty:
                         <div style="font-size: 12px;">Basado en similitud de percentiles</div>
                     </div>
                     """, unsafe_allow_html=True)
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("<br>", unsafe_allow_html=True)
 
         if metrics1_data and metrics2_data and player1_position == player2_position:
             # Crear gráfico radar para visualizar similitudes
