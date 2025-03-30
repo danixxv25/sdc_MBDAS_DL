@@ -1052,8 +1052,7 @@ if df_combined is not None and not df_combined.empty:
                         st.info("Intenta con otra jugadora o verifica los datos disponibles.")
                     
                     # Separador para la siguiente sección
-                    st.divider() range(len(normalized_values), len(all_values)):
-                                normalized_values.append([])
+                    st.divider()
 
                 
                         
