@@ -423,106 +423,83 @@ if df_combined is not None and not df_combined.empty:
                                         f"{valor:.2f}"
                                     )
                         
+                        # Incluir tabla con los valores exactos de todas las métricas
+                        st.write("#### Valores exactos de todas las métricas")
+                        
+                        # Crear lista de métricas con sus valores y descripciones
+                        datos_tabla_completa = {
+                            "Métrica": [metric_display_names.get(m, m) for m in metricas_validas],
+                            jugadora_seleccionada: [round(float(df_combined[df_combined['Player'] == jugadora_seleccionada][m].iloc[0]), 2) 
+                                                for m in metricas_validas],
+                            nombre: [round(float(info_jugadora[m].iloc[0]), 2) for m in metricas_validas]
+                        }
+                        
+                        # Mostrar tabla completa
+                        st.dataframe(pd.DataFrame(datos_tabla_completa), use_container_width=True)
+
+
                         # Comparación directa con la jugadora seleccionada
                         st.subheader("Comparación directa con " + jugadora_seleccionada)
-                        
-                        # 1. Spider chart simple con métricas clave para visualización rápida
-                        st.write("#### Comparación de métricas clave")
-                        if metricas_clave:
-                            # Preparar datos para el radar
-                            fig_radar_mini = plt.figure(figsize=(6, 6))
-                            ax = fig_radar_mini.add_subplot(111, polar=True)
+
+                        # Obtener todas las métricas relevantes para la posición
+                        if pos in position_metrics:
+                            todas_metricas_posicion = [m for m in position_metrics[pos] 
+                                                if m in df_combined.columns and m not in ['Player', 'Squad', 'Born', 'Pos', 'Nation', 'Comp', 'Age']]
                             
-                            # Datos de la jugadora seleccionada
-                            datos_seleccionada = df_combined[df_combined['Player'] == jugadora_seleccionada][metricas_clave].iloc[0].values
-                            datos_similar = info_jugadora[metricas_clave].iloc[0].values
+                            # Preparar datos para el radar completo
+                            fig_radar_full = plt.figure(figsize=(10, 10))
+                            ax_full = fig_radar_full.add_subplot(111, polar=True)
                             
-                            # Normalizar datos
-                            max_valores = []
-                            for m in metricas_clave:
-                                max_val = df_combined[m].max()
-                                if max_val == 0:
-                                    max_val = 1
-                                max_valores.append(max_val)
-                            
-                            datos_seleccionada_norm = [datos_seleccionada[i]/max_valores[i] for i in range(len(datos_seleccionada))]
-                            datos_similar_norm = [datos_similar[i]/max_valores[i] for i in range(len(datos_similar))]
-                            
-                            # Calcular ángulos
-                            angulos = np.linspace(0, 2*np.pi, len(metricas_clave), endpoint=False).tolist()
-                            # Cerrar el círculo
-                            datos_seleccionada_norm = np.append(datos_seleccionada_norm, datos_seleccionada_norm[0])
-                            datos_similar_norm = np.append(datos_similar_norm, datos_similar_norm[0])
-                            angulos += angulos[:1]
-                            
-                            # Dibujar el radar
-                            ax.plot(angulos, datos_seleccionada_norm, color='red', linewidth=2, label=jugadora_seleccionada)
-                            ax.fill(angulos, datos_seleccionada_norm, color='red', alpha=0.1)
-                            ax.plot(angulos, datos_similar_norm, color='blue', linewidth=2, label=nombre)
-                            ax.fill(angulos, datos_similar_norm, color='blue', alpha=0.1)
-                            
-                            # Etiquetas y leyenda
-                            plt.xticks(angulos[:-1], [metric_display_names.get(m, m) for m in metricas_clave], size=8)
-                            plt.yticks([0.2, 0.4, 0.6, 0.8], ["0.2", "0.4", "0.6", "0.8"], color="grey", size=7)
-                            plt.ylim(0, 1)
-                            plt.legend(loc='upper right', bbox_to_anchor=(0.1, 0.1), fontsize=8)
-                            plt.tight_layout()
-                            
-                            st.pyplot(fig_radar_mini)
-                        
-                        # 2. Agregar un checkbox para mostrar/ocultar el gráfico completo
-                        mostrar_completo = st.checkbox(f"Mostrar comparación completa con todas las métricas disponibles", key=f"completo_{nombre}")
-                        
-                        # Si el checkbox está marcado, mostrar el gráfico completo
-                        if mostrar_completo:
-                            st.write("#### Comparación completa (todas las métricas)")
-                            # Obtener todas las métricas disponibles según la posición
-                            if pos in position_metrics:
-                                all_metrics = [m for m in position_metrics[pos] if m in df_combined.columns]
-                                # Excluir identificadores
-                                exclude_cols = ['Player', 'Squad', 'Born', 'Pos', 'Nation', 'Comp', 'Age', 'Born']
-                                all_metrics = [m for m in all_metrics if m not in exclude_cols]
+                            try:
+                                # Obtener datos para ambas jugadoras
+                                datos_seleccionada = []
+                                datos_similar = []
+                                metricas_validas = []
                                 
-                                # Limitar a un máximo de 20 métricas para que el gráfico sea legible
-                                if len(all_metrics) > 20:
-                                    st.info(f"Se muestran 20 de {len(all_metrics)} métricas disponibles para mantener la legibilidad del gráfico.")
-                                    all_metrics = all_metrics[:20]
+                                # Filtrar solo métricas numéricas disponibles para ambas jugadoras
+                                for metrica in todas_metricas_posicion:
+                                    try:
+                                        # Verificar que la métrica es numérica y está disponible
+                                        if metrica in df_combined.select_dtypes(include=['float64', 'int64']).columns:
+                                            val_original = df_combined[df_combined['Player'] == jugadora_seleccionada][metrica].iloc[0]
+                                            val_similar = info_jugadora[metrica].iloc[0]
+                                            
+                                            if pd.notna(val_original) and pd.notna(val_similar):
+                                                datos_seleccionada.append(val_original)
+                                                datos_similar.append(val_similar)
+                                                metricas_validas.append(metrica)
+                                    except:
+                                        # Si hay error, ignoramos esta métrica
+                                        pass
                                 
-                                # Preparar los datos para el radar completo
-                                fig_radar_full = plt.figure(figsize=(10, 10))
-                                ax_full = fig_radar_full.add_subplot(111, polar=True)
-                                
-                                # Obtener los datos de ambas jugadoras
-                                try:
-                                    datos_seleccionada_full = df_combined[df_combined['Player'] == jugadora_seleccionada][all_metrics].iloc[0].values
-                                    datos_similar_full = info_jugadora[all_metrics].iloc[0].values
+                                if len(metricas_validas) > 0:
+                                    # Normalizar datos (usando valores máximos generales)
+                                    max_valores = []
+                                    for m in metricas_validas:
+                                        max_val = df_combined[m].max() if df_combined[m].max() > 0 else 1
+                                        max_valores.append(max_val)
                                     
-                                    # Normalizar datos
-                                    max_valores_full = []
-                                    for m in all_metrics:
-                                        max_val = df_combined[m].max()
-                                        if max_val == 0:
-                                            max_val = 1
-                                        max_valores_full.append(max_val)
+                                    datos_seleccionada_norm = [datos_seleccionada[i]/max_valores[i] for i in range(len(datos_seleccionada))]
+                                    datos_similar_norm = [datos_similar[i]/max_valores[i] for i in range(len(datos_similar))]
                                     
-                                    datos_seleccionada_norm_full = [datos_seleccionada_full[i]/max_valores_full[i] for i in range(len(datos_seleccionada_full))]
-                                    datos_similar_norm_full = [datos_similar_full[i]/max_valores_full[i] for i in range(len(datos_similar_full))]
+                                    # Mostrar cantidad de métricas en gráfico
+                                    st.caption(f"Comparando {len(metricas_validas)} métricas relevantes para {pos}")
                                     
                                     # Calcular ángulos
-                                    angulos_full = np.linspace(0, 2*np.pi, len(all_metrics), endpoint=False).tolist()
+                                    angulos = np.linspace(0, 2*np.pi, len(metricas_validas), endpoint=False).tolist()
                                     # Cerrar el círculo
-                                    datos_seleccionada_norm_full = np.append(datos_seleccionada_norm_full, datos_seleccionada_norm_full[0])
-                                    datos_similar_norm_full = np.append(datos_similar_norm_full, datos_similar_norm_full[0])
-                                    angulos_full += angulos_full[:1]
+                                    datos_seleccionada_norm = np.append(datos_seleccionada_norm, datos_seleccionada_norm[0])
+                                    datos_similar_norm = np.append(datos_similar_norm, datos_similar_norm[0])
+                                    angulos += angulos[:1]
                                     
                                     # Dibujar el radar completo
-                                    ax_full.plot(angulos_full, datos_seleccionada_norm_full, color='red', linewidth=2, label=jugadora_seleccionada)
-                                    ax_full.fill(angulos_full, datos_seleccionada_norm_full, color='red', alpha=0.1)
-                                    ax_full.plot(angulos_full, datos_similar_norm_full, color='blue', linewidth=2, label=nombre)
-                                    ax_full.fill(angulos_full, datos_similar_norm_full, color='blue', alpha=0.1)
+                                    ax_full.plot(angulos, datos_seleccionada_norm, color='red', linewidth=2, label=jugadora_seleccionada)
+                                    ax_full.fill(angulos, datos_seleccionada_norm, color='red', alpha=0.1)
+                                    ax_full.plot(angulos, datos_similar_norm, color='blue', linewidth=2, label=nombre)
+                                    ax_full.fill(angulos, datos_similar_norm, color='blue', alpha=0.1)
                                     
-                                    # Etiquetas y leyenda
-                                    plt.xticks(angulos_full[:-1], [metric_display_names.get(m, m) for m in all_metrics], size=8)
+                                    # Etiquetas y leyenda (usando nombres descriptivos)
+                                    plt.xticks(angulos[:-1], [metric_display_names.get(m, m) for m in metricas_validas], size=7)
                                     plt.yticks([0.2, 0.4, 0.6, 0.8], ["0.2", "0.4", "0.6", "0.8"], color="grey", size=7)
                                     plt.ylim(0, 1)
                                     plt.legend(loc='upper right', bbox_to_anchor=(0.1, 0.1), fontsize=8)
@@ -531,39 +508,25 @@ if df_combined is not None and not df_combined.empty:
                                     
                                     st.pyplot(fig_radar_full)
                                     
-                                    # Incluir tabla con los valores exactos
+                                    # Incluir tabla con los valores exactos de todas las métricas
                                     st.write("#### Valores exactos de todas las métricas")
+                                    
+                                    # Crear lista de métricas con sus valores y descripciones
                                     datos_tabla_completa = {
-                                        "Métrica": [metric_display_names.get(m, m) for m in all_metrics],
+                                        "Métrica": [metric_display_names.get(m, m) for m in metricas_validas],
                                         jugadora_seleccionada: [round(float(df_combined[df_combined['Player'] == jugadora_seleccionada][m].iloc[0]), 2) 
-                                                              if m in df_combined.columns else "N/A" for m in all_metrics],
-                                        nombre: [round(float(info_jugadora[m].iloc[0]), 2) if m in info_jugadora.columns else "N/A" 
-                                                for m in all_metrics]
+                                                            for m in metricas_validas],
+                                        nombre: [round(float(info_jugadora[m].iloc[0]), 2) for m in metricas_validas]
                                     }
                                     
+                                    # Mostrar tabla completa
                                     st.dataframe(pd.DataFrame(datos_tabla_completa), use_container_width=True)
                                     
-                                except Exception as e:
-                                    st.error(f"Error al generar el gráfico de radar completo: {e}")
-                                    st.write("No se pudieron obtener datos completos para la comparación.")
-                            else:
-                                st.warning(f"No se encontraron métricas específicas para la posición {pos}")
-                        
-                            # Seleccionar hasta 8 métricas adicionales relevantes
-                            if position in position_metrics:
-                                metricas_adicionales = [m for m in position_metrics[position] 
-                                                    if m not in metricas_clave and m in df_combined.columns][:8]
-                                
-                                if metricas_adicionales:
-                                    datos_comparacion = {
-                                        "Métrica": [metric_display_names.get(m, m) for m in metricas_adicionales],
-                                        jugadora_seleccionada: [df_combined[df_combined['Player'] == jugadora_seleccionada][m].iloc[0] 
-                                                                if m in df_combined.columns else "N/A" for m in metricas_adicionales],
-                                        nombre: [info_jugadora[m].iloc[0] if m in info_jugadora.columns else "N/A" 
-                                                for m in metricas_adicionales]
-                                    }
-                                    
-                                    st.table(pd.DataFrame(datos_comparacion))
+                                else:
+                                    st.warning(f"No hay suficientes métricas válidas disponibles para la comparación completa")
+                            
+                            except Exception as e:
+                                st.error(f"Error al generar la comparación: {e}")
                 
                 # Información adicional sobre la interpretación
                 st.info("""
