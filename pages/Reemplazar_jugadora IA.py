@@ -958,20 +958,22 @@ if df_combined is not None and not df_combined.empty:
                             # Analizamos oportunidades y amenazas basadas en comparaciones y tendencias
                             for categoria, metricas in categorias.items():
                                 for metrica in metricas:
-                                    if metrica in metricas_jugadora and metrica in metricas_similares:
-                                        valor_jugadora = metricas_jugadora.get(metrica)
-                                        mejor_similar = max(jugadora_similar.get(metrica, 0) for jugadora_similar in metricas_similares)
-                                        
-                                        if pd.notna(valor_jugadora) and pd.notna(mejor_similar) and mejor_similar > 0:
-                                            diff_porcentaje = ((mejor_similar - valor_jugadora) / valor_jugadora) * 100
-                                            metrica_nombre = metric_display_names.get(metrica, metrica)
+                                    if metrica in metricas_jugadora:
+                                        valores_similares = [s.get(metrica, 0) for s in metricas_similares if metrica in s]
+                                        if valores_similares:
+                                            mejor_similar = max(valores_similares)
+                                            valor_jugadora = metricas_jugadora.get(metrica)
                                             
-                                            if diff_porcentaje >= 20:  # 20% mejor que nuestra jugadora
-                                                oportunidades.append(f"**{metrica_nombre}**: Potencial para mejorar un {abs(diff_porcentaje):.1f}% hasta {mejor_similar:.2f} (referencia de jugadoras similares)")
-                                            
-                                            # Identificar métricas donde está muy por encima de similares (posible riesgo de regresión)
-                                            if valor_jugadora > 0 and (valor_jugadora - mejor_similar) / mejor_similar > 0.3:
-                                                amenazas.append(f"**{metrica_nombre}**: Rendimiento actual de {valor_jugadora:.2f} podría ser difícil de mantener (un {((valor_jugadora - mejor_similar) / mejor_similar * 100):.1f}% superior a jugadoras similares)")
+                                            if pd.notna(valor_jugadora) and pd.notna(mejor_similar) and mejor_similar > 0 and valor_jugadora > 0:
+                                                diff_porcentaje = ((mejor_similar - valor_jugadora) / valor_jugadora) * 100
+                                                metrica_nombre = metric_display_names.get(metrica, metrica)
+                                                
+                                                if diff_porcentaje >= 20:  # 20% mejor que nuestra jugadora
+                                                    oportunidades.append(f"**{metrica_nombre}**: Potencial para mejorar un {abs(diff_porcentaje):.1f}% hasta {mejor_similar:.2f} (referencia de jugadoras similares)")
+                                                
+                                                # Identificar métricas donde está muy por encima de similares (posible riesgo de regresión)
+                                                if (valor_jugadora - mejor_similar) / mejor_similar > 0.3:
+                                                    amenazas.append(f"**{metrica_nombre}**: Rendimiento actual de {valor_jugadora:.2f} podría ser difícil de mantener (un {((valor_jugadora - mejor_similar) / mejor_similar * 100):.1f}% superior a jugadoras similares)")
                         
                         # Agregar análisis específicos por posición
                         if posicion == 'GK':
@@ -990,16 +992,16 @@ if df_combined is not None and not df_combined.empty:
                         
                         elif posicion == 'MF':
                             if 'pass_1/3' in metricas_jugadora and 'SCA90' in metricas_jugadora:
-                                if metricas_jugadora['pass_1/3'] > 5:
+                                if metricas_jugadora.get('pass_1/3', 0) > 5:
                                     fortalezas.append("Excelente capacidad para hacer progresar el balón al último tercio")
-                                if metricas_jugadora['SCA90'] < 2:
+                                if metricas_jugadora.get('SCA90', 0) < 2:
                                     oportunidades.append("Potencial para mejorar en la creación de oportunidades de tiro")
                         
                         elif posicion == 'FW':
                             if 'G/Sh' in metricas_jugadora and 'G-xG' in metricas_jugadora:
-                                if metricas_jugadora['G/Sh'] < 0.1:
+                                if metricas_jugadora.get('G/Sh', 0) < 0.1:
                                     oportunidades.append("Mejorar la eficiencia en la finalización de oportunidades")
-                                if metricas_jugadora['G-xG'] > 0:
+                                if metricas_jugadora.get('G-xG', 0) > 0:
                                     fortalezas.append("Sobrerrendimiento en goles respecto a lo esperado por las oportunidades")
                         
                         # Si no tenemos suficientes puntos, agregamos algunos genéricos
@@ -1036,7 +1038,10 @@ if df_combined is not None and not df_combined.empty:
                         metricas_similar = {}
                         for metrica in metricas_numericas:
                             if metrica in similar_info.columns:
-                                metricas_similar[metrica] = similar_info[metrica].iloc[0]
+                                try:
+                                    metricas_similar[metrica] = similar_info[metrica].iloc[0]
+                                except:
+                                    pass  # Si hay error, omitimos esta métrica
                         metricas_similares.append(metricas_similar)
                     
                     # Obtener promedios por posición
@@ -1049,42 +1054,47 @@ if df_combined is not None and not df_combined.empty:
                             metricas_promedio[metrica] = jugadoras_misma_posicion[metrica].mean()
                     
                     # Generar el DAFO
-                    dafo = generar_dafo(
-                        jugadora_seleccionada, 
-                        position, 
-                        metricas_jugadora, 
-                        metricas_similares, 
-                        metricas_promedio
-                    )
-                    
-                    # Mostrar DAFO en una presentación visual clara
-                    col1, col2 = st.columns(2)
-                    
-                    with col1:
-                        st.markdown("#### Fortalezas")
-                        st.markdown('<div style="background-color: #d4edda; padding: 15px; border-radius: 5px;">', unsafe_allow_html=True)
-                        for fortaleza in dafo["fortalezas"]:
-                            st.markdown(f"✅ {fortaleza}")
-                        st.markdown('</div>', unsafe_allow_html=True)
+                    try:
+                        dafo = generar_dafo(
+                            jugadora_seleccionada, 
+                            position, 
+                            metricas_jugadora, 
+                            metricas_similares, 
+                            metricas_promedio
+                        )
                         
-                        st.markdown("#### Debilidades")
-                        st.markdown('<div style="background-color: #f8d7da; padding: 15px; border-radius: 5px;">', unsafe_allow_html=True)
-                        for debilidad in dafo["debilidades"]:
-                            st.markdown(f"❌ {debilidad}")
-                        st.markdown('</div>', unsafe_allow_html=True)
-                    
-                    with col2:
-                        st.markdown("#### Oportunidades")
-                        st.markdown('<div style="background-color: #cce5ff; padding: 15px; border-radius: 5px;">', unsafe_allow_html=True)
-                        for oportunidad in dafo["oportunidades"]:
-                            st.markdown(f"🚀 {oportunidad}")
-                        st.markdown('</div>', unsafe_allow_html=True)
+                        # Mostrar DAFO en una presentación visual clara
+                        col1, col2 = st.columns(2)
                         
-                        st.markdown("#### Amenazas")
-                        st.markdown('<div style="background-color: #fff3cd; padding: 15px; border-radius: 5px;">', unsafe_allow_html=True)
-                        for amenaza in dafo["amenazas"]:
-                            st.markdown(f"⚠️ {amenaza}")
-                        st.markdown('</div>', unsafe_allow_html=True)
+                        with col1:
+                            st.markdown("#### Fortalezas")
+                            st.markdown('<div style="background-color: #d4edda; padding: 15px; border-radius: 5px;">', unsafe_allow_html=True)
+                            for fortaleza in dafo["fortalezas"]:
+                                st.markdown(f"✅ {fortaleza}")
+                            st.markdown('</div>', unsafe_allow_html=True)
+                            
+                            st.markdown("#### Debilidades")
+                            st.markdown('<div style="background-color: #f8d7da; padding: 15px; border-radius: 5px;">', unsafe_allow_html=True)
+                            for debilidad in dafo["debilidades"]:
+                                st.markdown(f"❌ {debilidad}")
+                            st.markdown('</div>', unsafe_allow_html=True)
+                        
+                        with col2:
+                            st.markdown("#### Oportunidades")
+                            st.markdown('<div style="background-color: #cce5ff; padding: 15px; border-radius: 5px;">', unsafe_allow_html=True)
+                            for oportunidad in dafo["oportunidades"]:
+                                st.markdown(f"🚀 {oportunidad}")
+                            st.markdown('</div>', unsafe_allow_html=True)
+                            
+                            st.markdown("#### Amenazas")
+                            st.markdown('<div style="background-color: #fff3cd; padding: 15px; border-radius: 5px;">', unsafe_allow_html=True)
+                            for amenaza in dafo["amenazas"]:
+                                st.markdown(f"⚠️ {amenaza}")
+                            st.markdown('</div>', unsafe_allow_html=True)
+                        
+                    except Exception as e:
+                        st.error(f"Error al generar el análisis DAFO: {e}")
+                        st.info("Intenta con otra jugadora o verifica los datos disponibles.")
                     
                     # Separador para la siguiente sección
                     st.divider()
@@ -1092,42 +1102,42 @@ if df_combined is not None and not df_combined.empty:
                 # Sección de métricas a mejorar
                 st.write("### Plan de Mejora basado en Métricas")
                 
+                # Definir umbrales de mejora globales (para usar en varias funciones)
+                umbrales_mejora = {
+                    'GK': {
+                        'Save%': {'umbral': 70, 'recomendacion': 'Trabajar en posicionamiento y técnica de paradas'},
+                        'CS%': {'umbral': 30, 'recomendacion': 'Mejorar comunicación con la defensa para mantener portería a cero'},
+                        'PSxG-GA': {'umbral': 0, 'recomendacion': 'Enfocarse en situaciones de tiro más difíciles'},
+                        '#OPA/90': {'umbral': 1, 'recomendacion': 'Aumentar participación fuera del área para ayudar en la construcción'}
+                    },
+                    'DF': {
+                        'Tkl%': {'umbral': 65, 'recomendacion': 'Mejorar timing en las entradas para aumentar efectividad'},
+                        'Int': {'umbral': 1.5, 'recomendacion': 'Trabajar en anticipación para aumentar intercepciones'},
+                        'Cmp%_long': {'umbral': 60, 'recomendacion': 'Practicar pases largos para mejorar la progresión desde atrás'},
+                        'Blocks': {'umbral': 1.2, 'recomendacion': 'Mejorar posicionamiento para bloquear más tiros y pases'}
+                    },
+                    'MF': {
+                        'PPA': {'umbral': 3, 'recomendacion': 'Aumentar los pases al área rival para crear más peligro'},
+                        'SCA90': {'umbral': 2.5, 'recomendacion': 'Desarrollar más acciones que deriven en ocasiones de tiro'},
+                        'GCA90': {'umbral': 0.3, 'recomendacion': 'Incrementar las acciones que derivan en gol'},
+                        'pass_1/3': {'umbral': 4, 'recomendacion': 'Mejorar la progresión del balón al último tercio del campo'},
+                        'KP': {'umbral': 1, 'recomendacion': 'Aumentar la creación de pases clave para generar ocasiones'}
+                    },
+                    'FW': {
+                        'G/Sh': {'umbral': 0.12, 'recomendacion': 'Mejorar la definición y la toma de decisiones en el área'},
+                        'SoT/90': {'umbral': 1, 'recomendacion': 'Aumentar la precisión en los disparos a portería'},
+                        'G-xG': {'umbral': 0, 'recomendacion': 'Trabajar en la finalización para superar las expectativas de gol'},
+                        'touch_Att Pen': {'umbral': 4, 'recomendacion': 'Incrementar la presencia en el área rival para recibir más balones'},
+                        'TO_Succ%': {'umbral': 50, 'recomendacion': 'Mejorar la efectividad en los regates para crear ventajas'}
+                    }
+                }
+                
                 # Función para generar recomendaciones de mejora
                 def generar_recomendaciones(jugadora, posicion, metricas_jugadora, metricas_similares, metricas_promedio):
                     """
                     Genera recomendaciones específicas para mejorar basadas en las métricas de la jugadora.
                     """
                     recomendaciones = []
-                    
-                    # Establecer umbrales de mejora por posición y métrica
-                    umbrales_mejora = {
-                        'GK': {
-                            'Save%': {'umbral': 70, 'recomendacion': 'Trabajar en posicionamiento y técnica de paradas'},
-                            'CS%': {'umbral': 30, 'recomendacion': 'Mejorar comunicación con la defensa para mantener portería a cero'},
-                            'PSxG-GA': {'umbral': 0, 'recomendacion': 'Enfocarse en situaciones de tiro más difíciles'},
-                            '#OPA/90': {'umbral': 1, 'recomendacion': 'Aumentar participación fuera del área para ayudar en la construcción'}
-                        },
-                        'DF': {
-                            'Tkl%': {'umbral': 65, 'recomendacion': 'Mejorar timing en las entradas para aumentar efectividad'},
-                            'Int': {'umbral': 1.5, 'recomendacion': 'Trabajar en anticipación para aumentar intercepciones'},
-                            'Cmp%_long': {'umbral': 60, 'recomendacion': 'Practicar pases largos para mejorar la progresión desde atrás'},
-                            'Blocks': {'umbral': 1.2, 'recomendacion': 'Mejorar posicionamiento para bloquear más tiros y pases'}
-                        },
-                        'MF': {
-                            'PPA': {'umbral': 3, 'recomendacion': 'Aumentar los pases al área rival para crear más peligro'},
-                            'SCA90': {'umbral': 2.5, 'recomendacion': 'Desarrollar más acciones que deriven en ocasiones de tiro'},
-                            'GCA90': {'umbral': 0.3, 'recomendacion': 'Incrementar las acciones que derivan en gol'},
-                            'pass_1/3': {'umbral': 4, 'recomendacion': 'Mejorar la progresión del balón al último tercio del campo'},
-                            'KP': {'umbral': 1, 'recomendacion': 'Aumentar la creación de pases clave para generar ocasiones'}
-                        },
-                        'FW': {
-                            'G/Sh': {'umbral': 0.12, 'recomendacion': 'Mejorar la definición y la toma de decisiones en el área'},
-                            'SoT/90': {'umbral': 1, 'recomendacion': 'Aumentar la precisión en los disparos a portería'},
-                            'G-xG': {'umbral': 0, 'recomendacion': 'Trabajar en la finalización para superar las expectativas de gol'},
-                            'touch_Att Pen': {'umbral': 4, 'recomendacion': 'Incrementar la presencia en el área rival para recibir más balones'},
-                            'TO_Succ%': {'umbral': 50, 'recomendacion': 'Mejorar la efectividad en los regates para crear ventajas'}
-                        }
-                    }
                     
                     # Si la posición existe en nuestros umbrales
                     if posicion in umbrales_mejora:
@@ -1159,32 +1169,35 @@ if df_combined is not None and not df_combined.empty:
                     return recomendaciones_ordenadas
                 
                 # Generar recomendaciones
-                recomendaciones = generar_recomendaciones(
-                    jugadora_seleccionada, 
-                    position, 
-                    metricas_jugadora, 
-                    metricas_similares, 
-                    metricas_promedio
-                )
-                
-                # Mostrar las recomendaciones en una tabla visual
-                if recomendaciones:
-                    # Mostrar solo las 5 principales áreas de mejora
-                    top_recomendaciones = recomendaciones[:5]
+                try:
+                    recomendaciones = generar_recomendaciones(
+                        jugadora_seleccionada, 
+                        position, 
+                        metricas_jugadora, 
+                        metricas_similares, 
+                        metricas_promedio
+                    )
                     
-                    for i, rec in enumerate(top_recomendaciones, 1):
-                        # Crear una tarjeta para cada recomendación
-                        st.markdown(f"""
-                        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 10px;">
-                            <h4 style="color: #007bff;">Prioridad {i}: Mejorar {rec['nombre_metrica']}</h4>
-                            <p><b>Valor actual:</b> {rec['valor_actual']:.2f} | <b>Objetivo:</b> {rec['objetivo']:.2f}</p>
-                            <div style="background-color: #e9ecef; padding: 10px; border-radius: 5px;">
-                                <p><b>Recomendación:</b> {rec['recomendacion']}</p>
+                    # Mostrar las recomendaciones en una tabla visual
+                    if recomendaciones:
+                        # Mostrar solo las 5 principales áreas de mejora
+                        top_recomendaciones = recomendaciones[:5]
+                        
+                        for i, rec in enumerate(top_recomendaciones, 1):
+                            # Crear una tarjeta para cada recomendación
+                            st.markdown(f"""
+                            <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 10px;">
+                                <h4 style="color: #007bff;">Prioridad {i}: Mejorar {rec['nombre_metrica']}</h4>
+                                <p><b>Valor actual:</b> {rec['valor_actual']:.2f} | <b>Objetivo:</b> {rec['objetivo']:.2f}</p>
+                                <div style="background-color: #e9ecef; padding: 10px; border-radius: 5px;">
+                                    <p><b>Recomendación:</b> {rec['recomendacion']}</p>
+                                </div>
                             </div>
-                        </div>
-                        """, unsafe_allow_html=True)
-                else:
-                    st.info("No se han encontrado áreas específicas de mejora basadas en los umbrales establecidos.")
+                            """, unsafe_allow_html=True)
+                    else:
+                        st.info("No se han encontrado áreas específicas de mejora basadas en los umbrales establecidos.")
+                except Exception as e:
+                    st.error(f"Error al generar recomendaciones: {e}")
                 
                 # Sección final con resumen ejecutivo
                 st.write("### Resumen Ejecutivo")
@@ -1194,152 +1207,159 @@ if df_combined is not None and not df_combined.empty:
                     """
                     Genera un resumen ejecutivo personalizado para la jugadora.
                     """
-                    # Extraer información clave
-                    nombre = jugadora
-                    
-                    # Nivel aproximado basado en las métricas
-                    nivel = "alto"  # por defecto
-                    
-                    # Contar cuántas métricas están por debajo del promedio
-                    if posicion in umbrales_mejora:
-                        metricas_clave = umbrales_mejora[posicion].keys()
-                        metricas_bajas = sum(1 for m in metricas_clave if m in metricas_jugadora and 
-                                        metricas_jugadora[m] < umbrales_mejora[posicion][m]['umbral'])
+                    try:
+                        # Extraer información clave
+                        nombre = jugadora
                         
-                        total_metricas = sum(1 for m in metricas_clave if m in metricas_jugadora)
+                        # Nivel aproximado basado en las métricas
+                        nivel = "alto"  # por defecto
                         
-                        if total_metricas > 0:
-                            ratio = metricas_bajas / total_metricas
-                            if ratio > 0.7:
-                                nivel = "bajo"
-                            elif ratio > 0.3:
-                                nivel = "medio"
-                    
-                    # Identificar principales fortalezas
-                    fortalezas_principales = dafo["fortalezas"][:2] if len(dafo["fortalezas"]) >= 2 else dafo["fortalezas"]
-                    
-                    # Identificar principales áreas de mejora
-                    areas_mejora = [rec['nombre_metrica'] for rec in recomendaciones[:3]] if recomendaciones else ["No se identificaron áreas específicas"]
-                    
-                    # Construir resumen personalizado
-                    resumen = f"""
-                    {nombre} es una jugadora de nivel {nivel} en su posición de {posicion}. 
-                    
-                    **Perfil general:** """
-                    
-                    # Añadir descripción según posición
-                    if posicion == 'GK':
-                        resumen += "Portera "
-                        if 'Save%' in metricas_jugadora:
-                            if metricas_jugadora['Save%'] > 75:
-                                resumen += "con excelente porcentaje de paradas "
-                            elif metricas_jugadora['Save%'] > 65:
-                                resumen += "con buen porcentaje de paradas "
+                        # Contar cuántas métricas están por debajo del promedio
+                        if posicion in umbrales_mejora:
+                            metricas_clave = umbrales_mejora[posicion].keys()
+                            metricas_bajas = sum(1 for m in metricas_clave if m in metricas_jugadora and 
+                                            metricas_jugadora[m] < umbrales_mejora[posicion][m]['umbral'])
+                            
+                            total_metricas = sum(1 for m in metricas_clave if m in metricas_jugadora)
+                            
+                            if total_metricas > 0:
+                                ratio = metricas_bajas / total_metricas
+                                if ratio > 0.7:
+                                    nivel = "bajo"
+                                elif ratio > 0.3:
+                                    nivel = "medio"
+                        
+                        # Identificar principales fortalezas
+                        fortalezas_principales = dafo["fortalezas"][:2] if len(dafo["fortalezas"]) >= 2 else dafo["fortalezas"]
+                        
+                        # Identificar principales áreas de mejora
+                        areas_mejora = [rec['nombre_metrica'] for rec in recomendaciones[:3]] if recomendaciones else ["No se identificaron áreas específicas"]
+                        
+                        # Construir resumen personalizado
+                        resumen = f"""
+                        {nombre} es una jugadora de nivel {nivel} en su posición de {posicion}. 
+                        
+                        **Perfil general:** """
+                        
+                        # Añadir descripción según posición
+                        if posicion == 'GK':
+                            resumen += "Portera "
+                            if 'Save%' in metricas_jugadora:
+                                if metricas_jugadora['Save%'] > 75:
+                                    resumen += "con excelente porcentaje de paradas "
+                                elif metricas_jugadora['Save%'] > 65:
+                                    resumen += "con buen porcentaje de paradas "
+                                else:
+                                    resumen += "que necesita mejorar su porcentaje de paradas "
+                            if '#OPA/90' in metricas_jugadora:
+                                if metricas_jugadora['#OPA/90'] > 1.5:
+                                    resumen += "y activa fuera del área."
+                                else:
+                                    resumen += "y con margen de mejora en su participación fuera del área."
+                                    
+                        elif posicion == 'DF':
+                            resumen += "Defensora "
+                            if 'Tkl+Int' in metricas_jugadora:
+                                if metricas_jugadora['Tkl+Int'] > 4:
+                                    resumen += "con gran capacidad defensiva "
+                                elif metricas_jugadora['Tkl+Int'] > 2.5:
+                                    resumen += "con buena capacidad defensiva "
+                                else:
+                                    resumen += "con capacidad defensiva a mejorar "
+                            if 'Cmp%_long' in metricas_jugadora:
+                                if metricas_jugadora['Cmp%_long'] > 65:
+                                    resumen += "y excelente en la distribución larga del balón."
+                                elif metricas_jugadora['Cmp%_long'] > 50:
+                                    resumen += "y buena en la distribución del balón."
+                                else:
+                                    resumen += "y con margen de mejora en la distribución del balón."
+                                    
+                        elif posicion == 'MF':
+                            resumen += "Centrocampista "
+                            if 'SCA90' in metricas_jugadora:
+                                if metricas_jugadora['SCA90'] > 3:
+                                    resumen += "con gran capacidad creativa "
+                                elif metricas_jugadora['SCA90'] > 2:
+                                    resumen += "con buena capacidad creativa "
+                                else:
+                                    resumen += "con capacidad creativa a desarrollar "
+                            if 'Tkl+Int' in metricas_jugadora:
+                                if metricas_jugadora['Tkl+Int'] > 3.5:
+                                    resumen += "y excelente en la recuperación defensiva."
+                                elif metricas_jugadora['Tkl+Int'] > 2:
+                                    resumen += "y sólida en el aspecto defensivo."
+                                else:
+                                    resumen += "y con margen de mejora en el aspecto defensivo."
+                                    
+                        elif posicion == 'FW':
+                            resumen += "Delantera "
+                            if 'G/Sh' in metricas_jugadora:
+                                if metricas_jugadora['G/Sh'] > 0.15:
+                                    resumen += "con gran efectividad goleadora "
+                                elif metricas_jugadora['G/Sh'] > 0.1:
+                                    resumen += "con buena capacidad goleadora "
+                                else:
+                                    resumen += "con capacidad goleadora a mejorar "
+                            if 'SCA90' in metricas_jugadora:
+                                if metricas_jugadora['SCA90'] > 3:
+                                    resumen += "y excelente en la creación de oportunidades."
+                                elif metricas_jugadora['SCA90'] > 2:
+                                    resumen += "y buena en la creación de juego."
+                                else:
+                                    resumen += "y con margen de mejora en la creación de juego."
+                        
+                        # Añadir sección de fortalezas principales
+                        resumen += """
+                        
+                        **Principales fortalezas:**
+                        """
+                        for f in fortalezas_principales:
+                            resumen += f"\n- {f}"
+                        
+                        # Añadir sección de áreas de mejora
+                        resumen += """
+                        
+                        **Principales áreas de mejora:**
+                        """
+                        for i, area in enumerate(areas_mejora, 1):
+                            if i <= len(recomendaciones):
+                                resumen += f"\n- {area}: {recomendaciones[i-1]['recomendacion']}"
                             else:
-                                resumen += "que necesita mejorar su porcentaje de paradas "
-                        if '#OPA/90' in metricas_jugadora:
-                            if metricas_jugadora['#OPA/90'] > 1.5:
-                                resumen += "y activa fuera del área."
-                            else:
-                                resumen += "y con margen de mejora en su participación fuera del área."
-                                
-                    elif posicion == 'DF':
-                        resumen += "Defensora "
-                        if 'Tkl+Int' in metricas_jugadora:
-                            if metricas_jugadora['Tkl+Int'] > 4:
-                                resumen += "con gran capacidad defensiva "
-                            elif metricas_jugadora['Tkl+Int'] > 2.5:
-                                resumen += "con buena capacidad defensiva "
-                            else:
-                                resumen += "con capacidad defensiva a mejorar "
-                        if 'Cmp%_long' in metricas_jugadora:
-                            if metricas_jugadora['Cmp%_long'] > 65:
-                                resumen += "y excelente en la distribución larga del balón."
-                            elif metricas_jugadora['Cmp%_long'] > 50:
-                                resumen += "y buena en la distribución del balón."
-                            else:
-                                resumen += "y con margen de mejora en la distribución del balón."
-                                
-                    elif posicion == 'MF':
-                        resumen += "Centrocampista "
-                        if 'SCA90' in metricas_jugadora:
-                            if metricas_jugadora['SCA90'] > 3:
-                                resumen += "con gran capacidad creativa "
-                            elif metricas_jugadora['SCA90'] > 2:
-                                resumen += "con buena capacidad creativa "
-                            else:
-                                resumen += "con capacidad creativa a desarrollar "
-                        if 'Tkl+Int' in metricas_jugadora:
-                            if metricas_jugadora['Tkl+Int'] > 3.5:
-                                resumen += "y excelente en la recuperación defensiva."
-                            elif metricas_jugadora['Tkl+Int'] > 2:
-                                resumen += "y sólida en el aspecto defensivo."
-                            else:
-                                resumen += "y con margen de mejora en el aspecto defensivo."
-                                
-                    elif posicion == 'FW':
-                        resumen += "Delantera "
-                        if 'G/Sh' in metricas_jugadora:
-                            if metricas_jugadora['G/Sh'] > 0.15:
-                                resumen += "con gran efectividad goleadora "
-                            elif metricas_jugadora['G/Sh'] > 0.1:
-                                resumen += "con buena capacidad goleadora "
-                            else:
-                                resumen += "con capacidad goleadora a mejorar "
-                        if 'SCA90' in metricas_jugadora:
-                            if metricas_jugadora['SCA90'] > 3:
-                                resumen += "y excelente en la creación de oportunidades."
-                            elif metricas_jugadora['SCA90'] > 2:
-                                resumen += "y buena en la creación de juego."
-                            else:
-                                resumen += "y con margen de mejora en la creación de juego."
-                    
-                    # Añadir sección de fortalezas principales
-                    resumen += """
-                    
-                    **Principales fortalezas:**
-                    """
-                    for f in fortalezas_principales:
-                        resumen += f"\n- {f}"
-                    
-                    # Añadir sección de áreas de mejora
-                    resumen += """
-                    
-                    **Principales áreas de mejora:**
-                    """
-                    for i, area in enumerate(areas_mejora, 1):
-                        if i <= len(recomendaciones):
-                            resumen += f"\n- {area}: {recomendaciones[i-1]['recomendacion']}"
+                                resumen += f"\n- {area}"
+                        
+                        # Añadir conclusión
+                        resumen += """
+                        
+                        **Conclusión:** """
+                        
+                        if nivel == "alto":
+                            resumen += "Jugadora con excelente rendimiento que puede ayudar al equipo inmediatamente. Se recomienda mantener su desarrollo enfocándose en las áreas de mejora identificadas para maximizar su potencial."
+                        elif nivel == "medio":
+                            resumen += "Jugadora con buen rendimiento que puede contribuir al equipo. Con trabajo específico en las áreas identificadas, podría elevar significativamente su nivel y aportar más valor al equipo."
                         else:
-                            resumen += f"\n- {area}"
-                    
-                    # Añadir conclusión
-                    resumen += """
-                    
-                    **Conclusión:** """
-                    
-                    if nivel == "alto":
-                        resumen += "Jugadora con excelente rendimiento que puede ayudar al equipo inmediatamente. Se recomienda mantener su desarrollo enfocándose en las áreas de mejora identificadas para maximizar su potencial."
-                    elif nivel == "medio":
-                        resumen += "Jugadora con buen rendimiento que puede contribuir al equipo. Con trabajo específico en las áreas identificadas, podría elevar significativamente su nivel y aportar más valor al equipo."
-                    else:
-                        resumen += "Jugadora con potencial que necesita desarrollo específico. Centrándose en las áreas de mejora identificadas, podría incrementar sustancialmente su aporte al equipo a medio plazo."
-                    
-                    return resumen
+                            resumen += "Jugadora con potencial que necesita desarrollo específico. Centrándose en las áreas de mejora identificadas, podría incrementar sustancialmente su aporte al equipo a medio plazo."
+                        
+                        return resumen
+                    except Exception as e:
+                        st.error(f"Error al generar el resumen: {e}")
+                        return "No se pudo generar el resumen completo debido a un error en los datos."
                 
                 # Generar el resumen ejecutivo
-                resumen = generar_resumen(
-                    jugadora_seleccionada, 
-                    position, 
-                    metricas_jugadora, 
-                    dafo, 
-                    recomendaciones
-                )
-                
-                # Mostrar el resumen en un contenedor destacado
-                st.markdown('<div style="background-color: #f0f0f0; padding: 20px; border-radius: 10px; border-left: 5px solid #007bff;">', unsafe_allow_html=True)
-                st.markdown(resumen)
-                st.markdown('</div>', unsafe_allow_html=True)
+                try:
+                    resumen = generar_resumen(
+                        jugadora_seleccionada, 
+                        position, 
+                        metricas_jugadora, 
+                        dafo, 
+                        recomendaciones
+                    )
+                    
+                    # Mostrar el resumen en un contenedor destacado
+                    st.markdown('<div style="background-color: #f0f0f0; padding: 20px; border-radius: 10px; border-left: 5px solid #007bff;">', unsafe_allow_html=True)
+                    st.markdown(resumen)
+                    st.markdown('</div>', unsafe_allow_html=True)
+                except Exception as e:
+                    st.error(f"Error al generar el resumen ejecutivo: {e}")
                 
                 # Opciones para exportar el informe
                 st.divider()
@@ -1354,13 +1374,64 @@ if df_combined is not None and not df_combined.empty:
                     if st.button("📊 Exportar como presentación"):
                         st.info("Función de exportación a presentación no implementada en esta versión. Esta funcionalidad requeriría integración con librerías para generar PowerPoint o similares.")
                 
-                # Información de interpretación
+            # Información de interpretación (continuación)
                 st.info("""
                 **Nota sobre el análisis IA:**
                 - El análisis se basa únicamente en datos estadísticos disponibles
                 - Las recomendaciones son generales y deben ser evaluadas por el cuerpo técnico
                 - El análisis DAFO y las métricas a mejorar son herramientas orientativas para la toma de decisiones
+                - Se recomienda complementar este análisis con la observación directa de los partidos
                 """)
+                
+                # Sección de ayuda y metodología
+                with st.expander("ℹ️ Metodología del análisis IA"):
+                    st.markdown("""
+                    ### Metodología del análisis IA
+                    
+                    Este análisis utiliza técnicas de inteligencia artificial para interpretar datos estadísticos y generar conclusiones significativas sobre el rendimiento de las jugadoras.
+                    
+                    **Proceso del análisis:**
+                    
+                    1. **Recopilación de datos**: Se analizan las métricas disponibles de la jugadora seleccionada.
+                    2. **Análisis comparativo**: Se comparan estas métricas con:
+                    - Jugadoras similares identificadas mediante algoritmos de clustering
+                    - Promedios por posición en la misma liga/competición
+                    3. **Identificación de patrones**: Se detectan fortalezas, debilidades, oportunidades y amenazas.
+                    4. **Recomendaciones personalizadas**: Se generan sugerencias de mejora basadas en umbrales establecidos por expertos.
+                    
+                    **Limitaciones a considerar:**
+                    
+                    - El análisis está limitado a las métricas disponibles en la base de datos
+                    - No considera factores cualitativos como liderazgo, comunicación o inteligencia táctica
+                    - Las recomendaciones son generales y deben ser adaptadas al contexto específico del equipo
+                    - La interpretación final debe realizarse por profesionales con conocimiento del contexto
+                    
+                    **Uso recomendado:**
+                    
+                    Este análisis debe utilizarse como herramienta complementaria en el proceso de toma de decisiones, no como sustituto del criterio técnico profesional.
+                    """)
+                
+                # Sección de posibles próximos pasos
+                with st.expander("🔄 Evolución y seguimiento"):
+                    st.markdown("""
+                    ### Seguimiento y evolución
+                    
+                    Para un análisis más completo, se recomienda:
+                    
+                    1. **Establecer métricas de seguimiento** específicas para la jugadora basadas en las áreas de mejora identificadas
+                    2. **Crear un plan de desarrollo personalizado** con objetivos a corto, medio y largo plazo
+                    3. **Realizar revisiones periódicas** para evaluar el progreso y ajustar el plan según sea necesario
+                    4. **Comparar tendencias temporales** para identificar patrones de mejora o áreas de estancamiento
+                    
+                    Un enfoque integral debería combinar:
+                    
+                    - **Análisis de datos**: Métricas cuantitativas y tendencias
+                    - **Evaluación técnica**: Observación directa de habilidades y técnica
+                    - **Feedback cualitativo**: Aportaciones del cuerpo técnico y compañeras
+                    - **Autoevaluación**: Percepción de la propia jugadora sobre su rendimiento
+                    
+                    La visualización periódica de estos informes puede ayudar tanto al cuerpo técnico como a la jugadora a entender mejor su evolución y potencial.
+                    """)
     else:
         # Mensaje cuando no se ha realizado el análisis
         st.info("""
