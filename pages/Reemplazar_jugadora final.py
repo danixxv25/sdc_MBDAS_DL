@@ -565,7 +565,7 @@ if df_combined is not None and not df_combined.empty:
                         with col2:
                             # Buscar el logo del club
                             st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
-                            squad = jugadora_info_adicional['Squad'].iloc[0]
+                            squad = df_combined[df_combined['Player'] == nombre ]['Squad'].iloc[0]
                             team_logo_url = None
                             if df_teams_info is not None and squad in df_teams_info.columns and 'Shield URL' in df_teams_info.columns:
                                 club_team = df_teams_info[df_teams_info['Squad'] == squad]
