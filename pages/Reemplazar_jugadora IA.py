@@ -891,34 +891,29 @@ if df_combined is not None and not df_combined.empty:
                 st.header("Comparativa de Métricas Individuales")
                 st.write(f"Comparando a {jugadora_seleccionada} ({position}) con las jugadoras más similares")
                 
-                # Usamos position_metrics para el análisis completo 
+                # Inicializar session_state para las jugadoras si no existe
+                if 'tab4_jugadoras_similares' not in st.session_state:
+                    st.session_state.tab4_jugadoras_similares = [nombre for nombre, _, _, _, _ in distancias_ordenadas[:10]]
                 
-                # Obtener las 10 jugadoras más similares de la clusterización en tab1
-                jugadoras_similares = [nombre for nombre, _, _, _, _ in distancias_ordenadas[:10]]
+                # Crear un formulario para evitar recargas innecesarias
+                with st.form(key="form_jugadoras"):
+                    # Widget de selección múltiple dentro del formulario
+                    jugadoras_seleccionadas = st.multiselect(
+                        "Selecciona las jugadoras a comparar:",
+                        options=st.session_state.tab4_jugadoras_similares,
+                        default=[st.session_state.tab4_jugadoras_similares[0]] if st.session_state.tab4_jugadoras_similares else []
+                    )
+                    
+                    # Botón para aplicar los cambios
+                    submit_button = st.form_submit_button(label="Aplicar selección")
                 
-                # Usar session_state para mantener las selecciones entre recargas
-                if 'jugadoras_seleccionadas' not in st.session_state:
-                    st.session_state.jugadoras_seleccionadas = [jugadoras_similares[0]] if jugadoras_similares else []
-                
-                # Función para actualizar la selección sin reiniciar
-                def actualizar_seleccion(seleccion):
-                    st.session_state.jugadoras_seleccionadas = seleccion
-                
-                # Widget de selección múltiple para elegir jugadoras
-                jugadoras_seleccionadas = st.multiselect(
-                    "Selecciona las jugadoras a comparar:",
-                    options=jugadoras_similares,
-                    default=st.session_state.jugadoras_seleccionadas,
-                    on_change=actualizar_seleccion,
-                    args=(st.session_state.jugadoras_seleccionadas,)
-                )
-                
-                # Asegurarse de que la jugadora principal esté incluida
+                # Esta parte se ejecuta después de enviar el formulario o al cargar la página
+                # Asegurarse de que la jugadora principal esté incluida si no está ya
                 jugadoras_comparar = []
                 if jugadora_seleccionada not in jugadoras_seleccionadas:
                     jugadoras_comparar = [jugadora_seleccionada] + jugadoras_seleccionadas
                 else:
-                    jugadoras_comparar = jugadoras_seleccionadas.copy()
+                    jugadoras_comparar = jugadoras_seleccionadas
                 
                 # Obtener todas las métricas relevantes según la posición desde position_metrics
                 if position in position_metrics:
@@ -936,7 +931,7 @@ if df_combined is not None and not df_combined.empty:
                     
                     # Solo proceder si hay jugadoras seleccionadas
                     if jugadoras_comparar:
-                        # Crear un contenedor con scroll para los gráficos
+                        # Crear un contenedor para los gráficos
                         graph_container = st.container()
                         
                         with graph_container:
@@ -1003,6 +998,17 @@ if df_combined is not None and not df_combined.empty:
                                         st.warning(f"No hay datos disponibles para la métrica {metric}")
                     else:
                         st.warning("Por favor, selecciona al menos una jugadora para comparar.")
+                    
+                    # Información sobre la interpretación
+                    st.info("""
+                    **Comparación de métricas individuales:**
+                    - Las barras naranjas representan a la jugadora seleccionada
+                    - Las barras azules representan a las jugadoras similares
+                    - Estas comparaciones te permiten identificar fortalezas y debilidades específicas
+                    - Puedes usar esta información para decidir qué jugadoras podrían ser buenas alternativas o complementos
+                    """)
+                else:
+                    st.warning(f"No se encontraron métricas definidas para la posición {position} en position_metrics")
                     
                     # Información sobre la interpretación
                     st.info("""
