@@ -302,7 +302,7 @@ if df_combined is not None and not df_combined.empty:
             position = df_combined[df_combined['Player'] == jugadora_seleccionada]['Posición Principal'].iloc[0]
             st.write(position)
 
-            position_metrics = get_position_metrics()
+            position_metrics = obtener_metricas_jugadora(df_view)
             st.write(position_metrics)
             
             # Filtrar el DataFrame según la posición usando las métricas específicas
