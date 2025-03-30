@@ -728,11 +728,7 @@ if df_combined is not None and not df_combined.empty:
     ])
     
     # Mostrar información de las jugadoras seleccionadas
-    col1, col2 = st.columns(2)
-    
-    # Mostrar datos de las jugadoras
-    df_player1 = mostrar_datos_jugadora(player1, col1)
-    df_player2 = mostrar_datos_jugadora(player2, col2)
+
     
     # Variables para almacenar métricas y posiciones
     metrics1_data = None
@@ -752,7 +748,13 @@ if df_combined is not None and not df_combined.empty:
         metrics2_data, existing_metrics2, player2_position = obtener_metricas_jugadora(df_player2)
     
     # TAB 1: Visión General
-    with tab1:
+        with tab1:
+        col1, col2 = st.columns(2)
+        
+        # Mostrar datos de las jugadoras
+        df_player1 = mostrar_datos_jugadora(player1, col1)
+        df_player2 = mostrar_datos_jugadora(player2, col2)
+
         st.header("Visión General de la Comparativa")
         
         if metrics1_data and metrics2_data and player1_position == player2_position:
