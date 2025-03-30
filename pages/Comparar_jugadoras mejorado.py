@@ -54,6 +54,7 @@ st.markdown("""
     .similarity-container {
         background-color: #f8f9fa;
         border-radius: 10px;
+        height: 100px;
         padding: 20px;
         text-align: center;
         margin: 20px 0;
