@@ -558,6 +558,8 @@ if df_combined is not None and not df_combined.empty:
                                             except:
                                                 pass
                             
+                                except:
+                                    pass
                             st.markdown("</div>", unsafe_allow_html=True)
                         
                         with col2:
