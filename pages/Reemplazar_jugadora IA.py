@@ -579,8 +579,10 @@ if df_combined is not None and not df_combined.empty:
                 plt.legend()
                 plt.tight_layout()
                 
-                st.pyplot(fig_pca)
+                # Guardar figura PCA para el PDF
                 st.session_state.fig_pca_saved = fig_pca
+                
+                st.pyplot(fig_pca)
                 
                 # Explicación de los componentes principales
                 st.markdown("### Explicación de la Varianza")
@@ -608,9 +610,9 @@ if df_combined is not None and not df_combined.empty:
                 
                 # Seleccionamos métricas NUMÉRICAS relevantes según la posición
                 numeric_columns = df_combined.select_dtypes(include=['float64', 'int64']).columns.tolist()
-                relevant_metrics = [col for col in columnas_metricas[8:] if col in numeric_columns]
+                relevant_metrics = [col for col in columnas_metricas if col in numeric_columns]
                 
-                st.write(f"Métricas seleccionadas para el radar: {', '.join(relevant_metrics)}")
+                st.write(f"Métricas seleccionadas para el radar: {', '.join(relevant_metrics[:5])}...")
                 st.write(f"Número de métricas a visualizar: {len(relevant_metrics)}")
                 
                 # Seleccionamos las 5 jugadoras más similares para el gráfico de radar
@@ -629,7 +631,6 @@ if df_combined is not None and not df_combined.empty:
                     
                     # Calcular el ángulo para cada métrica
                     angulos = np.linspace(0, 2*np.pi, len(relevant_metrics), endpoint=False).tolist()
-                    st.write(f"Número de ángulos generados: {len(angulos)}")
                     
                     # Crear una paleta de colores para diferenciar las jugadoras
                     colores = plt.cm.tab10(np.linspace(0, 1, len(jugadoras_disponibles)))
@@ -647,7 +648,6 @@ if df_combined is not None and not df_combined.empty:
                                 valor = df_combined.loc[df_combined['Player'] == jugadora, metrica].iloc[0]
                                 valores_jugadora.append(valor)
                             except Exception as e:
-                                st.error(f"Error al obtener {metrica} para {jugadora}: {e}")
                                 valores_jugadora.append(0)  # Valor por defecto en caso de error
                         
                         all_values.append(valores_jugadora)
@@ -677,8 +677,6 @@ if df_combined is not None and not df_combined.empty:
                     for i, jugadora in enumerate(jugadoras_disponibles):
                         valores = normalized_values[i]
                         
-                        #st.write(f"Valores normalizados de {jugadora}: {valores}")
-                        
                         # Completar el círculo repitiendo el primer valor
                         valores_completos = valores + [valores[0]]
                         angulos_completos = angulos + [angulos[0]]
@@ -689,7 +687,7 @@ if df_combined is not None and not df_combined.empty:
                         ax.fill(angulos_completos, valores_completos, alpha=0.1, color=colores[i])
                     
                     # Añadir las etiquetas para cada métrica (usando nombres descriptivos)
-                    plt.xticks(angulos, [metric_display_names.get(m, m) for m in relevant_metrics], size=10)
+                    plt.xticks(angulos, [metric_display_names.get(m, m) for m in relevant_metrics], size=8)
                     
                     # Añadir las líneas de la red para cada nivel
                     ax.set_rlabel_position(0)
@@ -700,9 +698,10 @@ if df_combined is not None and not df_combined.empty:
                     plt.legend(loc='upper right', bbox_to_anchor=(0.1, 0.1))
                     plt.title(f'Comparación de Métricas: {jugadora_seleccionada} vs Jugadoras Similares', size=15)
                     
-                    st.pyplot(fig_radar)
+                    # Guardar figura Radar para el PDF
                     st.session_state.fig_radar_saved = fig_radar
-
+                    
+                    st.pyplot(fig_radar)
                 
                 except Exception as e:
                     st.error(f"Error al crear el gráfico de radar: {e}")
@@ -840,7 +839,7 @@ if df_combined is not None and not df_combined.empty:
                 # Mostrar tabla con descripciones
                 st.dataframe(pd.DataFrame(descripcion_data), use_container_width=True)
 
-                # Pestaña 4: Análisis IA con DAFO y recomendaciones
+            # Pestaña 4: Análisis IA con DAFO y recomendaciones
             with tab4:
                 st.header(f"Análisis IA para {jugadora_seleccionada}")
                 st.subheader("Informe generado por IA")
@@ -871,41 +870,12 @@ if df_combined is not None and not df_combined.empty:
                         oportunidades = []
                         amenazas = []
                         
-                        # Creamos un diccionario para mapear las métricas clave por posición
-                        metricas_importantes = position_metrics
-    
                         # Verificamos si la posición existe en nuestro mapeo
-                        if posicion in metricas_importantes:
-                            metricas_posicion = [m for m in metricas_importantes[posicion] 
-                                            if m not in ['Player', 'Squad', 'Born', 'Pos', 'Nation', 'Comp', 'Age']]
+                        if posicion in position_metrics:
+                            metricas_posicion = [m for m in position_metrics[posicion] 
+                                    if m not in ['Player', 'Squad', 'Born', 'Pos', 'Nation', 'Comp', 'Age']]
                             
-                            # Clasificar métricas por categoría para un análisis más ordenado
-                            categorias_metricas = {
-                                'GK': {
-                                    'defensivas': ['Save%', 'CS%', 'PSxG-GA', 'Stp%'], 
-                                    'tecnicas': ['Pass_Cmp_+40y%', '#OPA/90'],
-                                    'fisicas': ['AvgDist']
-                                },
-                                'DF': {
-                                    'defensivas': ['Tkl%', 'Blocks', 'Int', 'Tkl+Int', 'Recov'], 
-                                    'tecnicas': ['Cmp%_short', 'Cmp%_med', 'Cmp%_long', 'TotDist'],
-                                    'fisicas': ['touch_Def 3rd', 'touch_Mid 3rd']
-                                },
-                                'MF': {
-                                    'defensivas': ['Tkl%', 'Int', 'Recov'], 
-                                    'ofensivas': ['G+A', 'Ast', 'SCA90', 'GCA90', 'KP'],
-                                    'tecnicas': ['Cmp%_short', 'Cmp%_med', 'Cmp%_long', 'PPA', 'pass_1/3'],
-                                    'fisicas': ['touch_Mid 3rd', 'touch_Att 3rd', 'PrgR']
-                                },
-                                'FW': {
-                                    'defensivas': ['Recov'], 
-                                    'ofensivas': ['Gls', 'G+A', 'SoT/90', 'G/Sh', 'xG', 'G-xG'],
-                                    'tecnicas': ['TO_Succ%', 'KP', 'SCA90', 'GCA90'],
-                                    'fisicas': ['touch_Att 3rd', 'touch_Att Pen', 'PrgR']
-                                }
-                            }
-                            
-                            # Analizamos fortalezas y debilidades para todas las métricas de la posición
+                            # Analizamos fortalezas y debilidades
                             for metrica in metricas_posicion:
                                 if metrica in metricas_jugadora and metrica in metricas_promedio:
                                     # Obtenemos el valor de la jugadora y el promedio del equipo
@@ -1173,7 +1143,7 @@ if df_combined is not None and not df_combined.empty:
                 
                 # Sección final con resumen ejecutivo
                 st.write("### Resumen Ejecutivo")
-                
+
                 # Función para generar un resumen ejecutivo
                 def generar_resumen(jugadora, posicion, metricas_jugadora, dafo, recomendaciones):
                     """
@@ -1332,9 +1302,10 @@ if df_combined is not None and not df_combined.empty:
                     st.markdown('</div>', unsafe_allow_html=True)
                 except Exception as e:
                     st.error(f"Error al generar el resumen ejecutivo: {e}")
-
+                
+                # Función para crear PDF
                 def crear_pdf_analisis(jugadora_seleccionada, position, datos_jugadora, dafo, recomendaciones, resumen, 
-                       fig_pca, fig_radar, distancias_ordenadas, df_combined, metric_display_names):
+                                    fig_pca, fig_radar, distancias_ordenadas, df_combined, metric_display_names):
                     """
                     Crea un informe PDF completo con todas las secciones del análisis
                     """
@@ -1573,70 +1544,49 @@ if df_combined is not None and not df_combined.empty:
                     buffer.seek(0)
                     
                     return buffer
-
-
-                # Reemplazar la sección de opciones de exportación actual por esta:
-                st.divider()
-                st.write("### Opciones de exportación")
-
-                # Para guardar figuras para el informe PDF
-                if 'fig_pca_saved' not in st.session_state:
-                    st.session_state.fig_pca_saved = None
-                if 'fig_radar_saved' not in st.session_state:
-                    st.session_state.fig_radar_saved = None
-
-                # Guardar las figuras relevantes para el PDF
-                # Este código debe estar antes de mostrar las figuras en sus respectivas pestañas
-                # En la pestaña 2 (Clustering y Radar), después de crear fig_pca:
-                # st.session_state.fig_pca_saved = fig_pca
-
-                # En la pestaña 2, después de crear fig_radar:
-                # st.session_state.fig_radar_saved = fig_radar    
                 
                 # Opciones para exportar el informe
                 st.divider()
                 st.write("### Opciones de exportación")
                 
-                col1, col2 = st.columns(2)
-                with col1:
-                    if st.button("📄 Exportar como PDF"):
-                        try:
-                            # Obtener datos necesarios para el informe
-                            datos_jugadora = {}
-                            jugadora_info = df_combined[df_combined['Player'] == jugadora_seleccionada]
-                            
-                            for col in jugadora_info.columns:
-                                try:
-                                    datos_jugadora[col] = jugadora_info[col].iloc[0]
-                                except:
-                                    continue
-                            
-                            # Generar el PDF
-                            pdf_buffer = crear_pdf_analisis(
-                                jugadora_seleccionada=jugadora_seleccionada,
-                                position=position,
-                                datos_jugadora=datos_jugadora,
-                                dafo=dafo,
-                                recomendaciones=recomendaciones,
-                                resumen=resumen,
-                                fig_pca=st.session_state.fig_pca_saved if 'fig_pca_saved' in st.session_state else None,
-                                fig_radar=st.session_state.fig_radar_saved if 'fig_radar_saved' in st.session_state else None,
-                                distancias_ordenadas=distancias_ordenadas,
-                                df_combined=df_combined,
-                                metric_display_names=metric_display_names
-                            )
-                            
-                            # Convertir a base64 para descarga
-                            b64 = base64.b64encode(pdf_buffer.read()).decode()
-                            href = f'<a href="data:application/pdf;base64,{b64}" download="Analisis_{jugadora_seleccionada.replace(" ", "_")}.pdf">Descargar Informe PDF</a>'
-                            st.markdown(href, unsafe_allow_html=True)
-                            st.success("¡Informe PDF generado exitosamente!")
-                            
-                        except Exception as e:
-                            st.error(f"Error al generar el PDF: {e}")
-                            st.info("Asegúrate de tener instaladas todas las dependencias necesarias (reportlab).")
-                
-            # Información de interpretación (continuación)
+                if st.button("📄 Exportar como PDF"):
+                    try:
+                        # Obtener datos necesarios para el informe
+                        datos_jugadora = {}
+                        jugadora_info = df_combined[df_combined['Player'] == jugadora_seleccionada]
+                        
+                        for col in jugadora_info.columns:
+                            try:
+                                datos_jugadora[col] = jugadora_info[col].iloc[0]
+                            except:
+                                continue
+                        
+                        # Generar el PDF
+                        pdf_buffer = crear_pdf_analisis(
+                            jugadora_seleccionada=jugadora_seleccionada,
+                            position=position,
+                            datos_jugadora=datos_jugadora,
+                            dafo=dafo,
+                            recomendaciones=recomendaciones,
+                            resumen=resumen,
+                            fig_pca=st.session_state.fig_pca_saved if 'fig_pca_saved' in st.session_state else None,
+                            fig_radar=st.session_state.fig_radar_saved if 'fig_radar_saved' in st.session_state else None,
+                            distancias_ordenadas=distancias_ordenadas,
+                            df_combined=df_combined,
+                            metric_display_names=metric_display_names
+                        )
+                        
+                        # Convertir a base64 para descarga
+                        b64 = base64.b64encode(pdf_buffer.read()).decode()
+                        href = f'<a href="data:application/pdf;base64,{b64}" download="Analisis_{jugadora_seleccionada.replace(" ", "_")}.pdf">Descargar Informe PDF</a>'
+                        st.markdown(href, unsafe_allow_html=True)
+                        st.success("¡Informe PDF generado exitosamente!")
+                        
+                    except Exception as e:
+                        st.error(f"Error al generar el PDF: {e}")
+                        st.info("Asegúrate de tener instaladas todas las dependencias necesarias (reportlab).")
+                        
+                # Información de interpretación
                 st.info("""
                 **Nota sobre el análisis IA:**
                 - El análisis se basa únicamente en datos estadísticos disponibles
@@ -1645,55 +1595,56 @@ if df_combined is not None and not df_combined.empty:
                 - Se recomienda complementar este análisis con la observación directa de los partidos
                 """)
                 
-            # Sección de ayuda y metodología
-            with st.expander("ℹ️ Metodología del análisis IA"):
-                st.markdown("""
-                ### Metodología del análisis IA
+                # Sección de ayuda y metodología
+                with st.expander("ℹ️ Metodología del análisis IA"):
+                    st.markdown("""
+                    ### Metodología del análisis IA
+                    
+                    Este análisis utiliza técnicas de inteligencia artificial para interpretar datos estadísticos y generar conclusiones significativas sobre el rendimiento de las jugadoras.
+                    
+                    **Proceso del análisis:**
+                    
+                    1. **Recopilación de datos**: Se analizan las métricas disponibles de la jugadora seleccionada.
+                    2. **Análisis comparativo**: Se comparan estas métricas con:
+                    - Jugadoras similares identificadas mediante algoritmos de clustering
+                    - Promedios por posición en la misma liga/competición
+                    3. **Identificación de patrones**: Se detectan fortalezas, debilidades, oportunidades y amenazas.
+                    4. **Recomendaciones personalizadas**: Se generan sugerencias de mejora basadas en umbrales establecidos por expertos.
+                    
+                    **Limitaciones a considerar:**
+                    
+                    - El análisis está limitado a las métricas disponibles en la base de datos
+                    - No considera factores cualitativos como liderazgo, comunicación o inteligencia táctica
+                    - Las recomendaciones son generales y deben ser adaptadas al contexto específico del equipo
+                    - La interpretación final debe realizarse por profesionales con conocimiento del contexto
+                    
+                    **Uso recomendado:**
+                    
+                    Este análisis debe utilizarse como herramienta complementaria en el proceso de toma de decisiones, no como sustituto del criterio técnico profesional.
+                    """)
                 
-                Este análisis utiliza técnicas de inteligencia artificial para interpretar datos estadísticos y generar conclusiones significativas sobre el rendimiento de las jugadoras.
-                
-                **Proceso del análisis:**
-                
-                1. **Recopilación de datos**: Se analizan las métricas disponibles de la jugadora seleccionada.
-                2. **Análisis comparativo**: Se comparan estas métricas con:
-                - Jugadoras similares identificadas mediante algoritmos de clustering
-                - Promedios por posición en la misma liga/competición
-                3. **Identificación de patrones**: Se detectan fortalezas, debilidades, oportunidades y amenazas.
-                4. **Recomendaciones personalizadas**: Se generan sugerencias de mejora basadas en umbrales establecidos por expertos.
-                
-                **Limitaciones a considerar:**
-                
-                - El análisis está limitado a las métricas disponibles en la base de datos
-                - No considera factores cualitativos como liderazgo, comunicación o inteligencia táctica
-                - Las recomendaciones son generales y deben ser adaptadas al contexto específico del equipo
-                - La interpretación final debe realizarse por profesionales con conocimiento del contexto
-                
-                **Uso recomendado:**
-                
-                Este análisis debe utilizarse como herramienta complementaria en el proceso de toma de decisiones, no como sustituto del criterio técnico profesional.
-                """)
-            
-            # Sección de posibles próximos pasos
-            with st.expander("🔄 Evolución y seguimiento"):
-                st.markdown("""
-                ### Seguimiento y evolución
-                
-                Para un análisis más completo, se recomienda:
-                
-                1. **Establecer métricas de seguimiento** específicas para la jugadora basadas en las áreas de mejora identificadas
-                2. **Crear un plan de desarrollo personalizado** con objetivos a corto, medio y largo plazo
-                3. **Realizar revisiones periódicas** para evaluar el progreso y ajustar el plan según sea necesario
-                4. **Comparar tendencias temporales** para identificar patrones de mejora o áreas de estancamiento
-                
-                Un enfoque integral debería combinar:
-                
-                - **Análisis de datos**: Métricas cuantitativas y tendencias
-                - **Evaluación técnica**: Observación directa de habilidades y técnica
-                - **Feedback cualitativo**: Aportaciones del cuerpo técnico y compañeras
-                - **Autoevaluación**: Percepción de la propia jugadora sobre su rendimiento
-                
-                La visualización periódica de estos informes puede ayudar tanto al cuerpo técnico como a la jugadora a entender mejor su evolución y potencial.
-                """)
+                # Sección de posibles próximos pasos
+                with st.expander("🔄 Evolución y seguimiento"):
+                    st.markdown("""
+                    ### Seguimiento y evolución
+                    
+                    Para un análisis más completo, se recomienda:
+                    
+                    1. **Establecer métricas de seguimiento** específicas para la jugadora basadas en las áreas de mejora identificadas
+                    2. **Crear un plan de desarrollo personalizado** con objetivos a corto, medio y largo plazo
+                    3. **Realizar revisiones periódicas** para evaluar el progreso y ajustar el plan según sea necesario
+                    4. **Comparar tendencias temporales** para identificar patrones de mejora o áreas de estancamiento
+                    
+                    Un enfoque integral debería combinar:
+                    
+                    - **Análisis de datos**: Métricas cuantitativas y tendencias
+                    - **Evaluación técnica**: Observación directa de habilidades y técnica
+                    - **Feedback cualitativo**: Aportaciones del cuerpo técnico y compañeras
+                    - **Autoevaluación**: Percepción de la propia jugadora sobre su rendimiento
+                    
+                    La visualización periódica de estos informes puede ayudar tanto al cuerpo técnico como a la jugadora a entender mejor su evolución y potencial.
+                    """)
+    
     else:
         # Mensaje cuando no se ha realizado el análisis
         st.info("""
