@@ -389,7 +389,7 @@ def mostrar_datos_jugadora(player_name, container):
                 'Photo' in jugadora_info.columns and 
                 len(jugadora_info) > 0 and not pd.isna(jugadora_info['Photo'].iloc[0])):
                 photo_url = jugadora_info['Photo'].iloc[0]
-                st.image(photo_url, width=150)
+                st.image(photo_url, width=100)
             st.markdown("</div>", unsafe_allow_html=True)
         
         with col2:
