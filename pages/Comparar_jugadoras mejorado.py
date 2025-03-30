@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 import math
-from utils import display_logo, crear_graficos_comparativos
+from utils import display_logo, crear_graficos_comparativos, calcular_percentiles, mostrar_percentiles
 from sklearn.metrics.pairwise import cosine_similarity
 from scipy import stats
 
@@ -485,7 +485,7 @@ def obtener_metricas_jugadora(df_view):
         if metric in df_view.columns:
             metrics_data[metric] = df_view[metric].iloc[0]
     
-    return metrics_data, existing_metrics, player_position, position_metrics
+    return metrics_data, existing_metrics, player_position
 
 # Función para mostrar métricas en diferentes niveles
 def mostrar_metricas_nivel(df_view, metrics_list, metric_names, nivel, container):
@@ -618,96 +618,6 @@ def crear_grafico_radar(metrics1_data, metrics2_data, metrics_list, player1_name
     
     return fig
 
-# Función para calcular percentiles de jugadoras
-def calcular_percentiles(df_view, metrics_list):
-    if df_view is None or df_view.empty or not metrics_list:
-        return {}
-    
-    player_position = df_view['Posición Principal'].iloc[0] if 'Posición Principal' in df_view.columns else ""
-    
-    # Filtrar jugadoras de la misma posición
-    df_position = df_combined[df_combined['Posición Principal'] == player_position]
-    
-    percentiles = {}
-    
-    for metric in metrics_list:
-        if metric in df_view.columns and metric in df_position.columns:
-            # Obtener el valor de la jugadora
-            player_value = df_view[metric].iloc[0]
-            
-            # Calcular el percentil
-            if not pd.isna(player_value):
-                # Eliminar valores no numéricos y NaN
-                metric_values = df_position[metric].dropna()
-                
-                if not metric_values.empty:
-                    percentile = stats.percentileofscore(metric_values, player_value)
-                    percentiles[metric] = percentile
-    
-    return percentiles
-
-# Función para mostrar comparación de percentiles
-def mostrar_percentiles(percentiles1, percentiles2, player1_name, player2_name, metric_names):
-    if not percentiles1 or not percentiles2:
-        st.info("No hay suficientes datos para calcular percentiles")
-        return
-    
-    # Obtener métricas comunes
-    common_metrics = [m for m in percentiles1.keys() if m in percentiles2]
-    
-    if not common_metrics:
-        st.info("No hay métricas comunes para comparar percentiles")
-        return
-    
-    # Mostrar gráfico de barras para comparar percentiles
-    data = []
-    for metric in common_metrics:
-        data.append({
-            'metric': metric_names.get(metric, metric),
-            'Percentil ' + player1_name: percentiles1[metric],
-            'Percentil ' + player2_name: percentiles2[metric]
-        })
-    
-    # Convertir a DataFrame
-    df_percentiles = pd.DataFrame(data)
-    
-    # Crear gráfico de barras
-    fig, ax = plt.subplots(figsize=(12, len(common_metrics) * 0.5))
-    
-    # Ordenar por la diferencia entre percentiles
-    df_percentiles['diff'] = abs(df_percentiles['Percentil ' + player1_name] - df_percentiles['Percentil ' + player2_name])
-    df_percentiles = df_percentiles.sort_values('diff', ascending=False)
-    
-    # Crear gráfico
-    bar_width = 0.35
-    index = np.arange(len(df_percentiles))
-    
-    ax.barh(index, df_percentiles['Percentil ' + player1_name], bar_width, label=player1_name, color='#1f77b4')
-    ax.barh(index + bar_width, df_percentiles['Percentil ' + player2_name], bar_width, label=player2_name, color='#ff7f0e')
-    
-    # Añadir etiquetas y leyenda
-    ax.set_xlabel('Percentil')
-    ax.set_yticks(index + bar_width / 2)
-    ax.set_yticklabels(df_percentiles['metric'])
-    ax.set_xlim(0, 100)
-    ax.legend()
-    
-    # Añadir líneas de referencia
-    ax.axvline(x=25, color='gray', linestyle='--', alpha=0.5)
-    ax.axvline(x=50, color='gray', linestyle='--', alpha=0.5)
-    ax.axvline(x=75, color='gray', linestyle='--', alpha=0.5)
-    
-    # Añadir valores sobre las barras
-    for i, v in enumerate(df_percentiles['Percentil ' + player1_name]):
-        ax.text(v + 1, i - 0.05, f"{v:.0f}%", color='#1f77b4', fontweight='bold')
-    
-    for i, v in enumerate(df_percentiles['Percentil ' + player2_name]):
-        ax.text(v + 1, i + bar_width - 0.05, f"{v:.0f}%", color='#ff7f0e', fontweight='bold')
-    
-    plt.tight_layout()
-    
-    return fig
-
 # Verificar si se cargaron los datos correctamente
 if df_combined is not None and not df_combined.empty:
     # Crear filtros en la barra lateral
@@ -741,9 +651,6 @@ if df_combined is not None and not df_combined.empty:
         "Comparación gráfica por métricas"
     ])
     
-    # Mostrar información de las jugadoras seleccionadas
-
-    
     # Variables para almacenar métricas y posiciones
     metrics1_data = None
     metrics2_data = None
@@ -756,10 +663,10 @@ if df_combined is not None and not df_combined.empty:
     
     # Obtener métricas si se seleccionaron jugadoras
     if df_player1 is not None and player1:
-        metrics1_data, existing_metrics1, player1_position, position_metrics1 = obtener_metricas_jugadora(df_player1)
+        metrics1_data, existing_metrics1, player1_position = obtener_metricas_jugadora(df_player1)
     
     if df_player2 is not None and player2:
-        metrics2_data, existing_metrics2, player2_position, position_metrics2 = obtener_metricas_jugadora(df_player2)
+        metrics2_data, existing_metrics2, player2_position = obtener_metricas_jugadora(df_player2)
     
     # TAB 1: Visión General
     with tab1:
@@ -778,38 +685,40 @@ if df_combined is not None and not df_combined.empty:
                     similarity_class = "similarity-medium"
                 else:
                     similarity_class = "similarity-low"
+                
                 # Mostrar porcentaje de similitud con la clase correspondiente
                 st.markdown(f"""
-                <div class='similarity-container'>
+                <div class='similarity-container {similarity_class}'>
                     <div class='similarity-label'>Índice de Similitud</div>
-                    <div class='similarity-value {similarity_class}'>{similarity:.1f}%</div>
+                    <div class='similarity-value'>{similarity:.1f}%</div>
                 </div>
                 """, unsafe_allow_html=True)
         
-        # Crear gráfico radar para visualizar similitudes
-        # Obtener todas las métricas para la posición
-        all_position_metrics = []
-        for metrics_list in position_metrics.get(player1_position, {}).values():
-            all_position_metrics.extend(metrics_list)
-        
-        radar_fig = crear_grafico_radar(
-            metrics1_data, 
-            metrics2_data, 
-            all_position_metrics, 
-            player1, 
-            player2, 
-            metric_names
-        )
-        
-        if radar_fig:
-            st.pyplot(radar_fig)
-            st.caption("Gráfico radar que muestra el perfil de rendimiento de ambas jugadoras")
-        
+        if metrics1_data and metrics2_data and player1_position == player2_position:
+            # Crear gráfico radar para visualizar similitudes
+            # Obtener todas las métricas para la posición
+            all_position_metrics = []
+            for metrics_list in position_metrics.get(player1_position, {}).values():
+                all_position_metrics.extend(metrics_list)
+            
+            radar_fig = crear_grafico_radar(
+                metrics1_data, 
+                metrics2_data, 
+                all_position_metrics, 
+                player1, 
+                player2, 
+                metric_names
+            )
+            
+            if radar_fig:
+                st.pyplot(radar_fig)
+                st.caption("Gráfico radar que muestra el perfil de rendimiento de ambas jugadoras")
+                
         elif player1 and player2 and player1_position != player2_position:
             st.warning(f"Las jugadoras tienen posiciones diferentes ({player1_position} vs {player2_position}). No es posible realizar una comparación directa del perfil de juego.")
         else:
             st.info("Selecciona dos jugadoras para ver su comparativa")
-        st.divider()
+    
     # TAB 2: Métricas Macro
     with tab2:
         st.header("Métricas Macro")
@@ -927,31 +836,73 @@ if df_combined is not None and not df_combined.empty:
                 """)
             else:
                 st.info("No hay suficientes datos para calcular percentiles")
-            
+                
         elif player1 and player2 and player1_position != player2_position:
             st.warning("Las jugadoras tienen posiciones diferentes. Los percentiles solo son comparables entre jugadoras de la misma posición.")
-
-    with tab6:
-        position1 = df_player1['Posición Principal'].iloc[0]
-        st.write(position1)
-        position2 = df_player2['Posición Principal'].iloc[0]
-        st.write(position1)
-        # Crear gráficos comparativos si ambas jugadoras tienen datos
-        if position_metrics1 and position_metrics1:
-            # Usar solo métricas que existen para ambas jugadoras
-            if position1 == position2:
-                # Si las jugadoras tienen la misma posición, podemos usar todas las métricas
-                metrics_list = [m for m in position_metrics1 if m in position_metrics2]
-                player_position = position1
-            else:
-                # Si tienen posiciones diferentes, buscar métricas comunes
-                metrics_list = [m for m in position_metrics1 if m in position_metrics2]
-                st.warning(f"Las jugadoras tienen posiciones diferentes ({position1} vs {position2}). Mostrando solo métricas compatibles.")
-        
-            # Crear los gráficos comparativos
-            crear_graficos_comparativos(position_metrics1, position_metrics2, metrics_list, player_position, metric_names, player1, player2)
-                
         else:
             st.info("Selecciona dos jugadoras para ver la comparación por percentiles")
+    
+    # TAB 6: Comparación gráfica por métricas
+    with tab6:
+        st.header("Comparación gráfica por métricas")
+        st.markdown("Esta vista permite comparar directamente las métricas individuales entre ambas jugadoras")
+        
+        # Crear gráficos comparativos si ambas jugadoras tienen datos
+        if metrics1_data and metrics2_data:
+            # Determinar si tienen la misma posición
+            if player1_position == player2_position:
+                # Si las jugadoras tienen la misma posición, podemos usar todas las métricas
+                # Obtener todas las métricas para la posición
+                all_position_metrics = []
+                for metrics_list in position_metrics.get(player1_position, {}).values():
+                    all_position_metrics.extend(metrics_list)
+                
+                # Filtrar para obtener solo métricas que existen en ambas jugadoras
+                common_metrics = [m for m in all_position_metrics if m in metrics1_data and m in metrics2_data]
+                
+                # Organizar las métricas en filas de 3
+                metrics_per_row = 3
+                
+                # Procesar las métricas en grupos de 3
+                for i in range(0, len(common_metrics), metrics_per_row):
+                    # Crear una fila con 3 columnas
+                    cols = st.columns(metrics_per_row)
+                    
+                    # Procesar cada métrica de este grupo
+                    for j, metric in enumerate(common_metrics[i:i+metrics_per_row]):
+                        if j < len(cols):
+                            with cols[j]:
+                                fig, ax = plt.subplots(figsize=(4, 5))
+                                
+                                # Datos para el gráfico
+                                labels = [player1, player2]
+                                values = [metrics1_data[metric], metrics2_data[metric]]
+                                
+                                # Definir colores
+                                colors = ['#1f77b4', '#ff7f0e']
+                                
+                                # Crear el gráfico de barras
+                                bars = ax.bar(labels, values, color=colors, width=0.6)
+                                
+                                # Añadir etiquetas y título
+                                ax.set_ylabel(metric)
+                                ax.set_title(f"{metric_names.get(metric, metric)}", fontsize=10)
+                                
+                                # Añadir valores sobre las barras
+                                for bar in bars:
+                                    height = bar.get_height()
+                                    ax.text(bar.get_x() + bar.get_width()/2., height + 0.1,
+                                            f'{height:.1f}', ha='center', va='bottom', fontsize=9)
+                                
+                                # Ajustar los ejes y mostrar el gráfico
+                                plt.tight_layout()
+                                st.pyplot(fig)
+            else:
+                st.warning(f"Las jugadoras tienen posiciones diferentes ({player1_position} vs {player2_position}). Para una comparación más significativa, selecciona jugadoras de la misma posición.")
+        else:
+            st.info("Selecciona dos jugadoras para ver la comparación gráfica de métricas")
 else:
     st.error("No se pudieron cargar los datos. Verifica que los archivos existen en las rutas especificadas.")
+
+
+
