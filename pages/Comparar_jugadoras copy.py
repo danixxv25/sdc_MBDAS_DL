@@ -698,43 +698,7 @@ def mostrar_percentiles(percentiles1, percentiles2, player1_name, player2_name, 
 # Verificar si se cargaron los datos correctamente
 if df_combined is not None and not df_combined.empty:
     # Crear dos columnas para los filtros - PRIMERO LOS FILTROS ANTES DE LAS TABS
-    col1, col2 = st.columns(2)
-    
-    # Título para cada sección de filtros
-    col1.markdown("<h3 class='centered-title'>Jugadora 1</h3>", unsafe_allow_html=True)
-    col2.markdown("<h3 class='centered-title'>Jugadora 2</h3>", unsafe_allow_html=True)
-    
-    # Crear filtros para cada jugadora
-    player1 = crear_filtros_jugadora("player1", col1)
-    player2 = crear_filtros_jugadora("player2", col2)
-    
-
-    
-    # Mostrar información de las jugadoras seleccionadas
-    col1, col2 = st.columns(2)
-    
-    # Mostrar datos de las jugadoras
-    df_player1 = mostrar_datos_jugadora(player1, col1)
-    df_player2 = mostrar_datos_jugadora(player2, col2)
-    
-    # Variables para almacenar métricas y posiciones
-    metrics1_data = None
-    metrics2_data = None
-    existing_metrics1 = None
-    existing_metrics2 = None
-    player1_position = None
-    player2_position = None
-    metric_names = get_metric_display_names()
-    position_metrics = get_position_metrics()
-    
-    # Obtener métricas si se seleccionaron jugadoras
-    if df_player1 is not None and player1:
-        metrics1_data, existing_metrics1, player1_position = obtener_metricas_jugadora(df_player1)
-    
-    if df_player2 is not None and player2:
-        metrics2_data, existing_metrics2, player2_position = obtener_metricas_jugadora(df_player2)
-
-        # Ahora CREAMOS LAS TABS después de los filtros
+    # Ahora CREAMOS LAS TABS después de los filtros
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
         "Visión General", 
         "Métricas Macro", 
@@ -742,47 +706,81 @@ if df_combined is not None and not df_combined.empty:
         "Métricas Micro",
         "Comparación por Percentiles"
     ])
-    
+
     # TAB 1: Visión General
     with tab1:
-        st.header("Visión General de la Comparativa")
+        col1, col2 = st.columns(2)
         
-        if metrics1_data and metrics2_data and player1_position == player2_position:
-            # Calcular similitud coseno
-            similarity = calcular_similitud(metrics1_data, metrics2_data, position_metrics, player1_position)
+        # Título para cada sección de filtros
+        col1.markdown("<h3 class='centered-title'>Jugadora 1</h3>", unsafe_allow_html=True)
+        col2.markdown("<h3 class='centered-title'>Jugadora 2</h3>", unsafe_allow_html=True)
+        
+        # Crear filtros para cada jugadora
+        player1 = crear_filtros_jugadora("player1", col1)
+        player2 = crear_filtros_jugadora("player2", col2)
+
+        # Mostrar información de las jugadoras seleccionadas
+        col1, col2 = st.columns(2)
+        
+        # Mostrar datos de las jugadoras
+        df_player1 = mostrar_datos_jugadora(player1, col1)
+        df_player2 = mostrar_datos_jugadora(player2, col2)
+        
+        # Variables para almacenar métricas y posiciones
+        metrics1_data = None
+        metrics2_data = None
+        existing_metrics1 = None
+        existing_metrics2 = None
+        player1_position = None
+        player2_position = None
+        metric_names = get_metric_display_names()
+        position_metrics = get_position_metrics()
+        
+        # Obtener métricas si se seleccionaron jugadoras
+        if df_player1 is not None and player1:
+            metrics1_data, existing_metrics1, player1_position = obtener_metricas_jugadora(df_player1)
+        
+        if df_player2 is not None and player2:
+            metrics2_data, existing_metrics2, player2_position = obtener_metricas_jugadora(df_player2)
+
+            st.header("Visión General de la Comparativa")
             
-            # Mostrar porcentaje de similitud
-            st.markdown("""
-            <div class='similarity-container'>
-                <div class='similarity-label'>Índice de Similitud</div>
-                <div class='similarity-value'>{:.1f}%</div>
-                <div>Las jugadoras tienen un perfil similar en cuanto a sus métricas de rendimiento</div>
-            </div>
-            """.format(similarity), unsafe_allow_html=True)
-            
-            # Crear gráfico radar para visualizar similitudes
-            # Obtener todas las métricas para la posición
-            all_position_metrics = []
-            for metrics_list in position_metrics.get(player1_position, {}).values():
-                all_position_metrics.extend(metrics_list)
-            
-            radar_fig = crear_grafico_radar(
-                metrics1_data, 
-                metrics2_data, 
-                all_position_metrics, 
-                player1, 
-                player2, 
-                metric_names
-            )
-            
-            if radar_fig:
-                st.pyplot(radar_fig)
-                st.caption("Gráfico radar que muestra el perfil de rendimiento de ambas jugadoras")
-            
-        elif player1 and player2 and player1_position != player2_position:
-            st.warning(f"Las jugadoras tienen posiciones diferentes ({player1_position} vs {player2_position}). No es posible realizar una comparación directa del perfil de juego.")
-        else:
-            st.info("Selecciona dos jugadoras para ver su comparativa")
+            if metrics1_data and metrics2_data and player1_position == player2_position:
+                # Calcular similitud coseno
+                similarity = calcular_similitud(metrics1_data, metrics2_data, position_metrics, player1_position)
+                
+                # Mostrar porcentaje de similitud
+                st.markdown("""
+                <div class='similarity-container'>
+                    <div class='similarity-label'>Índice de Similitud</div>
+                    <div class='similarity-value'>{:.1f}%</div>
+                    <div>Las jugadoras tienen un perfil similar en cuanto a sus métricas de rendimiento</div>
+                </div>
+                """.format(similarity), unsafe_allow_html=True)
+                
+                # Crear gráfico radar para visualizar similitudes
+                # Obtener todas las métricas para la posición
+                all_position_metrics = []
+                for metrics_list in position_metrics.get(player1_position, {}).values():
+                    all_position_metrics.extend(metrics_list)
+                
+                radar_fig = crear_grafico_radar(
+                    metrics1_data, 
+                    metrics2_data, 
+                    all_position_metrics, 
+                    player1, 
+                    player2, 
+                    metric_names
+                )
+                
+                if radar_fig:
+                    st.pyplot(radar_fig)
+                    st.caption("Gráfico radar que muestra el perfil de rendimiento de ambas jugadoras")
+                
+            elif player1 and player2 and player1_position != player2_position:
+                st.warning(f"Las jugadoras tienen posiciones diferentes ({player1_position} vs {player2_position}). No es posible realizar una comparación directa del perfil de juego.")
+            else:
+                st.info("Selecciona dos jugadoras para ver su comparativa")
     
     # TAB 2: Métricas Macro
     with tab2:
