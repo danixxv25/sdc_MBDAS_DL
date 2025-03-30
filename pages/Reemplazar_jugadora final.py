@@ -621,7 +621,7 @@ if df_combined is not None and not df_combined.empty:
                                                 and m in df_combined.select_dtypes(include=['float64', 'int64']).columns]
                             
                             # Preparar datos para el radar
-                            fig_radar_full = plt.figure(figsize=(10, 10))
+                            fig_radar_full = plt.figure(figsize=(7, 7))
                             ax_full = fig_radar_full.add_subplot(111, polar=True)
                             
                             try:
@@ -720,7 +720,7 @@ if df_combined is not None and not df_combined.empty:
                 # Visualización de componentes principales y clusters
                 st.subheader("Visualización PCA y Clustering")
                 
-                fig_pca = plt.figure(figsize=(10, 8))
+                fig_pca = plt.figure(figsize=(8, 6.4))
                 # Graficamos todos los puntos, coloreados por cluster
                 scatter = plt.scatter(df_pca['PC1'], df_pca['PC2'], c=df_pca['cluster'], 
                                     cmap='viridis', alpha=0.6, s=50)
@@ -755,7 +755,7 @@ if df_combined is not None and not df_combined.empty:
                 st.markdown("### Explicación de la Varianza")
                 
                 # Gráfico de varianza explicada
-                fig_var = plt.figure(figsize=(10, 6))
+                fig_var = plt.figure(figsize=(5, 3))
                 plt.bar(range(1, len(varianza_explicada) + 1), varianza_explicada, alpha=0.7, label='Varianza Individual')
                 plt.step(range(1, len(varianza_acumulada) + 1), varianza_acumulada, where='mid', label='Varianza Acumulada')
                 plt.axhline(y=0.8, color='r', linestyle='--', label='Umbral 80%')
@@ -771,7 +771,7 @@ if df_combined is not None and not df_combined.empty:
                 
                 # Gráfico de radar para comparar métricas
                 st.subheader("Gráfico Radar de Métricas")
-                
+
                 # Usar las métricas específicas para la posición desde position_metrics
                 if position in position_metrics:
                     # Obtener métricas numéricas para esta posición
@@ -782,7 +782,7 @@ if df_combined is not None and not df_combined.empty:
                     st.write(f"Métricas seleccionadas para el radar: métricas específicas para {position}")
                     st.write(f"Número de métricas a visualizar: {len(relevant_metrics)}")
                     
-                    # Seleccionamos las 5 jugadoras más similares para el gráfico de radar
+                    # Seleccionamos las jugadoras para el gráfico de radar
                     jugadoras_radar = [jugadora_seleccionada] + [nombre for nombre, _, _, _, _ in distancias_ordenadas[:8]]
                     
                     # Verificar que las jugadoras existen en el DataFrame
@@ -790,88 +790,96 @@ if df_combined is not None and not df_combined.empty:
                     if len(jugadoras_disponibles) < len(jugadoras_radar):
                         st.warning(f"Algunas jugadoras no se encontraron en el DataFrame: {set(jugadoras_radar) - set(jugadoras_disponibles)}")
                     
-                    # Preparar datos para el gráfico de radar
-                    try:
-                        # Configurar el gráfico de radar
-                        fig_radar = plt.figure(figsize=(10, 10))
-                        ax = fig_radar.add_subplot(111, polar=True)
-                        
-                        # Calcular el ángulo para cada métrica
-                        angulos = np.linspace(0, 2*np.pi, len(relevant_metrics), endpoint=False).tolist()
-                        
-                        # Crear una paleta de colores para diferenciar las jugadoras
-                        colores = plt.cm.tab10(np.linspace(0, 1, len(jugadoras_disponibles)))
-                        
-                        # Matriz para almacenar los valores normalizados de todas las jugadoras
-                        all_values = []
-                        
-                        # Primero recopilamos todos los valores para normalización global
-                        for jugadora in jugadoras_disponibles:
-                            # Obtenemos datos cuidadosamente, una columna a la vez
-                            valores_jugadora = []
-                            for metrica in relevant_metrics:
-                                try:
-                                    # Extraer el valor específico para esta jugadora y métrica
-                                    valor = df_combined.loc[df_combined['Player'] == jugadora, metrica].iloc[0]
-                                    valores_jugadora.append(valor)
-                                except Exception as e:
-                                    valores_jugadora.append(0)  # Valor por defecto en caso de error
+                    # Verificar que tenemos al menos una jugadora y una métrica para el radar
+                    if len(jugadoras_disponibles) > 0 and len(relevant_metrics) > 2:
+                        try:
+                            # Configurar el gráfico de radar
+                            fig_radar = plt.figure(figsize=(7, 7))
+                            ax = fig_radar.add_subplot(111, polar=True)
                             
-                            all_values.append(valores_jugadora)
-                        
-                        # Normalizar todos los valores conjuntamente
-                        normalized_values = []
-                        for i, metrica in enumerate(relevant_metrics):
-                            # Obtener todos los valores para esta métrica
-                            metric_values = [values[i] for values in all_values]
-                            min_val = min(metric_values)
-                            max_val = max(metric_values)
+                            # Calcular el ángulo para cada métrica
+                            angulos = np.linspace(0, 2*np.pi, len(relevant_metrics), endpoint=False).tolist()
                             
-                            # Evitar división por cero
-                            if max_val > min_val:
-                                normalized_metric = [(v - min_val) / (max_val - min_val) for v in metric_values]
-                            else:
-                                normalized_metric = [0.5 for _ in metric_values]  # Valor medio si todos son iguales
+                            # Crear una paleta de colores para diferenciar las jugadoras
+                            colores = plt.cm.tab10(np.linspace(0, 1, len(jugadoras_disponibles)))
                             
-                            # Almacenar valores normalizados por métrica
-                            for j in range(len(all_values)):
-                                normalized_values[j].append(normalized_metric[j])
-                        
-                        # Dibujar cada jugadora en el gráfico de radar
-                        for i, jugadora in enumerate(jugadoras_disponibles):
-                            valores = normalized_values[i]
+                            # Matriz para almacenar los valores normalizados de todas las jugadoras
+                            all_values = []
                             
-                            # Completar el círculo repitiendo el primer valor
-                            valores_completos = valores + [valores[0]]
-                            angulos_completos = angulos + [angulos[0]]
+                            # Primero recopilamos todos los valores para normalización global
+                            for jugadora in jugadoras_disponibles:
+                                # Obtenemos datos cuidadosamente, una columna a la vez
+                                valores_jugadora = []
+                                for metrica in relevant_metrics:
+                                    try:
+                                        # Extraer el valor específico para esta jugadora y métrica
+                                        valor = df_combined.loc[df_combined['Player'] == jugadora, metrica].iloc[0]
+                                        valores_jugadora.append(valor)
+                                    except Exception as e:
+                                        valores_jugadora.append(0)  # Valor por defecto en caso de error
+                                
+                                all_values.append(valores_jugadora)
                             
-                            # Destacar la jugadora seleccionada con línea más gruesa
-                            linewidth = 3 if jugadora == jugadora_seleccionada else 1.5
-                            ax.plot(angulos_completos, valores_completos, linewidth=linewidth, linestyle='solid', label=jugadora, color=colores[i])
-                            ax.fill(angulos_completos, valores_completos, alpha=0.1, color=colores[i])
+                            # Normalizar todos los valores conjuntamente
+                            normalized_values = []
+                            for _ in range(len(jugadoras_disponibles)):
+                                normalized_values.append([])  # Inicializar listas vacías para cada jugadora
+                                
+                            for i, metrica in enumerate(relevant_metrics):
+                                # Obtener todos los valores para esta métrica
+                                metric_values = [values[i] for values in all_values]
+                                min_val = min(metric_values)
+                                max_val = max(metric_values)
+                                
+                                # Evitar división por cero
+                                if max_val > min_val:
+                                    normalized_metric = [(v - min_val) / (max_val - min_val) for v in metric_values]
+                                else:
+                                    normalized_metric = [0.5 for _ in metric_values]  # Valor medio si todos son iguales
+                                
+                                # Almacenar valores normalizados por métrica
+                                for j in range(len(all_values)):
+                                    normalized_values[j].append(normalized_metric[j])
+                            
+                            # Dibujar cada jugadora en el gráfico de radar
+                            for i, jugadora in enumerate(jugadoras_disponibles):
+                                # Verificar que tenemos valores normalizados para esta jugadora
+                                if i < len(normalized_values):
+                                    valores = normalized_values[i]
+                                    
+                                    # Completar el círculo repitiendo el primer valor
+                                    valores_completos = valores + [valores[0]]
+                                    angulos_completos = angulos + [angulos[0]]
+                                    
+                                    # Destacar la jugadora seleccionada con línea más gruesa
+                                    linewidth = 3 if jugadora == jugadora_seleccionada else 1.5
+                                    ax.plot(angulos_completos, valores_completos, linewidth=linewidth, linestyle='solid', label=jugadora, color=colores[i])
+                                    ax.fill(angulos_completos, valores_completos, alpha=0.1, color=colores[i])
+                            
+                            # Añadir las etiquetas para cada métrica (usando nombres descriptivos)
+                            plt.xticks(angulos, [metric_display_names.get(m, m) for m in relevant_metrics], size=8)
+                            
+                            # Añadir las líneas de la red para cada nivel
+                            ax.set_rlabel_position(0)
+                            plt.yticks([0.2, 0.4, 0.6, 0.8], ["0.2", "0.4", "0.6", "0.8"], color="grey", size=8)
+                            plt.ylim(0, 1)
+                            
+                            # Ajustar la leyenda y el título
+                            plt.legend(loc='upper right', bbox_to_anchor=(0.1, 0.1))
+                            plt.title(f'Comparación de Métricas: {jugadora_seleccionada} vs Jugadoras Similares', size=15)
+                            
+                            # Guardar figura Radar para el PDF
+                            st.session_state.fig_radar_saved = fig_radar
+                            
+                            st.pyplot(fig_radar)
                         
-                        # Añadir las etiquetas para cada métrica (usando nombres descriptivos)
-                        plt.xticks(angulos, [metric_display_names.get(m, m) for m in relevant_metrics], size=8)
-                        
-                        # Añadir las líneas de la red para cada nivel
-                        ax.set_rlabel_position(0)
-                        plt.yticks([0.2, 0.4, 0.6, 0.8], ["0.2", "0.4", "0.6", "0.8"], color="grey", size=8)
-                        plt.ylim(0, 1)
-                        
-                        # Ajustar la leyenda y el título
-                        plt.legend(loc='upper right', bbox_to_anchor=(0.1, 0.1))
-                        plt.title(f'Comparación de Métricas: {jugadora_seleccionada} vs Jugadoras Similares', size=15)
-                        
-                        # Guardar figura Radar para el PDF
-                        st.session_state.fig_radar_saved = fig_radar
-                        
-                        st.pyplot(fig_radar)
-                    
-                    except Exception as e:
-                        st.error(f"Error al crear el gráfico de radar: {e}")
-                        st.write("Detalles del error:", str(e))
-                        import traceback
-                        st.code(traceback.format_exc())
+                        except Exception as e:
+                            st.error(f"Error al crear el gráfico de radar: {e}")
+                            st.write("Detalles del error:", str(e))
+                            import traceback
+                            st.code(traceback.format_exc())
+                    else:
+                        st.warning("No hay suficientes datos para crear el gráfico radar. Se necesitan al menos 3 métricas y 1 jugadora.")
                 else:
                     st.warning(f"No se encontraron métricas definidas para la posición {position} en position_metrics")
                 
@@ -1489,7 +1497,7 @@ if df_combined is not None and not df_combined.empty:
                         
                         if len(nombres_indices) >= 3:  # Necesitamos al menos 3 índices para un radar significativo
                             # Crear figura para el radar
-                            fig_radar = plt.figure(figsize=(10, 10))
+                            fig_radar = plt.figure(figsize=(7, 7))
                             ax = fig_radar.add_subplot(111, polar=True)
                             
                             # Calcular el ángulo para cada índice
