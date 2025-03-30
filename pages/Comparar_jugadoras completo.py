@@ -611,9 +611,7 @@ def calcular_similitud(metrics1, metrics2, position_metrics, position):
     
     # Identificar métricas comunes
     common_metrics = [m for m in relevant_metrics if m in metrics1 and m in metrics2]
-
-    st.write(common_metrics)
-    
+   
     if not common_metrics:
         return 0
     
