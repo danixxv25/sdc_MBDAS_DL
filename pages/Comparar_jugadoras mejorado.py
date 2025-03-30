@@ -485,7 +485,7 @@ def obtener_metricas_jugadora(df_view):
         if metric in df_view.columns:
             metrics_data[metric] = df_view[metric].iloc[0]
     
-    return metrics_data, existing_metrics, player_position
+    return metrics_data, existing_metrics, player_position, position_metrics
 
 # Función para mostrar métricas en diferentes niveles
 def mostrar_metricas_nivel(df_view, metrics_list, metric_names, nivel, container):
@@ -756,10 +756,10 @@ if df_combined is not None and not df_combined.empty:
     
     # Obtener métricas si se seleccionaron jugadoras
     if df_player1 is not None and player1:
-        metrics1_data, existing_metrics1, player1_position = obtener_metricas_jugadora(df_player1)
+        metrics1_data, existing_metrics1, player1_position, position_metrics1 = obtener_metricas_jugadora(df_player1)
     
     if df_player2 is not None and player2:
-        metrics2_data, existing_metrics2, player2_position = obtener_metricas_jugadora(df_player2)
+        metrics2_data, existing_metrics2, player2_position, position_metrics2 = obtener_metricas_jugadora(df_player2)
     
     # TAB 1: Visión General
     with tab1:
@@ -932,16 +932,18 @@ if df_combined is not None and not df_combined.empty:
             st.warning("Las jugadoras tienen posiciones diferentes. Los percentiles solo son comparables entre jugadoras de la misma posición.")
 
     with tab6:
+        position1 = df_player1['Posición Principal'].iloc[0]
+        position2 = df_player2['Posición Principal'].iloc[0]
         # Crear gráficos comparativos si ambas jugadoras tienen datos
         if metrics1_data and metrics2_data:
             # Usar solo métricas que existen para ambas jugadoras
             if position1 == position2:
                 # Si las jugadoras tienen la misma posición, podemos usar todas las métricas
-                metrics_list = [m for m in metrics_list1 if m in metrics_list2]
+                metrics_list = [m for m in position_metrics1 if m in position_metrics2]
                 player_position = position1
             else:
                 # Si tienen posiciones diferentes, buscar métricas comunes
-                metrics_list = [m for m in metrics_list1 if m in metrics_list2]
+                metrics_list = [m for m in position_metrics1 if m in position_metrics2]
                 st.warning(f"Las jugadoras tienen posiciones diferentes ({position1} vs {position2}). Mostrando solo métricas compatibles.")
         
             # Crear los gráficos comparativos
