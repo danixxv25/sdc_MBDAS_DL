@@ -762,28 +762,30 @@ if df_combined is not None and not df_combined.empty:
     # TAB 1: Visión General
     with tab1:
         st.header("Visión General de la Comparativa")
-        
-        if metrics1_data and metrics2_data and player1_position == player2_position:
-            # Calcular similitud coseno
-            similarity = calcular_similitud(metrics1_data, metrics2_data, position_metrics, player1_position)
-            
-            # Determinar la clase CSS según el valor de similitud
-            similarity_class = ""
-            if similarity > 85:
-                similarity_class = "similarity-high"
-            elif similarity >= 60:
-                similarity_class = "similarity-medium"
-            else:
-                similarity_class = "similarity-low"
-            
-            # Mostrar porcentaje de similitud con la clase correspondiente
-            st.markdown(f"""
-            <div class='similarity-container'>
-                <div class='similarity-label'>Índice de Similitud</div>
-                <div class='similarity-value {similarity_class}'>{similarity:.1f}%</div>
-                <div>Las jugadoras tienen un perfil similar en cuanto a sus métricas de rendimiento</div>
-            </div>
-            """, unsafe_allow_html=True)
+        with container:
+            col1, col2, col3 = st.columns(3)
+            with col2:
+                if metrics1_data and metrics2_data and player1_position == player2_position:
+                    # Calcular similitud coseno
+                    similarity = calcular_similitud(metrics1_data, metrics2_data, position_metrics, player1_position)
+                    
+                    # Determinar la clase CSS según el valor de similitud
+                    similarity_class = ""
+                    if similarity > 85:
+                        similarity_class = "similarity-high"
+                    elif similarity >= 60:
+                        similarity_class = "similarity-medium"
+                    else:
+                        similarity_class = "similarity-low"
+                    
+                    # Mostrar porcentaje de similitud con la clase correspondiente
+                    st.markdown(f"""
+                    <div class='similarity-container'>
+                        <div class='similarity-label'>Índice de Similitud</div>
+                        <div class='similarity-value {similarity_class}'>{similarity:.1f}%</div>
+                        <div>Las jugadoras tienen un perfil similar en cuanto a sus métricas de rendimiento</div>
+                    </div>
+                    """, unsafe_allow_html=True)
             
             # Crear gráfico radar para visualizar similitudes
             # Obtener todas las métricas para la posición
