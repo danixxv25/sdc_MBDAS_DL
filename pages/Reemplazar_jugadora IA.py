@@ -365,54 +365,14 @@ if df_combined is not None and not df_combined.empty:
             }
         }
         return position_metrics
-    
-    # Función para obtener métricas del jugador
-    def obtener_metricas_jugadora(df_view):
-        if df_view is None or df_view.empty:
-            return None, None, None
         
-        # Obtener la posición de la jugadora
-        player_position = df_view['Posición Principal'].iloc[0] if 'Posición Principal' in df_view.columns else ""
-        
-        # Obtener métricas por posición
-        position_metrics = get_position_metrics()
-        
-        # Obtener métricas para cada nivel basado en la posición
-        metrics_by_level = {
-            'macro': position_metrics.get(player_position, {}).get('macro', []),
-            'meso': position_metrics.get(player_position, {}).get('meso', []),
-            'micro': position_metrics.get(player_position, {}).get('micro', [])
-        }
-        
-        # Verificar que las métricas existan en el dataframe
-        existing_metrics = {}
-        for level, metrics in metrics_by_level.items():
-            existing_metrics[level] = [metric for metric in metrics if metric in df_view.columns]
-        
-        # Obtener todas las métricas existentes juntas
-        all_metrics = []
-        for metrics in existing_metrics.values():
-            all_metrics.extend(metrics)
-        
-        # Crear un diccionario con los valores de las métricas
-        metrics_data = {}
-        
-        for metric in all_metrics:
-            if metric in df_view.columns:
-                metrics_data[metric] = df_view[metric].iloc[0]
-        
-        return metrics_data, existing_metrics, player_position
-    
     # Ejecutar análisis al hacer clic en el botón
     if st.sidebar.button("Analizar Similitudes"):
         with st.spinner("Realizando análisis de similitud..."):
             # Obtener posición de la jugadora seleccionada
             position = df_combined[df_combined['Player'] == jugadora_seleccionada]['Posición Principal'].iloc[0]
             st.write(position)
-
-            position_metrics = position_metrics[position]
-            st.write(position_metrics)
-            
+           
             # Filtrar el DataFrame según la posición usando las métricas específicas
             if position in position_metrics:
                 # Usamos las métricas específicas para la posición
