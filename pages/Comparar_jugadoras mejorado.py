@@ -748,7 +748,7 @@ if df_combined is not None and not df_combined.empty:
         metrics2_data, existing_metrics2, player2_position = obtener_metricas_jugadora(df_player2)
     
     # TAB 1: Visión General
-        with tab1:
+    with tab1:
         st.header("Visión General de la Comparativa")
         
         if metrics1_data and metrics2_data and player1_position == player2_position:
