@@ -949,7 +949,7 @@ if df_combined is not None and not df_combined.empty:
                 st.warning(f"Las jugadoras tienen posiciones diferentes ({position1} vs {position2}). Mostrando solo métricas compatibles.")
         
             # Crear los gráficos comparativos
-            crear_graficos_comparativos(metrics1_data, metrics2_data, metrics_list, player_position, metric_names, player1, player2)
+            crear_graficos_comparativos(position_metrics1, position_metrics2, metrics_list, player_position, metric_names, player1, player2)
                 
         else:
             st.info("Selecciona dos jugadoras para ver la comparación por percentiles")
