@@ -482,15 +482,9 @@ if df_combined is not None and not df_combined.empty:
                     # Agregar más información disponible
                     if 'Nation' in info_seleccionada.columns and not pd.isna(info_seleccionada['Nation'].iloc[0]):
                         st.write(f"**Nacionalidad:** {info_seleccionada['Nation'].iloc[0]}")
-                    
-                    # Verificar que jugadora_info no esté vacío y tenga filas antes de acceder a iloc[0]
-                    if (info_seleccionada is not None and not info_seleccionada.empty and 
-                        'Birth_Date' in info_seleccionada.columns and 
-                        len(info_seleccionada) > 0 and not pd.isna(info_seleccionada['Birth_Date'].iloc[0])):
-                        st.write(f"**Fecha de nacimiento:** {info_seleccionada['Birth_Date'].iloc[0]}")
-                    else:
-                        if 'Born' in info_seleccionada.columns and not pd.isna(info_seleccionada['Born'].iloc[0]):
-                            st.write(f"**Año de nacimiento:** {info_seleccionada['Born'].iloc[0]}")
+
+                    if 'Born' in info_seleccionada.columns and not pd.isna(info_seleccionada['Born'].iloc[0]):
+                        st.write(f"**Año de nacimiento:** {info_seleccionada['Born'].iloc[0]}")
 
                     if 'League' in info_seleccionada.columns and not pd.isna(info_seleccionada['League'].iloc[0]):
                         st.write(f"**Liga:** {info_seleccionada['League'].iloc[0]}")
@@ -541,7 +535,7 @@ if df_combined is not None and not df_combined.empty:
                 for i, (nombre, distancia, cluster, squad, pos) in enumerate(distancias_ordenadas[:10], 1):
                     with st.expander(f"{i}. {nombre} - Distancia: {distancia:.4f} - Club: {squad}"):
                         # Dividir en dos columnas para cada jugadora
-                        col1, col2 = st.columns([1, 1])
+                        col1, col2, col3 = st.columns([1, 1, 1])
                         
                         with col1:
                             # Mostrar foto si está disponible
@@ -569,6 +563,17 @@ if df_combined is not None and not df_combined.empty:
                             st.markdown("</div>", unsafe_allow_html=True)
                         
                         with col2:
+                            # Buscar el logo del club
+                            st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
+                            squad = jugadora_info_adicional['Squad'].iloc[0]
+                            team_logo_url = None
+                            if df_teams_info is not None and squad in df_teams_info.columns and 'Shield URL' in df_teams_info.columns:
+                                club_team = df_teams_info[df_teams_info['Squad'] == squad]
+                                if not club_team.empty and not pd.isna(club_team['Shield URL'].iloc[0]):
+                                    team_logo_url = club_team['Shield URL'].iloc[0]
+                                    st.image(team_logo_url, width=150)
+                            st.markdown("</div>", unsafe_allow_html=True)
+                        with col3:
                             # Datos básicos de la jugadora similar
                             info_jugadora = df_combined[df_combined['Player'] == nombre]
                             
