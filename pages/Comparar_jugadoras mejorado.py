@@ -52,9 +52,7 @@ st.markdown("""
     
     /* Estilos para el indicador de similitud */
     .similarity-container {
-        background-color: #f8f9fa;
         border-radius: 10px;
-        height: 100px;
         padding: 20px;
         text-align: center;
         margin: 20px 0;
@@ -64,25 +62,27 @@ st.markdown("""
     .similarity-value {
         font-size: 36px;
         font-weight: bold;
+        color: #000000; /* Color negro para el texto */
     }
     
-    /* Colores para el índice de similitud según rango */
+    /* Colores de fondo para el índice de similitud según rango */
     .similarity-high {
-        color: #2ecc71; /* Verde para >85% */
+        background-color: #a8e6cf; /* Verde claro para >85% */
     }
     
     .similarity-medium {
-        color: #f1c40f; /* Amarillo para 60-84.9% */
+        background-color: #fdfd96; /* Amarillo claro para 60-84.9% */
     }
     
     .similarity-low {
-        color: #e67e22; /* Naranja para <60% */
+        background-color: #ffcc99; /* Naranja claro para <60% */
     }
     
     .similarity-label {
         font-size: 14px;
-        color: #6c757d;
+        color: #000000;
         margin-bottom: 15px;
+        font-weight: 600;
     }
     
     /* Estilos para percentiles */
