@@ -734,7 +734,7 @@ if df_combined is not None and not df_combined.empty:
                 # Visualización de componentes principales y clusters
                 st.subheader("Visualización PCA y Clustering")
                 
-                fig_pca = plt.figure(figsize=(8, 6.4))
+                fig_pca = plt.figure(figsize=(7, 5.6))
                 # Graficamos todos los puntos, coloreados por cluster
                 scatter = plt.scatter(df_pca['PC1'], df_pca['PC2'], c=df_pca['cluster'], 
                                     cmap='viridis', alpha=0.6, s=50)
@@ -808,7 +808,7 @@ if df_combined is not None and not df_combined.empty:
                     if len(jugadoras_disponibles) > 0 and len(relevant_metrics) > 2:
                         try:
                             # Configurar el gráfico de radar
-                            fig_radar = plt.figure(figsize=(7, 7))
+                            fig_radar = plt.figure(figsize=(6, 6))
                             ax = fig_radar.add_subplot(111, polar=True)
                             
                             # Calcular el ángulo para cada métrica
@@ -1404,7 +1404,7 @@ if df_combined is not None and not df_combined.empty:
                         
                         if len(nombres_indices) >= 3:  # Necesitamos al menos 3 índices para un radar significativo
                             # Crear figura para el radar
-                            fig_radar = plt.figure(figsize=(7, 7))
+                            fig_radar = plt.figure(figsize=(6, 6))
                             ax = fig_radar.add_subplot(111, polar=True)
                             
                             # Calcular el ángulo para cada índice
