@@ -413,6 +413,8 @@ def mostrar_datos_jugadora(player_name, container):
                 len(jugadora_info) > 0 and not pd.isna(jugadora_info['Birth_Date'].iloc[0])):
                 datos_basicos.append(("Fecha de Nacimiento", jugadora_info['Birth_Date'].iloc[0]))
                 
+            if 'Born' in df_view.columns and not pd.isna(df_view['Born'].iloc[0]):
+                datos_basicos.append(("Año Nacimiento", df_view['Born'].iloc[0]))
             if 'Nation' in df_view.columns and not pd.isna(df_view['Nation'].iloc[0]):
                 datos_basicos.append(("Nacionalidad", df_view['Nation'].iloc[0]))
             if 'Squad' in df_view.columns and not pd.isna(df_view['Squad'].iloc[0]):
