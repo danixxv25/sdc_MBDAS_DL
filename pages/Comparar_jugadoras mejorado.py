@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 import math
-from utils import display_logo, crear_graficos_comparativos, calcular_percentiles, mostrar_percentiles
+from utils import display_logo, crear_graficos_comparativos
 from sklearn.metrics.pairwise import cosine_similarity
 from scipy import stats
 
@@ -904,5 +904,92 @@ if df_combined is not None and not df_combined.empty:
 else:
     st.error("No se pudieron cargar los datos. Verifica que los archivos existen en las rutas especificadas.")
 
+# Función para calcular percentiles de jugadoras
+def calcular_percentiles(df_view, metrics_list):
+    if df_view is None or df_view.empty or not metrics_list:
+        return {}
+    
+    player_position = df_view['Posición Principal'].iloc[0] if 'Posición Principal' in df_view.columns else ""
+    
+    # Filtrar jugadoras de la misma posición
+    df_position = df_combined[df_combined['Posición Principal'] == player_position]
+    
+    percentiles = {}
+    
+    for metric in metrics_list:
+        if metric in df_view.columns and metric in df_position.columns:
+            # Obtener el valor de la jugadora
+            player_value = df_view[metric].iloc[0]
+            
+            # Calcular el percentil
+            if not pd.isna(player_value):
+                # Eliminar valores no numéricos y NaN
+                metric_values = df_position[metric].dropna()
+                
+                if not metric_values.empty:
+                    percentile = stats.percentileofscore(metric_values, player_value)
+                    percentiles[metric] = percentile
+    
+    return percentiles
 
-
+# Función para mostrar comparación de percentiles
+def mostrar_percentiles(percentiles1, percentiles2, player1_name, player2_name, metric_names):
+    if not percentiles1 or not percentiles2:
+        st.info("No hay suficientes datos para calcular percentiles")
+        return
+    
+    # Obtener métricas comunes
+    common_metrics = [m for m in percentiles1.keys() if m in percentiles2]
+    
+    if not common_metrics:
+        st.info("No hay métricas comunes para comparar percentiles")
+        return
+    
+    # Mostrar gráfico de barras para comparar percentiles
+    data = []
+    for metric in common_metrics:
+        data.append({
+            'metric': metric_names.get(metric, metric),
+            'Percentil ' + player1_name: percentiles1[metric],
+            'Percentil ' + player2_name: percentiles2[metric]
+        })
+    
+    # Convertir a DataFrame
+    df_percentiles = pd.DataFrame(data)
+    
+    # Crear gráfico de barras
+    fig, ax = plt.subplots(figsize=(12, len(common_metrics) * 0.5))
+    
+    # Ordenar por la diferencia entre percentiles
+    df_percentiles['diff'] = abs(df_percentiles['Percentil ' + player1_name] - df_percentiles['Percentil ' + player2_name])
+    df_percentiles = df_percentiles.sort_values('diff', ascending=False)
+    
+    # Crear gráfico
+    bar_width = 0.35
+    index = np.arange(len(df_percentiles))
+    
+    ax.barh(index, df_percentiles['Percentil ' + player1_name], bar_width, label=player1_name, color='#1f77b4')
+    ax.barh(index + bar_width, df_percentiles['Percentil ' + player2_name], bar_width, label=player2_name, color='#ff7f0e')
+    
+    # Añadir etiquetas y leyenda
+    ax.set_xlabel('Percentil')
+    ax.set_yticks(index + bar_width / 2)
+    ax.set_yticklabels(df_percentiles['metric'])
+    ax.set_xlim(0, 100)
+    ax.legend()
+    
+    # Añadir líneas de referencia
+    ax.axvline(x=25, color='gray', linestyle='--', alpha=0.5)
+    ax.axvline(x=50, color='gray', linestyle='--', alpha=0.5)
+    ax.axvline(x=75, color='gray', linestyle='--', alpha=0.5)
+    
+    # Añadir valores sobre las barras
+    for i, v in enumerate(df_percentiles['Percentil ' + player1_name]):
+        ax.text(v + 1, i - 0.05, f"{v:.0f}%", color='#1f77b4', fontweight='bold')
+    
+    for i, v in enumerate(df_percentiles['Percentil ' + player2_name]):
+        ax.text(v + 1, i + bar_width - 0.05, f"{v:.0f}%", color='#ff7f0e', fontweight='bold')
+    
+    plt.tight_layout()
+    
+    return fig
