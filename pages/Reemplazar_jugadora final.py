@@ -1548,20 +1548,20 @@ if df_combined is not None and not df_combined.empty:
                         st.info("Este error puede deberse a falta de datos suficientes para algunos índices. Intenta con otra jugadora o posición.")
                     
                     # 2. TABLA COMPARATIVA DE ÍNDICES
-                    st.write("### Tabla Comparativa de Índices")
+                    with st.expander("### Tabla Comparativa de Índices"):
                     
-                    # Preparar datos para la tabla
-                    tabla_datos = {'Jugadora': jugadoras_a_comparar}
-                    
-                    for nombre_indice, valores in indices_calculados.items():
-                        tabla_datos[nombre_indice] = [valores.get(j, float('nan')) for j in jugadoras_a_comparar]
-                    
-                    # Crear DataFrame
-                    df_tabla = pd.DataFrame(tabla_datos)
-                    
-                    # Mostrar tabla con formato
-                    st.dataframe(df_tabla.style.format({col: "{:.1f}" for col in df_tabla.columns if col != 'Jugadora'}), 
-                                use_container_width=True)
+                        # Preparar datos para la tabla
+                        tabla_datos = {'Jugadora': jugadoras_a_comparar}
+                        
+                        for nombre_indice, valores in indices_calculados.items():
+                            tabla_datos[nombre_indice] = [valores.get(j, float('nan')) for j in jugadoras_a_comparar]
+                        
+                        # Crear DataFrame
+                        df_tabla = pd.DataFrame(tabla_datos)
+                        
+                        # Mostrar tabla con formato
+                        st.dataframe(df_tabla.style.format({col: "{:.1f}" for col in df_tabla.columns if col != 'Jugadora'}), 
+                                    use_container_width=True)
                     
                     # 3. GRÁFICOS DE BARRAS (EN DESPLEGABLE)
                     with st.expander("Ver comparativas detalladas por índice (gráficos de barras)", expanded=False):
