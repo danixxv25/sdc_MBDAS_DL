@@ -510,7 +510,7 @@ else:
                 
                 if existing_metrics:
                     # Obtener la competición de la jugadora seleccionada
-                    player_competition = player_stats['League'].iloc[0] if 'Comp' in player_stats.columns else None
+                    player_competition = player_stats['League'].iloc[0] if 'League' in player_stats.columns else None
                     
                     # Calcular el número de columnas necesarias (máximo 5 columnas)
                     num_metrics = len(existing_metrics)
