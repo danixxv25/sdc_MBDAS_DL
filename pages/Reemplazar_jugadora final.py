@@ -635,7 +635,7 @@ if df_combined is not None and not df_combined.empty:
                                                 and m in df_combined.select_dtypes(include=['float64', 'int64']).columns]
                             
                             # Preparar datos para el radar
-                            fig_radar_full = plt.figure(figsize=(7, 7))
+                            fig_radar_full = plt.figure(figsize=(5, 5))
                             ax_full = fig_radar_full.add_subplot(111, polar=True)
                             
                             try:
