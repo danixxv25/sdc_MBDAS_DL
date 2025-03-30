@@ -379,7 +379,7 @@ if df_combined is not None and not df_combined.empty:
                 # Usamos las métricas específicas para la posición
                 columnas_filtradas = position_metrics[position]
                 df_filtered = df_combined[columnas_filtradas]
-                st.info(f"Usando {len(columnas_filtradas)} métricas específicas para la posición {position}")
+                #st.info(f"Usando {len(columnas_filtradas)} métricas específicas para la posición {position}")
             else:
                 # Si la posición no está en nuestras categorías, usamos todas las columnas
                 st.warning(f"Posición '{position}' no reconocida. Usando todas las métricas disponibles.")
@@ -783,7 +783,7 @@ if df_combined is not None and not df_combined.empty:
                     st.write(f"Número de métricas a visualizar: {len(relevant_metrics)}")
                     
                     # Seleccionamos las 5 jugadoras más similares para el gráfico de radar
-                    jugadoras_radar = [jugadora_seleccionada] + [nombre for nombre, _, _, _, _ in distancias_ordenadas[:4]]
+                    jugadoras_radar = [jugadora_seleccionada] + [nombre for nombre, _, _, _, _ in distancias_ordenadas[:8]]
                     
                     # Verificar que las jugadoras existen en el DataFrame
                     jugadoras_disponibles = [j for j in jugadoras_radar if j in df_combined['Player'].values]
@@ -909,7 +909,7 @@ if df_combined is not None and not df_combined.empty:
                     st.subheader(f"Métricas completas para la posición: {position} ({len(metrics_to_display)} métricas)")
                     
                     # Seleccionar las jugadoras a comparar
-                    jugadoras_comparar = [jugadora_seleccionada] + [nombre for nombre, _, _, _, _ in distancias_ordenadas[:num_jugadoras-1]]
+                    jugadoras_comparar = [jugadora_seleccionada] + [nombre for nombre, _, _, _, _ in distancias_ordenadas[:8]]
                     
                     # Crear un contenedor con scroll para los gráficos
                     graph_container = st.container()
