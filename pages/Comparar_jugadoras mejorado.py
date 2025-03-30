@@ -542,12 +542,12 @@ def calcular_similitud(metrics1, metrics2, position_metrics, position):
     return similarity * 100
 
 # Función para crear gráfico radar
-def crear_grafico_radar(metrics1, metrics2, metrics_list, player1_name, player2_name, metric_names):
-    if not metrics1 or not metrics2 or not metrics_list:
+def crear_grafico_radar(metrics1_data, metrics2_data, metrics_list, player1_name, player2_name, metric_names):
+    if not metrics1_data or not metrics2_data or not metrics_list:
         return
     
     # Filtrar solo las métricas que existen en ambos jugadores
-    common_metrics = [m for m in metrics_list if m in metrics1 and m in metrics2]
+    common_metrics = [m for m in metrics_list if m in metrics1_data and m in metrics2_data]
     
     if not common_metrics:
         return
@@ -556,8 +556,8 @@ def crear_grafico_radar(metrics1, metrics2, metrics_list, player1_name, player2_
     labels = [metric_names.get(m, m) for m in common_metrics]
     
     # Extraer valores para cada jugadora
-    values1 = [metrics1.get(m, 0) for m in common_metrics]
-    values2 = [metrics2.get(m, 0) for m in common_metrics]
+    values1 = [metrics1_data.get(m, 0) for m in common_metrics]
+    values2 = [metrics2_data.get(m, 0) for m in common_metrics]
     
     # Normalizar valores para el gráfico radar (entre 0 y 1)
     normalized_values = []
