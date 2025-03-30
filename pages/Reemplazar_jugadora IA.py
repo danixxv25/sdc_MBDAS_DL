@@ -1645,55 +1645,55 @@ if df_combined is not None and not df_combined.empty:
                 - Se recomienda complementar este análisis con la observación directa de los partidos
                 """)
                 
-                # Sección de ayuda y metodología
-                with st.expander("ℹ️ Metodología del análisis IA"):
-                    st.markdown("""
-                    ### Metodología del análisis IA
-                    
-                    Este análisis utiliza técnicas de inteligencia artificial para interpretar datos estadísticos y generar conclusiones significativas sobre el rendimiento de las jugadoras.
-                    
-                    **Proceso del análisis:**
-                    
-                    1. **Recopilación de datos**: Se analizan las métricas disponibles de la jugadora seleccionada.
-                    2. **Análisis comparativo**: Se comparan estas métricas con:
-                    - Jugadoras similares identificadas mediante algoritmos de clustering
-                    - Promedios por posición en la misma liga/competición
-                    3. **Identificación de patrones**: Se detectan fortalezas, debilidades, oportunidades y amenazas.
-                    4. **Recomendaciones personalizadas**: Se generan sugerencias de mejora basadas en umbrales establecidos por expertos.
-                    
-                    **Limitaciones a considerar:**
-                    
-                    - El análisis está limitado a las métricas disponibles en la base de datos
-                    - No considera factores cualitativos como liderazgo, comunicación o inteligencia táctica
-                    - Las recomendaciones son generales y deben ser adaptadas al contexto específico del equipo
-                    - La interpretación final debe realizarse por profesionales con conocimiento del contexto
-                    
-                    **Uso recomendado:**
-                    
-                    Este análisis debe utilizarse como herramienta complementaria en el proceso de toma de decisiones, no como sustituto del criterio técnico profesional.
-                    """)
+            # Sección de ayuda y metodología
+            with st.expander("ℹ️ Metodología del análisis IA"):
+                st.markdown("""
+                ### Metodología del análisis IA
                 
-                # Sección de posibles próximos pasos
-                with st.expander("🔄 Evolución y seguimiento"):
-                    st.markdown("""
-                    ### Seguimiento y evolución
-                    
-                    Para un análisis más completo, se recomienda:
-                    
-                    1. **Establecer métricas de seguimiento** específicas para la jugadora basadas en las áreas de mejora identificadas
-                    2. **Crear un plan de desarrollo personalizado** con objetivos a corto, medio y largo plazo
-                    3. **Realizar revisiones periódicas** para evaluar el progreso y ajustar el plan según sea necesario
-                    4. **Comparar tendencias temporales** para identificar patrones de mejora o áreas de estancamiento
-                    
-                    Un enfoque integral debería combinar:
-                    
-                    - **Análisis de datos**: Métricas cuantitativas y tendencias
-                    - **Evaluación técnica**: Observación directa de habilidades y técnica
-                    - **Feedback cualitativo**: Aportaciones del cuerpo técnico y compañeras
-                    - **Autoevaluación**: Percepción de la propia jugadora sobre su rendimiento
-                    
-                    La visualización periódica de estos informes puede ayudar tanto al cuerpo técnico como a la jugadora a entender mejor su evolución y potencial.
-                    """)
+                Este análisis utiliza técnicas de inteligencia artificial para interpretar datos estadísticos y generar conclusiones significativas sobre el rendimiento de las jugadoras.
+                
+                **Proceso del análisis:**
+                
+                1. **Recopilación de datos**: Se analizan las métricas disponibles de la jugadora seleccionada.
+                2. **Análisis comparativo**: Se comparan estas métricas con:
+                - Jugadoras similares identificadas mediante algoritmos de clustering
+                - Promedios por posición en la misma liga/competición
+                3. **Identificación de patrones**: Se detectan fortalezas, debilidades, oportunidades y amenazas.
+                4. **Recomendaciones personalizadas**: Se generan sugerencias de mejora basadas en umbrales establecidos por expertos.
+                
+                **Limitaciones a considerar:**
+                
+                - El análisis está limitado a las métricas disponibles en la base de datos
+                - No considera factores cualitativos como liderazgo, comunicación o inteligencia táctica
+                - Las recomendaciones son generales y deben ser adaptadas al contexto específico del equipo
+                - La interpretación final debe realizarse por profesionales con conocimiento del contexto
+                
+                **Uso recomendado:**
+                
+                Este análisis debe utilizarse como herramienta complementaria en el proceso de toma de decisiones, no como sustituto del criterio técnico profesional.
+                """)
+            
+            # Sección de posibles próximos pasos
+            with st.expander("🔄 Evolución y seguimiento"):
+                st.markdown("""
+                ### Seguimiento y evolución
+                
+                Para un análisis más completo, se recomienda:
+                
+                1. **Establecer métricas de seguimiento** específicas para la jugadora basadas en las áreas de mejora identificadas
+                2. **Crear un plan de desarrollo personalizado** con objetivos a corto, medio y largo plazo
+                3. **Realizar revisiones periódicas** para evaluar el progreso y ajustar el plan según sea necesario
+                4. **Comparar tendencias temporales** para identificar patrones de mejora o áreas de estancamiento
+                
+                Un enfoque integral debería combinar:
+                
+                - **Análisis de datos**: Métricas cuantitativas y tendencias
+                - **Evaluación técnica**: Observación directa de habilidades y técnica
+                - **Feedback cualitativo**: Aportaciones del cuerpo técnico y compañeras
+                - **Autoevaluación**: Percepción de la propia jugadora sobre su rendimiento
+                
+                La visualización periódica de estos informes puede ayudar tanto al cuerpo técnico como a la jugadora a entender mejor su evolución y potencial.
+                """)
     else:
         # Mensaje cuando no se ha realizado el análisis
         st.info("""
