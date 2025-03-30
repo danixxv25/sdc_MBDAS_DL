@@ -933,6 +933,7 @@ if df_combined is not None and not df_combined.empty:
 
     with tab6:
         position1 = df_player1['Posición Principal'].iloc[0]
+        st.write(position1)
         position2 = df_player2['Posición Principal'].iloc[0]
         # Crear gráficos comparativos si ambas jugadoras tienen datos
         if position_metrics1 and position_metrics1:
