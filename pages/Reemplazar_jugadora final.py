@@ -906,352 +906,412 @@ if df_combined is not None and not df_combined.empty:
                 """)
                         
             # Pestaña 3: Análisis IA con DAFO y recomendaciones
-            with tab3:
-                st.header(f"Análisis para {jugadora_seleccionada}")
+            st.header(f"Análisis para {jugadora_seleccionada}")
+        
+            # Contenedor para el análisis DAFO
+            dafo_container = st.container()
             
-                # Contenedor para el análisis DAFO
-                dafo_container = st.container()
+            with dafo_container:
+                st.write("### Análisis DAFO")
                 
-                with dafo_container:
-                    st.write("### Análisis DAFO")
+                # Función para generar un análisis DAFO mejorado y más conciso
+                def generar_dafo_mejorado(jugadora, posicion, metricas_jugadora, metricas_similares, metricas_promedio, indices_calculados=None):
+                    """
+                    Genera un análisis DAFO conciso y enfocado para la jugadora basado en sus métricas clave
+                    y los índices compuestos (si están disponibles).
                     
-                    # Función para generar un análisis DAFO mejorado y más conciso
-                    def generar_dafo_mejorado(jugadora, posicion, metricas_jugadora, metricas_similares, metricas_promedio, indices_calculados=None):
-                        """
-                        Genera un análisis DAFO conciso y enfocado para la jugadora basado en sus métricas clave
-                        y los índices compuestos (si están disponibles).
+                    Args:
+                        jugadora: Nombre de la jugadora
+                        posicion: Posición de la jugadora
+                        metricas_jugadora: Dict con las métricas de la jugadora
+                        metricas_similares: Dict con las métricas de jugadoras similares
+                        metricas_promedio: Dict con los promedios por posición
+                        indices_calculados: Dict con los índices compuestos (opcional)
+                    
+                    Returns:
+                        Dict con el análisis DAFO (fortalezas, debilidades, oportunidades, amenazas)
+                    """
+                    fortalezas = []
+                    debilidades = []
+                    oportunidades = []
+                    amenazas = []
+                    
+                    # Definir métricas clave por posición
+                    metricas_clave = {
+                        'GK': ['Save%', 'CS%', 'PSxG-GA', 'GA90', 'Pass_Cmp_+40y%', 'Stp%'],
+                        'DF': ['Tkl+Int', 'Tkl%', 'Blocks', 'Int', 'Recov', 'Cmp%_long', 'touch_Def Pen'],
+                        'MF': ['pass_1/3', 'PPA', 'SCA90', 'GCA90', 'Tkl+Int', 'Recov', 'G+A', 'PrgDist'],
+                        'FW': ['Gls', 'G/Sh', 'G-xG', 'SoT/90', 'Ast', 'xA', 'touch_Att Pen', 'SCA90']
+                    }
+                    
+                    # Definir descripciones de las métricas clave
+                    descripciones = {
+                        # Porteras (GK)
+                        'Save%': 'porcentaje de paradas',
+                        'CS%': 'porcentaje de porterías a cero',
+                        'PSxG-GA': 'rendimiento vs. goles esperados',
+                        'GA90': 'goles encajados por 90 minutos',
+                        'Pass_Cmp_+40y%': 'precisión en pases largos',
+                        'Stp%': 'interceptación de centros',
                         
-                        Args:
-                            jugadora: Nombre de la jugadora
-                            posicion: Posición de la jugadora
-                            metricas_jugadora: Dict con las métricas de la jugadora
-                            metricas_similares: Dict con las métricas de jugadoras similares
-                            metricas_promedio: Dict con los promedios por posición
-                            indices_calculados: Dict con los índices compuestos (opcional)
+                        # Defensas (DF)
+                        'Tkl+Int': 'recuperaciones defensivas (tackles + intercepciones)',
+                        'Tkl%': 'eficacia en entradas',
+                        'Blocks': 'bloqueos',
+                        'Int': 'intercepciones',
+                        'Recov': 'balones recuperados',
+                        'Cmp%_long': 'precisión en pases largos',
+                        'touch_Def Pen': 'presencia en área propia',
                         
-                        Returns:
-                            Dict con el análisis DAFO (fortalezas, debilidades, oportunidades, amenazas)
-                        """
-                        fortalezas = []
-                        debilidades = []
-                        oportunidades = []
-                        amenazas = []
+                        # Mediocampistas (MF)
+                        'pass_1/3': 'pases al último tercio',
+                        'PPA': 'pases al área rival',
+                        'SCA90': 'creación de tiros por 90',
+                        'GCA90': 'creación de goles por 90',
+                        'G+A': 'contribución ofensiva (goles + asistencias)',
+                        'PrgDist': 'distancia progresiva de pases',
                         
-                        # Definir métricas clave por posición
-                        metricas_clave = {
-                            'GK': ['Save%', 'CS%', 'PSxG-GA', 'GA90', 'Pass_Cmp_+40y%', 'Stp%'],
-                            'DF': ['Tkl+Int', 'Tkl%', 'Blocks', 'Int', 'Recov', 'Cmp%_long', 'touch_Def Pen'],
-                            'MF': ['pass_1/3', 'PPA', 'SCA90', 'GCA90', 'Tkl+Int', 'Recov', 'G+A', 'PrgDist'],
-                            'FW': ['Gls', 'G/Sh', 'G-xG', 'SoT/90', 'Ast', 'xA', 'touch_Att Pen', 'SCA90']
-                        }
+                        # Delanteras (FW)
+                        'Gls': 'goles',
+                        'G/Sh': 'eficiencia goleadora',
+                        'G-xG': 'rendimiento vs. goles esperados',
+                        'SoT/90': 'tiros a puerta por 90',
+                        'Ast': 'asistencias',
+                        'xA': 'asistencias esperadas',
+                        'touch_Att Pen': 'toques en área rival',
+                        'SCA90': 'acciones que generan tiros por 90'
+                    }
+                    
+                    # Utilizar índices compuestos si están disponibles
+                    if indices_calculados:
+                        # Identificar fortalezas y debilidades basadas en índices
+                        indices_valores = []
+                        for nombre_indice, valores in indices_calculados.items():
+                            if jugadora in valores:
+                                indices_valores.append((nombre_indice, valores[jugadora]))
                         
-                        # Definir descripciones de las métricas clave
-                        descripciones = {
-                            # Porteras (GK)
-                            'Save%': 'porcentaje de paradas',
-                            'CS%': 'porcentaje de porterías a cero',
-                            'PSxG-GA': 'rendimiento vs. goles esperados',
-                            'GA90': 'goles encajados por 90 minutos',
-                            'Pass_Cmp_+40y%': 'precisión en pases largos',
-                            'Stp%': 'interceptación de centros',
-                            
-                            # Defensas (DF)
-                            'Tkl+Int': 'recuperaciones defensivas (tackles + intercepciones)',
-                            'Tkl%': 'eficacia en entradas',
-                            'Blocks': 'bloqueos',
-                            'Int': 'intercepciones',
-                            'Recov': 'balones recuperados',
-                            'Cmp%_long': 'precisión en pases largos',
-                            'touch_Def Pen': 'presencia en área propia',
-                            
-                            # Mediocampistas (MF)
-                            'pass_1/3': 'pases al último tercio',
-                            'PPA': 'pases al área rival',
-                            'SCA90': 'creación de tiros por 90',
-                            'GCA90': 'creación de goles por 90',
-                            'G+A': 'contribución ofensiva (goles + asistencias)',
-                            'PrgDist': 'distancia progresiva de pases',
-                            
-                            # Delanteras (FW)
-                            'Gls': 'goles',
-                            'G/Sh': 'eficiencia goleadora',
-                            'G-xG': 'rendimiento vs. goles esperados',
-                            'SoT/90': 'tiros a puerta por 90',
-                            'Ast': 'asistencias',
-                            'xA': 'asistencias esperadas',
-                            'touch_Att Pen': 'toques en área rival',
-                            'SCA90': 'acciones que generan tiros por 90'
-                        }
+                        # Ordenar índices por valor
+                        indices_ordenados = sorted(indices_valores, key=lambda x: x[1], reverse=True)
                         
-                        # Utilizar índices compuestos si están disponibles
-                        if indices_calculados:
-                            # Identificar fortalezas y debilidades basadas en índices
-                            indices_valores = []
-                            for nombre_indice, valores in indices_calculados.items():
-                                if jugadora in valores:
-                                    indices_valores.append((nombre_indice, valores[jugadora]))
+                        # Identificar los mejores y peores índices
+                        if indices_ordenados:
+                            # Mejores índices (top 2)
+                            for i, (indice, valor) in enumerate(indices_ordenados[:2]):
+                                if valor > 65:  # Umbral para considerarlo una fortaleza real
+                                    fortalezas.append(f"**{indice}** (puntuación {valor:.1f}/100): Demuestra excelente capacidad en este aspecto clave")
                             
-                            # Ordenar índices por valor
-                            indices_ordenados = sorted(indices_valores, key=lambda x: x[1], reverse=True)
-                            
-                            # Identificar los mejores y peores índices
-                            if indices_ordenados:
-                                # Mejores índices (top 2)
-                                for i, (indice, valor) in enumerate(indices_ordenados[:2]):
-                                    if valor > 65:  # Umbral para considerarlo una fortaleza real
-                                        fortalezas.append(f"**{indice}** (puntuación {valor:.1f}/100): Demuestra excelente capacidad en este aspecto clave")
+                            # Peores índices (bottom 2)
+                            for i, (indice, valor) in enumerate(indices_ordenados[-2:]):
+                                if valor < 40:  # Umbral para considerarlo una debilidad real
+                                    debilidades.append(f"**{indice}** (puntuación {valor:.1f}/100): Área que requiere desarrollo específico")
+                    
+                    # Verificar si la posición existe en nuestro mapeo de métricas clave
+                    if posicion in metricas_clave:
+                        # Seleccionar métricas clave para la posición
+                        metricas_posicion_clave = metricas_clave[posicion]
+                        
+                        # Análisis de fortalezas y debilidades basado en comparación con promedio
+                        metricas_destacadas = []
+                        for metrica in metricas_posicion_clave:
+                            if metrica in metricas_jugadora and metrica in metricas_promedio:
+                                valor_jugadora = metricas_jugadora.get(metrica)
+                                promedio_posicion = metricas_promedio.get(metrica)
                                 
-                                # Peores índices (bottom 2)
-                                for i, (indice, valor) in enumerate(indices_ordenados[-2:]):
-                                    if valor < 40:  # Umbral para considerarlo una debilidad real
-                                        debilidades.append(f"**{indice}** (puntuación {valor:.1f}/100): Área que requiere desarrollo específico")
-                        
-                        # Verificar si la posición existe en nuestro mapeo de métricas clave
-                        if posicion in metricas_clave:
-                            # Seleccionar métricas clave para la posición
-                            metricas_posicion_clave = metricas_clave[posicion]
-                            
-                            # Análisis de fortalezas y debilidades basado en comparación con promedio
-                            metricas_destacadas = []
-                            for metrica in metricas_posicion_clave:
-                                if metrica in metricas_jugadora and metrica in metricas_promedio:
-                                    valor_jugadora = metricas_jugadora.get(metrica)
-                                    promedio_posicion = metricas_promedio.get(metrica)
+                                if pd.notna(valor_jugadora) and pd.notna(promedio_posicion) and promedio_posicion > 0:
+                                    # Calcular diferencia porcentual respecto al promedio
+                                    diff_porcentaje = ((valor_jugadora - promedio_posicion) / promedio_posicion) * 100
+                                    descripcion = descripciones.get(metrica, metrica)
                                     
-                                    if pd.notna(valor_jugadora) and pd.notna(promedio_posicion) and promedio_posicion > 0:
-                                        # Calcular diferencia porcentual respecto al promedio
-                                        diff_porcentaje = ((valor_jugadora - promedio_posicion) / promedio_posicion) * 100
+                                    # Almacenar la métrica y su diferencia para análisis posterior
+                                    metricas_destacadas.append((metrica, descripcion, valor_jugadora, diff_porcentaje))
+                        
+                        # Ordenar métricas por diferencia porcentual
+                        metricas_ordenadas = sorted(metricas_destacadas, key=lambda x: x[3], reverse=True)
+                        
+                        # Seleccionar top 3 fortalezas (diferencia positiva significativa)
+                        top_fortalezas = [m for m in metricas_ordenadas if m[3] >= 15][:3]
+                        for metrica, descripcion, valor, diff in top_fortalezas:
+                            fortalezas.append(f"Destacada **{descripcion}**: {valor:.2f} ({diff:.1f}% superior al promedio)")
+                        
+                        # Seleccionar top 2 debilidades (diferencia negativa significativa)
+                        top_debilidades = [m for m in metricas_ordenadas if m[3] <= -15][-2:]
+                        for metrica, descripcion, valor, diff in top_debilidades:
+                            debilidades.append(f"Inferior en **{descripcion}**: {valor:.2f} ({abs(diff):.1f}% por debajo del promedio)")
+                        
+                        # Análisis de oportunidades basado en mejores jugadoras similares
+                        metricas_mejorables = []
+                        for metrica in metricas_posicion_clave:
+                            if metrica in metricas_jugadora:
+                                # Obtener los valores de las jugadoras similares para esta métrica
+                                valores_similares = [s.get(metrica, 0) for s in metricas_similares if metrica in s]
+                                
+                                if valores_similares:
+                                    mejor_similar = max(valores_similares)
+                                    valor_jugadora = metricas_jugadora.get(metrica)
+                                    
+                                    if pd.notna(valor_jugadora) and pd.notna(mejor_similar) and mejor_similar > 0 and valor_jugadora > 0:
+                                        # Calcular diferencia porcentual
+                                        diff_porcentaje = ((mejor_similar - valor_jugadora) / valor_jugadora) * 100
                                         descripcion = descripciones.get(metrica, metrica)
                                         
-                                        # Almacenar la métrica y su diferencia para análisis posterior
-                                        metricas_destacadas.append((metrica, descripcion, valor_jugadora, diff_porcentaje))
-                            
-                            # Ordenar métricas por diferencia porcentual
-                            metricas_ordenadas = sorted(metricas_destacadas, key=lambda x: x[3], reverse=True)
-                            
-                            # Seleccionar top 3 fortalezas (diferencia positiva significativa)
-                            top_fortalezas = [m for m in metricas_ordenadas if m[3] >= 15][:3]
-                            for metrica, descripcion, valor, diff in top_fortalezas:
-                                fortalezas.append(f"Destacada **{descripcion}**: {valor:.2f} ({diff:.1f}% superior al promedio)")
-                            
-                            # Seleccionar top 2 debilidades (diferencia negativa significativa)
-                            top_debilidades = [m for m in metricas_ordenadas if m[3] <= -15][-2:]
-                            for metrica, descripcion, valor, diff in top_debilidades:
-                                debilidades.append(f"Inferior en **{descripcion}**: {valor:.2f} ({abs(diff):.1f}% por debajo del promedio)")
-                            
-                            # Análisis de oportunidades basado en mejores jugadoras similares
-                            metricas_mejorables = []
-                            for metrica in metricas_posicion_clave:
-                                if metrica in metricas_jugadora:
-                                    # Obtener los valores de las jugadoras similares para esta métrica
-                                    valores_similares = [s.get(metrica, 0) for s in metricas_similares if metrica in s]
-                                    
-                                    if valores_similares:
-                                        mejor_similar = max(valores_similares)
-                                        valor_jugadora = metricas_jugadora.get(metrica)
-                                        
-                                        if pd.notna(valor_jugadora) and pd.notna(mejor_similar) and mejor_similar > 0 and valor_jugadora > 0:
-                                            # Calcular diferencia porcentual
-                                            diff_porcentaje = ((mejor_similar - valor_jugadora) / valor_jugadora) * 100
-                                            descripcion = descripciones.get(metrica, metrica)
-                                            
-                                            # Almacenar para análisis posterior si la diferencia es significativa
-                                            if diff_porcentaje >= 20:
-                                                metricas_mejorables.append((metrica, descripcion, valor_jugadora, mejor_similar, diff_porcentaje))
-                            
-                            # Ordenar por diferencia porcentual
-                            metricas_mejorables = sorted(metricas_mejorables, key=lambda x: x[4], reverse=True)
-                            
-                            # Seleccionar top 3 oportunidades de mejora
-                            for metrica, descripcion, valor_actual, mejor_valor, diff in metricas_mejorables[:3]:
-                                oportunidades.append(f"Potencial en **{descripcion}**: Puede mejorar de {valor_actual:.2f} hasta {mejor_valor:.2f} ({diff:.1f}%)")
+                                        # Almacenar para análisis posterior si la diferencia es significativa
+                                        if diff_porcentaje >= 20:
+                                            metricas_mejorables.append((metrica, descripcion, valor_jugadora, mejor_similar, diff_porcentaje))
                         
-                        # Análisis de amenazas específicas según posición
-                        if posicion == 'GK':
-                            if 'GA90' in metricas_jugadora and metricas_jugadora['GA90'] > 1.2:
-                                amenazas.append("**Vulnerabilidad defensiva**: Alta tasa de goles encajados que puede afectar la confianza")
-                            if 'Save%' in metricas_jugadora and metricas_jugadora['Save%'] < 65:
-                                amenazas.append("**Presión sobre rendimiento**: El bajo porcentaje de paradas puede generar cuestionamientos")
+                        # Ordenar por diferencia porcentual
+                        metricas_mejorables = sorted(metricas_mejorables, key=lambda x: x[4], reverse=True)
                         
-                        elif posicion == 'DF':
-                            if 'CrdY' in metricas_jugadora and metricas_jugadora['CrdY'] > 4:
-                                amenazas.append("**Riesgo disciplinario**: Alta acumulación de tarjetas que puede resultar en suspensiones")
-                            if 'Tkl%' in metricas_jugadora and metricas_jugadora['Tkl%'] < 50:
-                                amenazas.append("**Inconsistencia defensiva**: Baja efectividad en duelos puede ser explotada por rivales")
-                        
-                        elif posicion == 'MF':
-                            if 'Recov' in metricas_jugadora and metricas_jugadora.get('Recov', 0) < 5:
-                                amenazas.append("**Presión en recuperación**: Dificultad para recuperar balones puede reducir control de juego")
-                            if 'pass_1/3' in metricas_jugadora and metricas_jugadora.get('pass_1/3', 0) < 2:
-                                amenazas.append("**Limitación creativa**: Baja progresión ofensiva puede hacerla predecible")
-                        
-                        elif posicion == 'FW':
-                            if 'G-xG' in metricas_jugadora and metricas_jugadora.get('G-xG', 0) < -2:
-                                amenazas.append("**Presión por eficacia**: Rendimiento por debajo de goles esperados genera expectativas no cumplidas")
-                            if 'SoT/90' in metricas_jugadora and metricas_jugadora.get('SoT/90', 0) < 0.8:
-                                amenazas.append("**Limitación ofensiva**: Baja generación de tiros a puerta reduce oportunidades de gol")
-                        
-                        # Asegurar que tenemos suficientes elementos en cada categoría
-                        if len(fortalezas) < 2:
-                            fortalezas.append("Jugadora con perfil técnico adecuado para su posición")
-                        if len(debilidades) < 1:
-                            debilidades.append("Necesita más minutos para evaluar áreas específicas de mejora")
-                        if len(oportunidades) < 2:
-                            oportunidades.append("Potencial para desarrollar aspectos técnicos mediante entrenamiento específico")
-                        if len(amenazas) < 2:
-                            amenazas.append("Competencia interna por la posición puede limitar oportunidades de juego")
-                        
-                        return {
-                            "fortalezas": fortalezas,
-                            "debilidades": debilidades,
-                            "oportunidades": oportunidades,
-                            "amenazas": amenazas
-                        }
+                        # Seleccionar top 3 oportunidades de mejora
+                        for metrica, descripcion, valor_actual, mejor_valor, diff in metricas_mejorables[:3]:
+                            oportunidades.append(f"Potencial en **{descripcion}**: Puede mejorar de {valor_actual:.2f} hasta {mejor_valor:.2f} ({diff:.1f}%)")
+                    
+                    # Análisis de amenazas específicas según posición
+                    if posicion == 'GK':
+                        if 'GA90' in metricas_jugadora and metricas_jugadora['GA90'] > 1.2:
+                            amenazas.append("**Vulnerabilidad defensiva**: Alta tasa de goles encajados que puede afectar la confianza")
+                        if 'Save%' in metricas_jugadora and metricas_jugadora['Save%'] < 65:
+                            amenazas.append("**Presión sobre rendimiento**: El bajo porcentaje de paradas puede generar cuestionamientos")
+                    
+                    elif posicion == 'DF':
+                        if 'CrdY' in metricas_jugadora and metricas_jugadora['CrdY'] > 4:
+                            amenazas.append("**Riesgo disciplinario**: Alta acumulación de tarjetas que puede resultar en suspensiones")
+                        if 'Tkl%' in metricas_jugadora and metricas_jugadora['Tkl%'] < 50:
+                            amenazas.append("**Inconsistencia defensiva**: Baja efectividad en duelos puede ser explotada por rivales")
+                    
+                    elif posicion == 'MF':
+                        if 'Recov' in metricas_jugadora and metricas_jugadora.get('Recov', 0) < 5:
+                            amenazas.append("**Presión en recuperación**: Dificultad para recuperar balones puede reducir control de juego")
+                        if 'pass_1/3' in metricas_jugadora and metricas_jugadora.get('pass_1/3', 0) < 2:
+                            amenazas.append("**Limitación creativa**: Baja progresión ofensiva puede hacerla predecible")
+                    
+                    elif posicion == 'FW':
+                        if 'G-xG' in metricas_jugadora and metricas_jugadora.get('G-xG', 0) < -2:
+                            amenazas.append("**Presión por eficacia**: Rendimiento por debajo de goles esperados genera expectativas no cumplidas")
+                        if 'SoT/90' in metricas_jugadora and metricas_jugadora.get('SoT/90', 0) < 0.8:
+                            amenazas.append("**Limitación ofensiva**: Baja generación de tiros a puerta reduce oportunidades de gol")
+                    
+                    # Asegurar que tenemos suficientes elementos en cada categoría
+                    if len(fortalezas) < 2:
+                        fortalezas.append("Jugadora con perfil técnico adecuado para su posición")
+                    if len(debilidades) < 1:
+                        debilidades.append("Necesita más minutos para evaluar áreas específicas de mejora")
+                    if len(oportunidades) < 2:
+                        oportunidades.append("Potencial para desarrollar aspectos técnicos mediante entrenamiento específico")
+                    if len(amenazas) < 2:
+                        amenazas.append("Competencia interna por la posición puede limitar oportunidades de juego")
+                    
+                    return {
+                        "fortalezas": fortalezas,
+                        "debilidades": debilidades,
+                        "oportunidades": oportunidades,
+                        "amenazas": amenazas
+                    }
 
                     # Implementación en la pestaña 3
                     with tab3:
-                        st.header(f"Análisis para {jugadora_seleccionada}")
+                            st.header(f"Análisis para {jugadora_seleccionada}")
 
-                        # Contenedor para el análisis DAFO
-                        dafo_container = st.container()
-                        
-                        with dafo_container:
-                            st.write("### Análisis DAFO")
+                            # Contenedor para el análisis DAFO
+                            dafo_container = st.container()
                             
-                            # Obtener datos de la jugadora seleccionada
-                            jugadora_info = df_combined[df_combined['Player'] == jugadora_seleccionada]
-                            
-                            # Obtener métricas de la jugadora
-                            metricas_jugadora = {}
-                            # Usar las métricas específicas de la posición
-                            if position in position_metrics:
-                                metricas_numericas = [m for m in position_metrics[position] 
-                                                    if m in jugadora_info.select_dtypes(include=['float64', 'int64']).columns]
-                            else:
-                                metricas_numericas = jugadora_info.select_dtypes(include=['float64', 'int64']).columns.tolist()
-                            
-                            for metrica in metricas_numericas:
-                                if metrica in jugadora_info.columns:
-                                    metricas_jugadora[metrica] = jugadora_info[metrica].iloc[0]
-                            
-                            # Obtener datos de jugadoras similares
-                            metricas_similares = []
-                            for nombre, _, _, _, _ in distancias_ordenadas[:5]:
-                                similar_info = df_combined[df_combined['Player'] == nombre]
-                                metricas_similar = {}
+                            with dafo_container:
+                                st.write("### Análisis DAFO")
+                                
+                                # Obtener datos de la jugadora seleccionada
+                                jugadora_info = df_combined[df_combined['Player'] == jugadora_seleccionada]
+                                
+                                # Obtener métricas de la jugadora
+                                metricas_jugadora = {}
+                                # Usar las métricas específicas de la posición
+                                if position in position_metrics:
+                                    metricas_numericas = [m for m in position_metrics[position] 
+                                                        if m in jugadora_info.select_dtypes(include=['float64', 'int64']).columns]
+                                else:
+                                    metricas_numericas = jugadora_info.select_dtypes(include=['float64', 'int64']).columns.tolist()
+                                
                                 for metrica in metricas_numericas:
-                                    if metrica in similar_info.columns:
-                                        try:
-                                            metricas_similar[metrica] = similar_info[metrica].iloc[0]
-                                        except:
-                                            pass  # Si hay error, omitimos esta métrica
-                                metricas_similares.append(metricas_similar)
-                            
-                            # Obtener promedios por posición
-                            position = jugadora_info['Posición Principal'].iloc[0]
-                            jugadoras_misma_posicion = df_combined[df_combined['Posición Principal'] == position]
-                            
-                            metricas_promedio = {}
-                            for metrica in metricas_numericas:
-                                if metrica in jugadoras_misma_posicion.columns:
-                                    metricas_promedio[metrica] = jugadoras_misma_posicion[metrica].mean()
-                            
-                            # Intentar obtener índices calculados si están disponibles (desde tab5)
-                            indices_calculados = {}
-                            try:
-                                if 'tab5_indices_calculados' in st.session_state:
-                                    indices_calculados = st.session_state.tab5_indices_calculados
-                            except:
-                                pass
-                            
-                            # Generar el DAFO mejorado
-                            try:
-                                dafo = generar_dafo_mejorado(
-                                    jugadora_seleccionada, 
-                                    position, 
-                                    metricas_jugadora, 
-                                    metricas_similares, 
-                                    metricas_promedio,
-                                    indices_calculados
-                                )
+                                    if metrica in jugadora_info.columns:
+                                        metricas_jugadora[metrica] = jugadora_info[metrica].iloc[0]
                                 
-                                # Mostrar DAFO en una presentación visual clara
-                                col1, col2 = st.columns(2)
+                                # Obtener datos de jugadoras similares
+                                metricas_similares = []
+                                for nombre, _, _, _, _ in distancias_ordenadas[:5]:
+                                    similar_info = df_combined[df_combined['Player'] == nombre]
+                                    metricas_similar = {}
+                                    for metrica in metricas_numericas:
+                                        if metrica in similar_info.columns:
+                                            try:
+                                                metricas_similar[metrica] = similar_info[metrica].iloc[0]
+                                            except:
+                                                pass  # Si hay error, omitimos esta métrica
+                                    metricas_similares.append(metricas_similar)
                                 
-                                with col1:
-                                    st.markdown("#### Fortalezas")
-                                    st.markdown('<div style="background-color: #d4edda; padding: 15px; border-radius: 5px;">', unsafe_allow_html=True)
-                                    for fortaleza in dafo["fortalezas"]:
-                                        st.markdown(f"✅ {fortaleza}")
-                                    st.markdown('</div>', unsafe_allow_html=True)
+                                # Obtener promedios por posición
+                                position = jugadora_info['Posición Principal'].iloc[0]
+                                jugadoras_misma_posicion = df_combined[df_combined['Posición Principal'] == position]
+                                
+                                metricas_promedio = {}
+                                for metrica in metricas_numericas:
+                                    if metrica in jugadoras_misma_posicion.columns:
+                                        metricas_promedio[metrica] = jugadoras_misma_posicion[metrica].mean()
+                                
+                                # Intentar obtener índices calculados si están disponibles (desde tab5)
+                                indices_calculados = {}
+                                try:
+                                    if 'tab5_indices_calculados' in st.session_state:
+                                        indices_calculados = st.session_state.tab5_indices_calculados
+                                except:
+                                    pass
+                                
+                                # Generar el DAFO mejorado
+                                try:
+                                    dafo = generar_dafo_mejorado(
+                                        jugadora_seleccionada, 
+                                        position, 
+                                        metricas_jugadora, 
+                                        metricas_similares, 
+                                        metricas_promedio,
+                                        indices_calculados
+                                    )
                                     
-                                    st.markdown("#### Debilidades")
-                                    st.markdown('<div style="background-color: #f8d7da; padding: 15px; border-radius: 5px;">', unsafe_allow_html=True)
-                                    for debilidad in dafo["debilidades"]:
-                                        st.markdown(f"❌ {debilidad}")
-                                    st.markdown('</div>', unsafe_allow_html=True)
-                                
-                                with col2:
-                                    st.markdown("#### Oportunidades")
-                                    st.markdown('<div style="background-color: #cce5ff; padding: 15px; border-radius: 5px;">', unsafe_allow_html=True)
-                                    for oportunidad in dafo["oportunidades"]:
-                                        st.markdown(f"🚀 {oportunidad}")
-                                    st.markdown('</div>', unsafe_allow_html=True)
+                                    # Asegurar un mínimo de elementos por categoría para evitar desalineamientos
+                                    min_elementos = max(len(dafo["fortalezas"]), len(dafo["debilidades"]), 
+                                                    len(dafo["oportunidades"]), len(dafo["amenazas"]))
                                     
-                                    st.markdown("#### Amenazas")
-                                    st.markdown('<div style="background-color: #fff3cd; padding: 15px; border-radius: 5px;">', unsafe_allow_html=True)
-                                    for amenaza in dafo["amenazas"]:
-                                        st.markdown(f"⚠️ {amenaza}")
-                                    st.markdown('</div>', unsafe_allow_html=True)
+                                    # Asegurar que todas las categorías tengan el mismo número de elementos
+                                    # Añadiendo elementos vacíos si es necesario
+                                    while len(dafo["fortalezas"]) < min_elementos:
+                                        dafo["fortalezas"].append("")
+                                    while len(dafo["debilidades"]) < min_elementos:
+                                        dafo["debilidades"].append("")
+                                    while len(dafo["oportunidades"]) < min_elementos:
+                                        dafo["oportunidades"].append("")
+                                    while len(dafo["amenazas"]) < min_elementos:
+                                        dafo["amenazas"].append("")
+                                    
+                                    # Usar CSS personalizado para asegurar alineación y altura consistentes
+                                    st.markdown("""
+                                    <style>
+                                    .dafo-box {
+                                        height: 100%;
+                                        min-height: 250px;
+                                        padding: 15px;
+                                        border-radius: 5px;
+                                        margin-bottom: 15px;
+                                    }
+                                    .fortalezas {
+                                        background-color: #d4edda;
+                                    }
+                                    .debilidades {
+                                        background-color: #f8d7da;
+                                    }
+                                    .oportunidades {
+                                        background-color: #cce5ff;
+                                    }
+                                    .amenazas {
+                                        background-color: #fff3cd;
+                                    }
+                                    .dafo-title {
+                                        font-weight: bold;
+                                        font-size: 1.1rem;
+                                        margin-bottom: 10px;
+                                        text-align: center;
+                                    }
+                                    .dafo-content {
+                                        min-height: 200px;
+                                    }
+                                    </style>
+                                    """, unsafe_allow_html=True)
+                                    
+                                    # Crear estructura de 2x2 con alturas iguales
+                                    row1_col1, row1_col2 = st.columns(2)
+                                    row2_col1, row2_col2 = st.columns(2)
+                                    
+                                    # Mostrar DAFO en estructura más robusta
+                                    with row1_col1:
+                                        st.markdown('<div class="dafo-box fortalezas">', unsafe_allow_html=True)
+                                        st.markdown('<div class="dafo-title">Fortalezas</div>', unsafe_allow_html=True)
+                                        st.markdown('<div class="dafo-content">', unsafe_allow_html=True)
+                                        for fortaleza in dafo["fortalezas"]:
+                                            if fortaleza:  # Solo mostrar si no está vacío
+                                                st.markdown(f"✅ {fortaleza}")
+                                        st.markdown('</div></div>', unsafe_allow_html=True)
+                                    
+                                    with row1_col2:
+                                        st.markdown('<div class="dafo-box oportunidades">', unsafe_allow_html=True)
+                                        st.markdown('<div class="dafo-title">Oportunidades</div>', unsafe_allow_html=True)
+                                        st.markdown('<div class="dafo-content">', unsafe_allow_html=True)
+                                        for oportunidad in dafo["oportunidades"]:
+                                            if oportunidad:  # Solo mostrar si no está vacío
+                                                st.markdown(f"🚀 {oportunidad}")
+                                        st.markdown('</div></div>', unsafe_allow_html=True)
+                                    
+                                    with row2_col1:
+                                        st.markdown('<div class="dafo-box debilidades">', unsafe_allow_html=True)
+                                        st.markdown('<div class="dafo-title">Debilidades</div>', unsafe_allow_html=True)
+                                        st.markdown('<div class="dafo-content">', unsafe_allow_html=True)
+                                        for debilidad in dafo["debilidades"]:
+                                            if debilidad:  # Solo mostrar si no está vacío
+                                                st.markdown(f"❌ {debilidad}")
+                                        st.markdown('</div></div>', unsafe_allow_html=True)
+                                    
+                                    with row2_col2:
+                                        st.markdown('<div class="dafo-box amenazas">', unsafe_allow_html=True)
+                                        st.markdown('<div class="dafo-title">Amenazas</div>', unsafe_allow_html=True)
+                                        st.markdown('<div class="dafo-content">', unsafe_allow_html=True)
+                                        for amenaza in dafo["amenazas"]:
+                                            if amenaza:  # Solo mostrar si no está vacío
+                                                st.markdown(f"⚠️ {amenaza}")
+                                        st.markdown('</div></div>', unsafe_allow_html=True)
+                                    
+                                except Exception as e:
+                                    st.error(f"Error al generar el análisis DAFO: {e}")
+                                    st.info("Intenta con otra jugadora o verifica los datos disponibles.")
                                 
-                            except Exception as e:
-                                st.error(f"Error al generar el análisis DAFO: {e}")
-                                st.info("Intenta con otra jugadora o verifica los datos disponibles.")
-                            
-                            # Separador para la siguiente sección
-                            st.divider()
-                            
-                        # Información de interpretación
-                        st.info("""
-                        **Nota sobre el análisis DAFO:**
-                        - Este análisis se enfoca en las métricas más relevantes para cada posición
-                        - Prioriza claridad y concisión sobre exhaustividad
-                        - Las comparaciones se realizan respecto al promedio por posición y jugadoras similares
-                        - Se recomienda complementar este análisis con la observación directa de los partidos
-                        """)
-                        
-                        # Sección de ayuda y metodología (mantener expandibles)
-                        with st.expander("ℹ️ Metodología del análisis"):
-                            st.markdown("""
-                            ### Metodología del análisis DAFO
-                            
-                            Este análisis prioriza las métricas más relevantes para cada posición y se centra en identificar:
-                            
-                            **Fortalezas:** Métricas donde la jugadora destaca significativamente sobre el promedio de su posición.
-                            
-                            **Debilidades:** Áreas donde la jugadora muestra rendimiento por debajo del promedio de su posición.
-                            
-                            **Oportunidades:** Aspectos donde otras jugadoras similares muestran mejor rendimiento, 
-                            indicando potencial de desarrollo.
-                            
-                            **Amenazas:** Factores de riesgo específicos según la posición y contexto de la jugadora.
-                            
-                            El análisis incorpora tanto métricas individuales como índices compuestos para ofrecer 
-                            una visión holística pero focalizada del rendimiento.
+                                # Separador para la siguiente sección
+                                st.divider()
+                                
+                            # Información de interpretación
+                            st.info("""
+                            **Nota sobre el análisis DAFO:**
+                            - Este análisis se enfoca en las métricas más relevantes para cada posición
+                            - Prioriza claridad y concisión sobre exhaustividad
+                            - Las comparaciones se realizan respecto al promedio por posición y jugadoras similares
+                            - Se recomienda complementar este análisis con la observación directa de los partidos
                             """)
-                        
-                        with st.expander("🔄 Próximos pasos"):
-                            st.markdown("""
-                            ### Recomendaciones para seguimiento
                             
-                            1. **Plan de desarrollo personalizado** enfocado en las áreas de mejora específicas identificadas
-                            2. **Entrenamiento específico** para potenciar fortalezas y reducir debilidades
-                            3. **Evaluaciones periódicas** utilizando las mismas métricas para medir progreso
-                            4. **Establecimiento de objetivos SMART** (Específicos, Medibles, Alcanzables, Relevantes y Temporales)
+                            # Sección de ayuda y metodología (mantener expandibles)
+                            with st.expander("ℹ️ Metodología del análisis"):
+                                st.markdown("""
+                                ### Metodología del análisis DAFO
+                                
+                                Este análisis prioriza las métricas más relevantes para cada posición y se centra en identificar:
+                                
+                                **Fortalezas:** Métricas donde la jugadora destaca significativamente sobre el promedio de su posición.
+                                
+                                **Debilidades:** Áreas donde la jugadora muestra rendimiento por debajo del promedio de su posición.
+                                
+                                **Oportunidades:** Aspectos donde otras jugadoras similares muestran mejor rendimiento, 
+                                indicando potencial de desarrollo.
+                                
+                                **Amenazas:** Factores de riesgo específicos según la posición y contexto de la jugadora.
+                                
+                                El análisis incorpora tanto métricas individuales como índices compuestos para ofrecer 
+                                una visión holística pero focalizada del rendimiento.
+                                """)
                             
-                            El cuerpo técnico debe adaptar estas recomendaciones al contexto del equipo, 
-                            considerando también factores cualitativos no reflejados en las estadísticas.
-                            """)
+                            with st.expander("🔄 Próximos pasos"):
+                                st.markdown("""
+                                ### Recomendaciones para seguimiento
+                                
+                                1. **Plan de desarrollo personalizado** enfocado en las áreas de mejora específicas identificadas
+                                2. **Entrenamiento específico** para potenciar fortalezas y reducir debilidades
+                                3. **Evaluaciones periódicas** utilizando las mismas métricas para medir progreso
+                                4. **Establecimiento de objetivos SMART** (Específicos, Medibles, Alcanzables, Relevantes y Temporales)
+                                
+                                El cuerpo técnico debe adaptar estas recomendaciones al contexto del equipo, 
+                                considerando también factores cualitativos no reflejados en las estadísticas.
+                                """)
 
             # Pestaña 4: Análisis de Índices Compuestos
             with tab4:
