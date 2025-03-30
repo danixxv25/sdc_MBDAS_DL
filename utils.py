@@ -131,33 +131,7 @@ def calcular_comparativa(df, metric, player_value, player_position, competition)
 
 #------------------------------------------------------------------------------------------------------------------------------------------------------------------------------->
 
-# Función para calcular percentiles de jugadoras
-def calcular_percentiles(df_view, metrics_list):
-    if df_view is None or df_view.empty or not metrics_list:
-        return {}
-    
-    player_position = df_view['Posición Principal'].iloc[0] if 'Posición Principal' in df_view.columns else ""
-    
-    # Filtrar jugadoras de la misma posición
-    df_position = df_combined[df_combined['Posición Principal'] == player_position]
-    
-    percentiles = {}
-    
-    for metric in metrics_list:
-        if metric in df_view.columns and metric in df_position.columns:
-            # Obtener el valor de la jugadora
-            player_value = df_view[metric].iloc[0]
-            
-            # Calcular el percentil
-            if not pd.isna(player_value):
-                # Eliminar valores no numéricos y NaN
-                metric_values = df_position[metric].dropna()
-                
-                if not metric_values.empty:
-                    percentile = stats.percentileofscore(metric_values, player_value)
-                    percentiles[metric] = percentile
-    
-    return percentiles
+
 
 #------------------------------------------------------------------------------------------------------------------------------------------------------------------------------->
 
