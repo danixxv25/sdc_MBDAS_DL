@@ -697,16 +697,7 @@ def mostrar_percentiles(percentiles1, percentiles2, player1_name, player2_name, 
 
 # Verificar si se cargaron los datos correctamente
 if df_combined is not None and not df_combined.empty:
-    # Crear tabs para la aplicación
-    tab1, tab2, tab3, tab4, tab5 = st.tabs([
-        "Visión General", 
-        "Métricas Macro", 
-        "Métricas Meso", 
-        "Métricas Micro",
-        "Comparación por Percentiles"
-    ])
-    
-    # Crear dos columnas para los filtros
+    # Crear dos columnas para los filtros - PRIMERO LOS FILTROS ANTES DE LAS TABS
     col1, col2 = st.columns(2)
     
     # Título para cada sección de filtros
@@ -716,6 +707,15 @@ if df_combined is not None and not df_combined.empty:
     # Crear filtros para cada jugadora
     player1 = crear_filtros_jugadora("player1", col1)
     player2 = crear_filtros_jugadora("player2", col2)
+    
+    # Ahora CREAMOS LAS TABS después de los filtros
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+        "Visión General", 
+        "Métricas Macro", 
+        "Métricas Meso", 
+        "Métricas Micro",
+        "Comparación por Percentiles"
+    ])
     
     # Mostrar información de las jugadoras seleccionadas
     col1, col2 = st.columns(2)
