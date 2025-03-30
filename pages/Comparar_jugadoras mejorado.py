@@ -777,13 +777,11 @@ if df_combined is not None and not df_combined.empty:
                     similarity_class = "similarity-medium"
                 else:
                     similarity_class = "similarity-low"
-                
                 # Mostrar porcentaje de similitud con la clase correspondiente
                 st.markdown(f"""
                 <div class='similarity-container'>
                     <div class='similarity-label'>Índice de Similitud</div>
                     <div class='similarity-value {similarity_class}'>{similarity:.1f}%</div>
-                    <div>Las jugadoras tienen un perfil similar en cuanto a sus métricas de rendimiento</div>
                 </div>
                 """, unsafe_allow_html=True)
         
