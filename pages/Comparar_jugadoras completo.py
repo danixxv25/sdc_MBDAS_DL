@@ -876,8 +876,6 @@ if df_combined is not None and not df_combined.empty:
                 else:
                     similarity_class = "similarity-low"
                 
-                st.subheader("Índices de similitud")
-
                 col1, col2 = st.columns([5,5])
                 with col1:
                     # Mostrar porcentaje de similitud con la clase correspondiente
@@ -896,6 +894,7 @@ if df_combined is not None and not df_combined.empty:
                         <div style="font-size: 12px;">Basado en similitud de percentiles</div>
                     </div>
                     """, unsafe_allow_html=True)
+                    
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown("<br>", unsafe_allow_html=True)
