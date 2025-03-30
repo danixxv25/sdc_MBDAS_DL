@@ -908,21 +908,7 @@ if df_combined is not None and not df_combined.empty:
             # Pestaña 3: Análisis IA con DAFO y recomendaciones               
             # Función para generar un análisis DAFO mejorado y más conciso
             def generar_dafo_mejorado(jugadora, posicion, metricas_jugadora, metricas_similares, metricas_promedio, indices_calculados=None):
-                """
-                Genera un análisis DAFO conciso y enfocado para la jugadora basado en sus métricas clave
-                y los índices compuestos (si están disponibles).
-                
-                Args:
-                    jugadora: Nombre de la jugadora
-                    posicion: Posición de la jugadora
-                    metricas_jugadora: Dict con las métricas de la jugadora
-                    metricas_similares: Dict con las métricas de jugadoras similares
-                    metricas_promedio: Dict con los promedios por posición
-                    indices_calculados: Dict con los índices compuestos (opcional)
-                
-                Returns:
-                    Dict con el análisis DAFO (fortalezas, debilidades, oportunidades, amenazas)
-                """
+
                 fortalezas = []
                 debilidades = []
                 oportunidades = []
@@ -1185,7 +1171,7 @@ if df_combined is not None and not df_combined.empty:
                         st.markdown("""
                         <style>
                         .dafo-box {
-                            height: 100%;
+                            height: 60%;
                             min-height: 250px;
                             padding: 15px;
                             border-radius: 5px;
