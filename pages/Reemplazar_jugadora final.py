@@ -484,9 +484,9 @@ if df_combined is not None and not df_combined.empty:
                         st.write(f"**Nacionalidad:** {info_seleccionada['Nation'].iloc[0]}")
                     
                     # Verificar que jugadora_info no esté vacío y tenga filas antes de acceder a iloc[0]
-                    if (jugadora_info is not None and not jugadora_info.empty and 
-                        'Birth_Date' in jugadora_info.columns and 
-                        len(jugadora_info) > 0 and not pd.isna(jugadora_info['Birth_Date'].iloc[0])):
+                    if (info_seleccionada is not None and not info_seleccionada.empty and 
+                        'Birth_Date' in info_seleccionada.columns and 
+                        len(info_seleccionada) > 0 and not pd.isna(info_seleccionada['Birth_Date'].iloc[0])):
                         st.write(f"**Fecha de nacimiento:** {info_seleccionada['Birth_Date'].iloc[0]}")
                     else:
                         if 'Born' in info_seleccionada.columns and not pd.isna(info_seleccionada['Born'].iloc[0]):
