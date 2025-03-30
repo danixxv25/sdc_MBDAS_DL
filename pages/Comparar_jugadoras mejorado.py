@@ -935,7 +935,7 @@ if df_combined is not None and not df_combined.empty:
         position1 = df_player1['Posición Principal'].iloc[0]
         position2 = df_player2['Posición Principal'].iloc[0]
         # Crear gráficos comparativos si ambas jugadoras tienen datos
-        if metrics1_data and metrics2_data:
+        if position_metrics1 and position_metrics1:
             # Usar solo métricas que existen para ambas jugadoras
             if position1 == position2:
                 # Si las jugadoras tienen la misma posición, podemos usar todas las métricas
