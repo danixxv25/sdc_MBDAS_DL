@@ -858,22 +858,38 @@ if df_combined is not None and not df_combined.empty:
                     all_position_metrics.extend(metrics_list)
                 
                 # Calcular similitud basada en percentiles
-                similarity = calcular_similitud_percentiles(df_player1, df_player2, all_position_metrics, player1_position)
+                similarity1 = calcular_similitud(metrics1_data, metrics2_data, position_metrics, player1_position)
+                similarity2 = calcular_similitud_percentiles(df_player1, df_player2, all_position_metrics, player1_position)
                 
                 # Determinar la clase CSS según el valor de similitud
-                similarity_class = ""
-                if similarity > 75:
+                similarity_class1 = ""
+                if similarity1 > 75:  # Ajustamos los umbrales para la distancia euclidiana
                     similarity_class = "similarity-high"
-                elif similarity >= 50:
+                elif similarity1 >= 50:
                     similarity_class = "similarity-medium"
                 else:
                     similarity_class = "similarity-low"
-                
+                # Determinar la clase CSS según el valor de similitud
+                similarity_class2 = ""
+                if similarity2 > 75:  # Ajustamos los umbrales para la distancia euclidiana
+                    similarity_class = "similarity-high"
+                elif similarity2 >= 50:
+                    similarity_class = "similarity-medium"
+                else:
+                    similarity_class = "similarity-low"
+
                 # Mostrar porcentaje de similitud con la clase correspondiente
                 st.markdown(f"""
                 <div class='similarity-container {similarity_class}'>
                     <div class='similarity-label'>Índice de Similitud</div>
-                    <div class='similarity-value'>{similarity:.1f}%</div>
+                    <div class='similarity-value'>{similarity1:.1f}%</div>
+                    <div style="font-size: 12px;">Basado en distancia euclidiana normalizada</div>
+                </div>
+                """, unsafe_allow_html=True)
+                st.markdown(f"""
+                <div class='similarity-container {similarity_class}'>
+                    <div class='similarity-label'>Índice de Similitud</div>
+                    <div class='similarity-value'>{similarity2:.1f}%</div>
                     <div style="font-size: 12px;">Basado en similitud de percentiles</div>
                 </div>
                 """, unsafe_allow_html=True)
