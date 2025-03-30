@@ -444,288 +444,287 @@ if df_combined is not None and not df_combined.empty:
             
             # Ordenamos por distancia para encontrar las más similares
             distancias_ordenadas = sorted(distancias, key=lambda x: x[1])
+
+            st.header(f"Información de Jugadoras Similares a {jugadora_seleccionada}")
             
-            # Creamos tres pestañas para mostrar diferentes visualizaciones
-            tab1, tab2, tab3, tab4, tab5 = st.tabs(["Información Básica", "Clustering y Radar", "Análisis", "Índices Compuestos", "Comparativa de Métricas"])
+            # Información de la jugadora seleccionada
+            st.subheader("Jugadora Seleccionada")
+            col1, col2, col3 = st.columns([1,1, 1])
             
-            # Pestaña 1: Información básica de las jugadoras similares
-            with tab1:
-                st.header(f"Información de Jugadoras Similares a {jugadora_seleccionada}")
-                
-                # Información de la jugadora seleccionada
-                st.subheader("Jugadora Seleccionada")
-                col1, col2, col3 = st.columns([1,1, 1])
-                
-                with col1:
-                    # Mostrar foto si está disponible
-                    st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
-                    jugadora_info = df_combined[df_combined['Player'] == jugadora_seleccionada]
-                    if jugadora_info['Squad'].iloc[0] == "Atlético de Madrid" and df_atm_photos is not None:
-                        try:
-                            jugadora_foto = df_atm_photos[df_atm_photos['Player'] == jugadora_seleccionada]
-                            if not jugadora_foto.empty and 'url_photo' in jugadora_foto.columns:
-                                photo_url_atm = jugadora_foto['url_photo'].iloc[0]
-                                st.image(photo_url_atm, width=150)
-                        except:
-                            st.write("Foto no disponible")
-                    st.markdown("</div>", unsafe_allow_html=True)
-                
-                with col2:
-                    display_logo(150)
+            with col1:
+                # Mostrar foto si está disponible
+                st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
+                jugadora_info = df_combined[df_combined['Player'] == jugadora_seleccionada]
+                if jugadora_info['Squad'].iloc[0] == "Atlético de Madrid" and df_atm_photos is not None:
+                    try:
+                        jugadora_foto = df_atm_photos[df_atm_photos['Player'] == jugadora_seleccionada]
+                        if not jugadora_foto.empty and 'url_photo' in jugadora_foto.columns:
+                            photo_url_atm = jugadora_foto['url_photo'].iloc[0]
+                            st.image(photo_url_atm, width=150)
+                    except:
+                        st.write("Foto no disponible")
+                st.markdown("</div>", unsafe_allow_html=True)
+            
+            with col2:
+                display_logo(150)
 
-                with col3:
-                    # Datos básicos de la jugadora seleccionada
-                    info_seleccionada = df_combined[df_combined['Player'] == jugadora_seleccionada]
-                    st.write(f"**Posición:** {info_seleccionada['Posición Principal'].iloc[0]}")
-                    st.write(f"**Club:** {info_seleccionada['Squad'].iloc[0]}")
-                    
-                    # Agregar más información disponible
-                    if 'Nation' in info_seleccionada.columns and not pd.isna(info_seleccionada['Nation'].iloc[0]):
-                        st.write(f"**Nacionalidad:** {info_seleccionada['Nation'].iloc[0]}")
-
-                    if 'Born' in info_seleccionada.columns and not pd.isna(info_seleccionada['Born'].iloc[0]):
-                        st.write(f"**Año de nacimiento:** {info_seleccionada['Born'].iloc[0]}")
-
-                    if 'League' in info_seleccionada.columns and not pd.isna(info_seleccionada['League'].iloc[0]):
-                        st.write(f"**Liga:** {info_seleccionada['League'].iloc[0]}")
+            with col3:
+                # Datos básicos de la jugadora seleccionada
+                info_seleccionada = df_combined[df_combined['Player'] == jugadora_seleccionada]
+                st.write(f"**Posición:** {info_seleccionada['Posición Principal'].iloc[0]}")
+                st.write(f"**Club:** {info_seleccionada['Squad'].iloc[0]}")
                 
+                # Agregar más información disponible
+                if 'Nation' in info_seleccionada.columns and not pd.isna(info_seleccionada['Nation'].iloc[0]):
+                    st.write(f"**Nacionalidad:** {info_seleccionada['Nation'].iloc[0]}")
+
+                if 'Born' in info_seleccionada.columns and not pd.isna(info_seleccionada['Born'].iloc[0]):
+                    st.write(f"**Año de nacimiento:** {info_seleccionada['Born'].iloc[0]}")
+
+                if 'League' in info_seleccionada.columns and not pd.isna(info_seleccionada['League'].iloc[0]):
+                    st.write(f"**Liga:** {info_seleccionada['League'].iloc[0]}")
+                
+                tab1, tab2, tab3, tab4, tab5 = st.tabs(["Información Básica", "Clustering y Radar", "Análisis", "Índices Compuestos", "Comparativa de Métricas"])
+                
+                # Pestaña 1: Información básica de las jugadoras similares
+                with tab1:
                 # Separador
-                st.divider()
-                
-                # Métricas clave de la jugadora seleccionada basadas en su posición
-                st.subheader("Métricas destacadas")
-                
-                # Seleccionamos métricas clave según la posición específica usando position_metrics
-                if position in position_metrics:
-                    # Filtrar solo métricas numéricas
-                    pos_metricas = [m for m in position_metrics[position] 
-                                if m in df_combined.select_dtypes(include=['float64', 'int64']).columns 
-                                and m not in ['Player', 'Squad', 'Born']]
+                    st.divider()
                     
-                    # Seleccionar 4-5 métricas clave para esta posición
-                    metricas_clave = []
-                    if position == 'GK':
-                        metricas_clave = ['GA90', 'Save%', 'CS%', 'PSxG-GA', '#OPA/90']
-                    elif position == 'DF':
-                        metricas_clave = ['Tkl+Int', 'Blocks', 'Recov', 'touch_Def Pen', 'Tkl%']
-                    elif position == 'MF':
-                        metricas_clave = ['SCA90', 'GCA90', 'pass_1/3', 'PPA', 'touch_Mid 3rd']
-                    elif position == 'FW':
-                        metricas_clave = ['Gls', 'G/Sh', 'xG', 'SoT/90', 'touch_Att Pen']
+                    # Métricas clave de la jugadora seleccionada basadas en su posición
+                    st.subheader("Métricas destacadas")
                     
-                    # Asegurarse de que las métricas seleccionadas existen en los datos
-                    metricas_clave = [m for m in metricas_clave if m in pos_metricas]
+                    # Seleccionamos métricas clave según la posición específica usando position_metrics
+                    if position in position_metrics:
+                        # Filtrar solo métricas numéricas
+                        pos_metricas = [m for m in position_metrics[position] 
+                                    if m in df_combined.select_dtypes(include=['float64', 'int64']).columns 
+                                    and m not in ['Player', 'Squad', 'Born']]
+                        
+                        # Seleccionar 4-5 métricas clave para esta posición
+                        metricas_clave = []
+                        if position == 'GK':
+                            metricas_clave = ['GA90', 'Save%', 'CS%', 'PSxG-GA', '#OPA/90']
+                        elif position == 'DF':
+                            metricas_clave = ['Tkl+Int', 'Blocks', 'Recov', 'touch_Def Pen', 'Tkl%']
+                        elif position == 'MF':
+                            metricas_clave = ['SCA90', 'GCA90', 'pass_1/3', 'PPA', 'touch_Mid 3rd']
+                        elif position == 'FW':
+                            metricas_clave = ['Gls', 'G/Sh', 'xG', 'SoT/90', 'touch_Att Pen']
+                        
+                        # Asegurarse de que las métricas seleccionadas existen en los datos
+                        metricas_clave = [m for m in metricas_clave if m in pos_metricas]
+                        
+                        # Mostrar métricas clave en forma de tarjetas
+                        if metricas_clave:
+                            cols = st.columns(len(metricas_clave))
+                            
+                            for i, metrica in enumerate(metricas_clave):
+                                if metrica in info_seleccionada.columns and not pd.isna(info_seleccionada[metrica].iloc[0]):
+                                    valor = info_seleccionada[metrica].iloc[0]
+                                    cols[i].metric(
+                                        metric_display_names.get(metrica, metrica),
+                                        f"{valor:.2f}"
+                                    )
                     
-                    # Mostrar métricas clave en forma de tarjetas
-                    if metricas_clave:
-                        cols = st.columns(len(metricas_clave))
-                        
-                        for i, metrica in enumerate(metricas_clave):
-                            if metrica in info_seleccionada.columns and not pd.isna(info_seleccionada[metrica].iloc[0]):
-                                valor = info_seleccionada[metrica].iloc[0]
-                                cols[i].metric(
-                                    metric_display_names.get(metrica, metrica),
-                                    f"{valor:.2f}"
-                                )
-                
-                # Información detallada de cada jugadora similar
-                st.subheader("Jugadoras similares - Información detallada")
-                
-                # Crear un acordeón para cada jugadora similar
-                for i, (nombre, distancia, cluster, squad, pos) in enumerate(distancias_ordenadas[:10], 1):
-                    with st.expander(f"{i}. {nombre} - Distancia: {distancia:.4f} - {squad}"):
-                        # Dividir en dos columnas para cada jugadora
-                        col1, col2, col3 = st.columns([1, 1, 1])
-                        
-                        with col1:
-                            # Mostrar foto si está disponible
-                            st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
-                            # Buscar foto de la jugadora
-                            if squad == "Atlético de Madrid" and df_atm_photos is not None:
-                                try:
-                                    jugadora_foto = df_atm_photos[df_atm_photos['Player'] == nombre]
-                                    if not jugadora_foto.empty and 'url_photo' in jugadora_foto.columns:
-                                        photo_url_atm = jugadora_foto['url_photo'].iloc[0]
-                                        st.image(photo_url_atm, width=150)
-                                    else:
-                                        if df_players_info is not None:
-                                            try:
-                                                jugadora_info_adicional = df_players_info[df_players_info['Player'] == nombre]
-                                                if not jugadora_info_adicional.empty and 'Photo' in jugadora_info_adicional.columns:
-                                                    if not pd.isna(jugadora_info_adicional['Photo'].iloc[0]):
-                                                        photo_url = jugadora_info_adicional['Photo'].iloc[0]
-                                                        st.image(photo_url, width=150)
-                                            except:
-                                                pass
+                    # Información detallada de cada jugadora similar
+                    st.subheader("Jugadoras similares - Información detallada")
+                    
+                    # Crear un acordeón para cada jugadora similar
+                    for i, (nombre, distancia, cluster, squad, pos) in enumerate(distancias_ordenadas[:10], 1):
+                        with st.expander(f"{i}. {nombre} - Distancia: {distancia:.4f} - {squad}"):
+                            # Dividir en dos columnas para cada jugadora
+                            col1, col2, col3 = st.columns([1, 1, 1])
                             
-                                except:
-                                    pass
-                            st.markdown("</div>", unsafe_allow_html=True)
-                        
-                        with col2:
-                            # Buscar el logo del club
-                            st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
-                            squad = df_combined[df_combined['Player'] == nombre ]['Squad'].iloc[0]
-                            team_logo_url = None
-                            if df_teams_info is not None and 'Squad' in df_teams_info.columns and 'Shield URL' in df_teams_info.columns:
-                                club_team = df_teams_info[df_teams_info['Squad'] == squad]
-                                if not club_team.empty and not pd.isna(club_team['Shield URL'].iloc[0]):
-                                    team_logo_url = club_team['Shield URL'].iloc[0]
-                                    st.image(team_logo_url, width=150)
-                            st.markdown("</div>", unsafe_allow_html=True)
-
-                        with col3:
-                            # Datos básicos de la jugadora similar
-                            info_jugadora = df_combined[df_combined['Player'] == nombre]
-                            
-                            # Mostrar distancia respecto a la jugadora seleccionada
-                            st.metric("Distancia", f"{distancia:.4f}", 
-                                    delta=f"{distancias_ordenadas[0][1] - distancia:.4f}" if i > 1 else "Más similar")
-                            
-                            st.write(f"**Posición:** {pos}")
-                            st.write(f"**Club:** {squad}")
-                            
-                            # Agregar más información disponible
-                            if 'Nation' in info_jugadora.columns and not pd.isna(info_jugadora['Nation'].iloc[0]):
-                                st.write(f"**Nacionalidad:** {info_jugadora['Nation'].iloc[0]}")
-                            if 'League' in info_jugadora.columns and not pd.isna(info_jugadora['League'].iloc[0]):
-                                st.write(f"**Liga:** {info_jugadora['League'].iloc[0]}")
-                            if 'Born' in info_jugadora.columns and not pd.isna(info_jugadora['Born'].iloc[0]):
-                                st.write(f"**Año de nacimiento:** {info_jugadora['Born'].iloc[0]}")
-                        
-                        # Sección para mostrar algunos indicadores clave según la posición
-                        st.subheader("Métricas destacadas")
-                        
-                        # Usar las mismas métricas clave definidas anteriormente para consistencia
-                        if pos in position_metrics:
-                            if pos == 'GK':
-                                metricas_clave = ['GA90', 'Save%', 'CS%', 'PSxG-GA', '#OPA/90']
-                            elif pos == 'DF':
-                                metricas_clave = ['Tkl+Int', 'Blocks', 'Recov', 'touch_Def Pen', 'Tkl%']
-                            elif pos == 'MF':
-                                metricas_clave = ['SCA90', 'GCA90', 'pass_1/3', 'PPA', 'touch_Mid 3rd']
-                            elif pos == 'FW':
-                                metricas_clave = ['Gls', 'G/Sh', 'xG', 'SoT/90', 'touch_Att Pen']
-                            
-                            # Filtrar solo las métricas disponibles
-                            metricas_clave = [m for m in metricas_clave if m in info_jugadora.columns]
-                            
-                            # Crear columnas para las métricas clave
-                            if metricas_clave:
-                                cols = st.columns(len(metricas_clave))
-                                
-                                for j, metrica in enumerate(metricas_clave):
-                                    if metrica in info_jugadora.columns and not pd.isna(info_jugadora[metrica].iloc[0]):
-                                        valor = info_jugadora[metrica].iloc[0]
-                                        cols[j].metric(
-                                            metric_display_names.get(metrica, metrica),
-                                            f"{valor:.2f}"
-                                        )
-                        
-                        # Comparación directa con la jugadora seleccionada
-                        st.subheader("Comparación directa con " + jugadora_seleccionada)
-
-                        # Usar exactamente las métricas definidas en position_metrics para esta posición
-                        if pos in position_metrics:
-                            metricas_posicion = position_metrics[pos]
-                            
-                            # Filtrar identificadores y mantener solo métricas numéricas
-                            metricas_posicion = [m for m in metricas_posicion 
-                                                if m not in ['Player', 'Squad', 'Born', 'Pos', 'Nation', 'Comp', 'Age']
-                                                and m in df_combined.select_dtypes(include=['float64', 'int64']).columns]
-                            
-                            # Preparar datos para el radar
-                            fig_radar_full = plt.figure(figsize=(6 ,6))
-                            ax_full = fig_radar_full.add_subplot(111, polar=True)
-                            
-                            try:
-                                # Obtener datos para ambas jugadoras
-                                datos_seleccionada = []
-                                datos_similar = []
-                                metricas_validas = []
-                                
-                                # Filtrar solo métricas disponibles para ambas jugadoras
-                                for metrica in metricas_posicion:
+                            with col1:
+                                # Mostrar foto si está disponible
+                                st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
+                                # Buscar foto de la jugadora
+                                if squad == "Atlético de Madrid" and df_atm_photos is not None:
                                     try:
-                                        # Verificar que la métrica está disponible para ambas jugadoras
-                                        val_original = df_combined[df_combined['Player'] == jugadora_seleccionada][metrica].iloc[0]
-                                        val_similar = info_jugadora[metrica].iloc[0]
-                                        
-                                        if pd.notna(val_original) and pd.notna(val_similar):
-                                            datos_seleccionada.append(val_original)
-                                            datos_similar.append(val_similar)
-                                            metricas_validas.append(metrica)
-                                    except:
-                                        # Si hay error, ignoramos esta métrica
-                                        pass
+                                        jugadora_foto = df_atm_photos[df_atm_photos['Player'] == nombre]
+                                        if not jugadora_foto.empty and 'url_photo' in jugadora_foto.columns:
+                                            photo_url_atm = jugadora_foto['url_photo'].iloc[0]
+                                            st.image(photo_url_atm, width=150)
+                                        else:
+                                            if df_players_info is not None:
+                                                try:
+                                                    jugadora_info_adicional = df_players_info[df_players_info['Player'] == nombre]
+                                                    if not jugadora_info_adicional.empty and 'Photo' in jugadora_info_adicional.columns:
+                                                        if not pd.isna(jugadora_info_adicional['Photo'].iloc[0]):
+                                                            photo_url = jugadora_info_adicional['Photo'].iloc[0]
+                                                            st.image(photo_url, width=150)
+                                                except:
+                                                    pass
                                 
-                                if len(metricas_validas) > 0:
-                                    # Normalizar datos (usando valores máximos de todas las jugadoras)
-                                    max_valores = []
-                                    for m in metricas_validas:
-                                        max_val = df_combined[m].max() if df_combined[m].max() > 0 else 1
-                                        max_valores.append(max_val)
-                                    
-                                    datos_seleccionada_norm = [datos_seleccionada[i]/max_valores[i] for i in range(len(datos_seleccionada))]
-                                    datos_similar_norm = [datos_similar[i]/max_valores[i] for i in range(len(datos_similar))]
-                                    
-                                    # Mostrar cantidad de métricas en gráfico
-                                    st.caption(f"Comparando {len(metricas_validas)} métricas definidas para posición {pos}")
-                                    
-                                    # Calcular ángulos
-                                    angulos = np.linspace(0, 2*np.pi, len(metricas_validas), endpoint=False).tolist()
-                                    # Cerrar el círculo
-                                    datos_seleccionada_norm = np.append(datos_seleccionada_norm, datos_seleccionada_norm[0])
-                                    datos_similar_norm = np.append(datos_similar_norm, datos_similar_norm[0])
-                                    angulos += angulos[:1]
-                                    
-                                    # Dibujar el radar
-                                    ax_full.plot(angulos, datos_seleccionada_norm, color='red', linewidth=2, label=jugadora_seleccionada)
-                                    ax_full.fill(angulos, datos_seleccionada_norm, color='red', alpha=0.1)
-                                    ax_full.plot(angulos, datos_similar_norm, color='blue', linewidth=2, label=nombre)
-                                    ax_full.fill(angulos, datos_similar_norm, color='blue', alpha=0.1)
-                                    
-                                    # Etiquetas y leyenda (usando nombres descriptivos)
-                                    plt.xticks(angulos[:-1], [metric_display_names.get(m, m) for m in metricas_validas], size=5)
-                                    plt.yticks([0.2, 0.4, 0.6, 0.8], ["0.2", "0.4", "0.6", "0.8"], color="grey", size=7)
-                                    plt.ylim(0, 1)
-                                    plt.legend(loc='upper right', bbox_to_anchor=(0.1, 0.1), fontsize=8)
-                                    plt.title(f"Comparación de métricas de {pos}: {jugadora_seleccionada} vs {nombre}", size=12)
-                                    plt.tight_layout()
-                                    
-                                    st.pyplot(fig_radar_full)
-                                    
-                                    # Incluir tabla con los valores exactos de todas las métricas
-                                    st.write(f"#### Valores exactos de las métricas para posición {pos}")
-                                    
-                                    # Crear lista de métricas con sus valores y descripciones
-                                    datos_tabla_completa = {
-                                        "Métrica": [metric_display_names.get(m, m) for m in metricas_validas],
-                                        jugadora_seleccionada: [round(float(df_combined[df_combined['Player'] == jugadora_seleccionada][m].iloc[0]), 2) 
-                                                            for m in metricas_validas],
-                                        nombre: [round(float(info_jugadora[m].iloc[0]), 2) for m in metricas_validas]
-                                    }
-                                    
-                                    # Mostrar tabla completa
-                                    st.dataframe(pd.DataFrame(datos_tabla_completa), use_container_width=True)
-                                    
-                                else:
-                                    st.warning(f"No hay suficientes métricas válidas disponibles para la comparación")
+                                    except:
+                                        pass
+                                st.markdown("</div>", unsafe_allow_html=True)
                             
-                            except Exception as e:
-                                st.error(f"Error al generar la comparación: {e}")
-                                st.write("Detalles:", str(e))
-                        else:
-                            st.warning(f"No se encontraron métricas definidas para la posición {pos}")
-                
-                # Información adicional sobre la interpretación
-                st.info("""
-                **¿Cómo interpretar estos resultados?** 
-                - La distancia es una medida de similitud: valores más bajos indican mayor similitud 
-                - Las métricas destacadas te muestran los indicadores clave para la posición
-                - La comparación directa te permite identificar fortalezas y debilidades relativas
-                - El gráfico radar muestra el perfil general de la jugadora respecto a la seleccionada
-                """)
+                            with col2:
+                                # Buscar el logo del club
+                                st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
+                                squad = df_combined[df_combined['Player'] == nombre ]['Squad'].iloc[0]
+                                team_logo_url = None
+                                if df_teams_info is not None and 'Squad' in df_teams_info.columns and 'Shield URL' in df_teams_info.columns:
+                                    club_team = df_teams_info[df_teams_info['Squad'] == squad]
+                                    if not club_team.empty and not pd.isna(club_team['Shield URL'].iloc[0]):
+                                        team_logo_url = club_team['Shield URL'].iloc[0]
+                                        st.image(team_logo_url, width=150)
+                                st.markdown("</div>", unsafe_allow_html=True)
+
+                            with col3:
+                                # Datos básicos de la jugadora similar
+                                info_jugadora = df_combined[df_combined['Player'] == nombre]
+                                
+                                # Mostrar distancia respecto a la jugadora seleccionada
+                                st.metric("Distancia", f"{distancia:.4f}", 
+                                        delta=f"{distancias_ordenadas[0][1] - distancia:.4f}" if i > 1 else "Más similar")
+                                
+                                st.write(f"**Posición:** {pos}")
+                                st.write(f"**Club:** {squad}")
+                                
+                                # Agregar más información disponible
+                                if 'Nation' in info_jugadora.columns and not pd.isna(info_jugadora['Nation'].iloc[0]):
+                                    st.write(f"**Nacionalidad:** {info_jugadora['Nation'].iloc[0]}")
+                                if 'League' in info_jugadora.columns and not pd.isna(info_jugadora['League'].iloc[0]):
+                                    st.write(f"**Liga:** {info_jugadora['League'].iloc[0]}")
+                                if 'Born' in info_jugadora.columns and not pd.isna(info_jugadora['Born'].iloc[0]):
+                                    st.write(f"**Año de nacimiento:** {info_jugadora['Born'].iloc[0]}")
+                            
+                            # Sección para mostrar algunos indicadores clave según la posición
+                            st.subheader("Métricas destacadas")
+                            
+                            # Usar las mismas métricas clave definidas anteriormente para consistencia
+                            if pos in position_metrics:
+                                if pos == 'GK':
+                                    metricas_clave = ['GA90', 'Save%', 'CS%', 'PSxG-GA', '#OPA/90']
+                                elif pos == 'DF':
+                                    metricas_clave = ['Tkl+Int', 'Blocks', 'Recov', 'touch_Def Pen', 'Tkl%']
+                                elif pos == 'MF':
+                                    metricas_clave = ['SCA90', 'GCA90', 'pass_1/3', 'PPA', 'touch_Mid 3rd']
+                                elif pos == 'FW':
+                                    metricas_clave = ['Gls', 'G/Sh', 'xG', 'SoT/90', 'touch_Att Pen']
+                                
+                                # Filtrar solo las métricas disponibles
+                                metricas_clave = [m for m in metricas_clave if m in info_jugadora.columns]
+                                
+                                # Crear columnas para las métricas clave
+                                if metricas_clave:
+                                    cols = st.columns(len(metricas_clave))
+                                    
+                                    for j, metrica in enumerate(metricas_clave):
+                                        if metrica in info_jugadora.columns and not pd.isna(info_jugadora[metrica].iloc[0]):
+                                            valor = info_jugadora[metrica].iloc[0]
+                                            cols[j].metric(
+                                                metric_display_names.get(metrica, metrica),
+                                                f"{valor:.2f}"
+                                            )
+                            
+                            # Comparación directa con la jugadora seleccionada
+                            st.subheader("Comparación directa con " + jugadora_seleccionada)
+
+                            # Usar exactamente las métricas definidas en position_metrics para esta posición
+                            if pos in position_metrics:
+                                metricas_posicion = position_metrics[pos]
+                                
+                                # Filtrar identificadores y mantener solo métricas numéricas
+                                metricas_posicion = [m for m in metricas_posicion 
+                                                    if m not in ['Player', 'Squad', 'Born', 'Pos', 'Nation', 'Comp', 'Age']
+                                                    and m in df_combined.select_dtypes(include=['float64', 'int64']).columns]
+                                
+                                # Preparar datos para el radar
+                                fig_radar_full = plt.figure(figsize=(6 ,6))
+                                ax_full = fig_radar_full.add_subplot(111, polar=True)
+                                
+                                try:
+                                    # Obtener datos para ambas jugadoras
+                                    datos_seleccionada = []
+                                    datos_similar = []
+                                    metricas_validas = []
+                                    
+                                    # Filtrar solo métricas disponibles para ambas jugadoras
+                                    for metrica in metricas_posicion:
+                                        try:
+                                            # Verificar que la métrica está disponible para ambas jugadoras
+                                            val_original = df_combined[df_combined['Player'] == jugadora_seleccionada][metrica].iloc[0]
+                                            val_similar = info_jugadora[metrica].iloc[0]
+                                            
+                                            if pd.notna(val_original) and pd.notna(val_similar):
+                                                datos_seleccionada.append(val_original)
+                                                datos_similar.append(val_similar)
+                                                metricas_validas.append(metrica)
+                                        except:
+                                            # Si hay error, ignoramos esta métrica
+                                            pass
+                                    
+                                    if len(metricas_validas) > 0:
+                                        # Normalizar datos (usando valores máximos de todas las jugadoras)
+                                        max_valores = []
+                                        for m in metricas_validas:
+                                            max_val = df_combined[m].max() if df_combined[m].max() > 0 else 1
+                                            max_valores.append(max_val)
+                                        
+                                        datos_seleccionada_norm = [datos_seleccionada[i]/max_valores[i] for i in range(len(datos_seleccionada))]
+                                        datos_similar_norm = [datos_similar[i]/max_valores[i] for i in range(len(datos_similar))]
+                                        
+                                        # Mostrar cantidad de métricas en gráfico
+                                        st.caption(f"Comparando {len(metricas_validas)} métricas definidas para posición {pos}")
+                                        
+                                        # Calcular ángulos
+                                        angulos = np.linspace(0, 2*np.pi, len(metricas_validas), endpoint=False).tolist()
+                                        # Cerrar el círculo
+                                        datos_seleccionada_norm = np.append(datos_seleccionada_norm, datos_seleccionada_norm[0])
+                                        datos_similar_norm = np.append(datos_similar_norm, datos_similar_norm[0])
+                                        angulos += angulos[:1]
+                                        
+                                        # Dibujar el radar
+                                        ax_full.plot(angulos, datos_seleccionada_norm, color='red', linewidth=2, label=jugadora_seleccionada)
+                                        ax_full.fill(angulos, datos_seleccionada_norm, color='red', alpha=0.1)
+                                        ax_full.plot(angulos, datos_similar_norm, color='blue', linewidth=2, label=nombre)
+                                        ax_full.fill(angulos, datos_similar_norm, color='blue', alpha=0.1)
+                                        
+                                        # Etiquetas y leyenda (usando nombres descriptivos)
+                                        plt.xticks(angulos[:-1], [metric_display_names.get(m, m) for m in metricas_validas], size=5)
+                                        plt.yticks([0.2, 0.4, 0.6, 0.8], ["0.2", "0.4", "0.6", "0.8"], color="grey", size=7)
+                                        plt.ylim(0, 1)
+                                        plt.legend(loc='upper right', bbox_to_anchor=(0.1, 0.1), fontsize=8)
+                                        plt.title(f"Comparación de métricas de {pos}: {jugadora_seleccionada} vs {nombre}", size=12)
+                                        plt.tight_layout()
+                                        
+                                        st.pyplot(fig_radar_full)
+                                        
+                                        # Incluir tabla con los valores exactos de todas las métricas
+                                        st.write(f"#### Valores exactos de las métricas para posición {pos}")
+                                        
+                                        # Crear lista de métricas con sus valores y descripciones
+                                        datos_tabla_completa = {
+                                            "Métrica": [metric_display_names.get(m, m) for m in metricas_validas],
+                                            jugadora_seleccionada: [round(float(df_combined[df_combined['Player'] == jugadora_seleccionada][m].iloc[0]), 2) 
+                                                                for m in metricas_validas],
+                                            nombre: [round(float(info_jugadora[m].iloc[0]), 2) for m in metricas_validas]
+                                        }
+                                        
+                                        # Mostrar tabla completa
+                                        st.dataframe(pd.DataFrame(datos_tabla_completa), use_container_width=True)
+                                        
+                                    else:
+                                        st.warning(f"No hay suficientes métricas válidas disponibles para la comparación")
+                                
+                                except Exception as e:
+                                    st.error(f"Error al generar la comparación: {e}")
+                                    st.write("Detalles:", str(e))
+                            else:
+                                st.warning(f"No se encontraron métricas definidas para la posición {pos}")
+                    
+                    # Información adicional sobre la interpretación
+                    st.info("""
+                    **¿Cómo interpretar estos resultados?** 
+                    - La distancia es una medida de similitud: valores más bajos indican mayor similitud 
+                    - Las métricas destacadas te muestran los indicadores clave para la posición
+                    - La comparación directa te permite identificar fortalezas y debilidades relativas
+                    - El gráfico radar muestra el perfil general de la jugadora respecto a la seleccionada
+                    """)
             
             # Pestaña 2: Visualización de clustering y gráfico radar
             with tab2:
