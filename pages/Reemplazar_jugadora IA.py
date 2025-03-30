@@ -379,6 +379,7 @@ if df_combined is not None and not df_combined.empty:
             if position in position_metrics:
                 # Usamos las métricas específicas para la posición
                 columnas_filtradas = position_metrics[position]
+                st.write(columnas_filtradas)
                 df_filtered = df_combined[columnas_filtradas]
                 st.info(f"Usando {len(columnas_filtradas)} métricas específicas para la posición {position}")
             else:
