@@ -708,14 +708,7 @@ if df_combined is not None and not df_combined.empty:
     player1 = crear_filtros_jugadora("player1", col1)
     player2 = crear_filtros_jugadora("player2", col2)
     
-    # Ahora CREAMOS LAS TABS después de los filtros
-    tab1, tab2, tab3, tab4, tab5 = st.tabs([
-        "Visión General", 
-        "Métricas Macro", 
-        "Métricas Meso", 
-        "Métricas Micro",
-        "Comparación por Percentiles"
-    ])
+
     
     # Mostrar información de las jugadoras seleccionadas
     col1, col2 = st.columns(2)
@@ -740,6 +733,15 @@ if df_combined is not None and not df_combined.empty:
     
     if df_player2 is not None and player2:
         metrics2_data, existing_metrics2, player2_position = obtener_metricas_jugadora(df_player2)
+
+        # Ahora CREAMOS LAS TABS después de los filtros
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+        "Visión General", 
+        "Métricas Macro", 
+        "Métricas Meso", 
+        "Métricas Micro",
+        "Comparación por Percentiles"
+    ])
     
     # TAB 1: Visión General
     with tab1:
