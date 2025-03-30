@@ -52,6 +52,29 @@ st.markdown("""
         color: #6c757d;
         margin-top: 5px;
     }
+            
+    /* Tamaño fijo para los scorecards */
+    .stMetric {
+        height: 120px;
+        width: 100%;
+        min-width: 150px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    /* Asegurar que el contenedor de valor tenga altura fija */
+    .stMetric [data-testid="stMetricValue"] {
+        margin: 8px 0;
+        height: 30px;
+        display: flex;
+        align-items: center;
+    }
+
+    /* Asegurar que la sección de comparativas tenga altura fija */
+    .metric-comparison {
+        height: 40px;
+    }
 </style>
 """, unsafe_allow_html=True)
 
