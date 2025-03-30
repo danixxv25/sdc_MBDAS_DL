@@ -482,10 +482,19 @@ if df_combined is not None and not df_combined.empty:
                     # Agregar más información disponible
                     if 'Nation' in info_seleccionada.columns and not pd.isna(info_seleccionada['Nation'].iloc[0]):
                         st.write(f"**Nacionalidad:** {info_seleccionada['Nation'].iloc[0]}")
+                    
+                    # Verificar que jugadora_info no esté vacío y tenga filas antes de acceder a iloc[0]
+                    if (jugadora_info is not None and not jugadora_info.empty and 
+                        'Birth_Date' in jugadora_info.columns and 
+                        len(jugadora_info) > 0 and not pd.isna(jugadora_info['Birth_Date'].iloc[0])):
+                        st.write(f"**Fecha de nacimiento:** {info_seleccionada['Birth_Date'].iloc[0]}")
+                    
+                    if not 'Birth_Date':
+                        if 'Born' in info_seleccionada.columns and not pd.isna(info_seleccionada['Born'].iloc[0]):
+                            st.write(f"**Año de nacimiento:** {info_seleccionada['Born'].iloc[0]}")
+
                     if 'League' in info_seleccionada.columns and not pd.isna(info_seleccionada['League'].iloc[0]):
                         st.write(f"**Liga:** {info_seleccionada['League'].iloc[0]}")
-                    if 'Born' in info_seleccionada.columns and not pd.isna(info_seleccionada['Born'].iloc[0]):
-                        st.write(f"**Año de nacimiento:** {info_seleccionada['Born'].iloc[0]}")
                 
                 # Separador
                 st.divider()
