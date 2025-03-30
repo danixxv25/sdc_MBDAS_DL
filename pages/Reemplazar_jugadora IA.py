@@ -241,11 +241,12 @@ if df_combined is not None and not df_combined.empty:
             # Obtener posición de la jugadora seleccionada
             position = df_combined[df_combined['Player'] == jugadora_seleccionada]['Posición Principal'].iloc[0]
             
-            # Filtrar el DataFrame según la posición
+            # Filtrar el DataFrame según la posición usando las métricas específicas
             if position in position_metrics:
                 # Usamos las métricas específicas para la posición
                 columnas_filtradas = position_metrics[position]
                 df_filtered = df_combined[columnas_filtradas]
+                st.info(f"Usando {len(columnas_filtradas)} métricas específicas para la posición {position}")
             else:
                 # Si la posición no está en nuestras categorías, usamos todas las columnas
                 st.warning(f"Posición '{position}' no reconocida. Usando todas las métricas disponibles.")
@@ -304,7 +305,9 @@ if df_combined is not None and not df_combined.empty:
                     squad = player_info['Squad'].iloc[0] if not player_info.empty else "Desconocido"
                     pos = player_info['Posición Principal'].iloc[0] if not player_info.empty else "Desconocido"
                     
-                    distancias.append((row['Player'], distancia, row['cluster'], squad, pos))
+                    # Solo incluimos jugadoras de la misma posición para mejorar la relevancia
+                    if pos == position:
+                        distancias.append((row['Player'], distancia, row['cluster'], squad, pos))
             
             # Ordenamos por distancia para encontrar las más similares
             distancias_ordenadas = sorted(distancias, key=lambda x: x[1])
@@ -350,6 +353,42 @@ if df_combined is not None and not df_combined.empty:
                 
                 # Separador
                 st.divider()
+                
+                # Métricas clave de la jugadora seleccionada basadas en su posición
+                st.subheader("Métricas destacadas")
+                
+                # Seleccionamos métricas clave según la posición específica usando position_metrics
+                if position in position_metrics:
+                    # Filtrar solo métricas numéricas
+                    pos_metricas = [m for m in position_metrics[position] 
+                                if m in df_combined.select_dtypes(include=['float64', 'int64']).columns 
+                                and m not in ['Player', 'Squad', 'Born']]
+                    
+                    # Seleccionar 4-5 métricas clave para esta posición
+                    metricas_clave = []
+                    if position == 'GK':
+                        metricas_clave = ['GA90', 'Save%', 'CS%', 'PSxG-GA', '#OPA/90']
+                    elif position == 'DF':
+                        metricas_clave = ['Tkl+Int', 'Blocks', 'Recov', 'touch_Def Pen', 'Tkl%']
+                    elif position == 'MF':
+                        metricas_clave = ['SCA90', 'GCA90', 'pass_1/3', 'PPA', 'touch_Mid 3rd']
+                    elif position == 'FW':
+                        metricas_clave = ['Gls', 'G/Sh', 'xG', 'SoT/90', 'touch_Att Pen']
+                    
+                    # Asegurarse de que las métricas seleccionadas existen en los datos
+                    metricas_clave = [m for m in metricas_clave if m in pos_metricas]
+                    
+                    # Mostrar métricas clave en forma de tarjetas
+                    if metricas_clave:
+                        cols = st.columns(len(metricas_clave))
+                        
+                        for i, metrica in enumerate(metricas_clave):
+                            if metrica in info_seleccionada.columns and not pd.isna(info_seleccionada[metrica].iloc[0]):
+                                valor = info_seleccionada[metrica].iloc[0]
+                                cols[i].metric(
+                                    metric_display_names.get(metrica, metrica),
+                                    f"{valor:.2f}"
+                                )
                 
                 # Información detallada de cada jugadora similar
                 st.subheader("Jugadoras similares - Información detallada")
@@ -407,35 +446,37 @@ if df_combined is not None and not df_combined.empty:
                         # Sección para mostrar algunos indicadores clave según la posición
                         st.subheader("Métricas destacadas")
                         
-                        # Seleccionar métricas clave según la posición
-                        metricas_clave = []
-                        if pos == 'GK':
-                            metricas_clave = ['Save%', 'CS%', 'GA90', 'PSxG-GA']
-                        elif pos == 'DF':
-                            metricas_clave = ['Tkl+Int', 'Blocks', 'Recov', 'touch_Def Pen']
-                        elif pos == 'MF':
-                            metricas_clave = ['Gls', 'Ast', 'PPA', 'touch_Mid 3rd']
-                        elif pos == 'FW':
-                            metricas_clave = ['Gls', 'G/Sh', 'xG', 'touch_Att Pen']
-                        
-                        # Crear columnas para las métricas clave
-                        if metricas_clave:
-                            cols = st.columns(len(metricas_clave))
+                        # Usar las mismas métricas clave definidas anteriormente para consistencia
+                        if pos in position_metrics:
+                            if pos == 'GK':
+                                metricas_clave = ['GA90', 'Save%', 'CS%', 'PSxG-GA', '#OPA/90']
+                            elif pos == 'DF':
+                                metricas_clave = ['Tkl+Int', 'Blocks', 'Recov', 'touch_Def Pen', 'Tkl%']
+                            elif pos == 'MF':
+                                metricas_clave = ['SCA90', 'GCA90', 'pass_1/3', 'PPA', 'touch_Mid 3rd']
+                            elif pos == 'FW':
+                                metricas_clave = ['Gls', 'G/Sh', 'xG', 'SoT/90', 'touch_Att Pen']
                             
-                            for j, metrica in enumerate(metricas_clave):
-                                if metrica in info_jugadora.columns and not pd.isna(info_jugadora[metrica].iloc[0]):
-                                    valor = info_jugadora[metrica].iloc[0]
-                                    cols[j].metric(
-                                        metric_display_names.get(metrica, metrica),
-                                        f"{valor:.2f}"
-                                    )
+                            # Filtrar solo las métricas disponibles
+                            metricas_clave = [m for m in metricas_clave if m in info_jugadora.columns]
+                            
+                            # Crear columnas para las métricas clave
+                            if metricas_clave:
+                                cols = st.columns(len(metricas_clave))
+                                
+                                for j, metrica in enumerate(metricas_clave):
+                                    if metrica in info_jugadora.columns and not pd.isna(info_jugadora[metrica].iloc[0]):
+                                        valor = info_jugadora[metrica].iloc[0]
+                                        cols[j].metric(
+                                            metric_display_names.get(metrica, metrica),
+                                            f"{valor:.2f}"
+                                        )
                         
                         # Comparación directa con la jugadora seleccionada
                         st.subheader("Comparación directa con " + jugadora_seleccionada)
 
-                        # Obtener todas las métricas específicas de la posición desde position_metrics
+                        # Usar exactamente las métricas definidas en position_metrics para esta posición
                         if pos in position_metrics:
-                            # Usar exactamente las métricas definidas en position_metrics para esta posición
                             metricas_posicion = position_metrics[pos]
                             
                             # Filtrar identificadores y mantener solo métricas numéricas
@@ -535,16 +576,6 @@ if df_combined is not None and not df_combined.empty:
                 - La comparación directa te permite identificar fortalezas y debilidades relativas
                 - El gráfico radar muestra el perfil general de la jugadora respecto a la seleccionada
                 """)
-                
-                # Información sobre el uso de estos datos
-                st.markdown("""
-                ### Sugerencias de uso:
-                
-                * Para reemplazo directo: busca jugadoras con distancia baja y métricas similares
-                * Para complemento táctico: identifica jugadoras con fortalezas donde la seleccionada es más débil
-                * Para desarrollo: las jugadoras jóvenes con perfil similar pueden ser buenas candidatas para desarrollar
-                """)
-            
             
             # Pestaña 2: Visualización de clustering y gráfico radar
             with tab2:
@@ -605,109 +636,108 @@ if df_combined is not None and not df_combined.empty:
                 # Gráfico de radar para comparar métricas
                 st.subheader("Gráfico Radar de Métricas")
                 
-                # Verificamos los tipos de columnas
-                st.write("Seleccionando métricas numéricas para el radar...")
-                
-                # Seleccionamos métricas NUMÉRICAS relevantes según la posición
-                numeric_columns = df_combined.select_dtypes(include=['float64', 'int64']).columns.tolist()
-                relevant_metrics = [col for col in columnas_metricas if col in numeric_columns]
-                
-                st.write(f"Métricas seleccionadas para el radar: {', '.join(relevant_metrics[:5])}...")
-                st.write(f"Número de métricas a visualizar: {len(relevant_metrics)}")
-                
-                # Seleccionamos las 5 jugadoras más similares para el gráfico de radar
-                jugadoras_radar = [jugadora_seleccionada] + [nombre for nombre, _, _, _, _ in distancias_ordenadas[:4]]
-                
-                # Verificar que las jugadoras existen en el DataFrame
-                jugadoras_disponibles = [j for j in jugadoras_radar if j in df_combined['Player'].values]
-                if len(jugadoras_disponibles) < len(jugadoras_radar):
-                    st.warning(f"Algunas jugadoras no se encontraron en el DataFrame: {set(jugadoras_radar) - set(jugadoras_disponibles)}")
-                
-                # Preparar datos para el gráfico de radar
-                try:
-                    # Configurar el gráfico de radar
-                    fig_radar = plt.figure(figsize=(10, 10))
-                    ax = fig_radar.add_subplot(111, polar=True)
+                # Usar las métricas específicas para la posición desde position_metrics
+                if position in position_metrics:
+                    # Obtener métricas numéricas para esta posición
+                    relevant_metrics = [m for m in position_metrics[position] 
+                                    if m in df_combined.select_dtypes(include=['float64', 'int64']).columns
+                                    and m not in ['Player', 'Squad', 'Born']]
                     
-                    # Calcular el ángulo para cada métrica
-                    angulos = np.linspace(0, 2*np.pi, len(relevant_metrics), endpoint=False).tolist()
+                    st.write(f"Métricas seleccionadas para el radar: métricas específicas para {position}")
+                    st.write(f"Número de métricas a visualizar: {len(relevant_metrics)}")
                     
-                    # Crear una paleta de colores para diferenciar las jugadoras
-                    colores = plt.cm.tab10(np.linspace(0, 1, len(jugadoras_disponibles)))
+                    # Seleccionamos las 5 jugadoras más similares para el gráfico de radar
+                    jugadoras_radar = [jugadora_seleccionada] + [nombre for nombre, _, _, _, _ in distancias_ordenadas[:4]]
                     
-                    # Matriz para almacenar los valores normalizados de todas las jugadoras
-                    all_values = []
+                    # Verificar que las jugadoras existen en el DataFrame
+                    jugadoras_disponibles = [j for j in jugadoras_radar if j in df_combined['Player'].values]
+                    if len(jugadoras_disponibles) < len(jugadoras_radar):
+                        st.warning(f"Algunas jugadoras no se encontraron en el DataFrame: {set(jugadoras_radar) - set(jugadoras_disponibles)}")
                     
-                    # Primero recopilamos todos los valores para normalización global
-                    for jugadora in jugadoras_disponibles:
-                        # Obtenemos datos cuidadosamente, una columna a la vez
-                        valores_jugadora = []
-                        for metrica in relevant_metrics:
-                            try:
-                                # Extraer el valor específico para esta jugadora y métrica
-                                valor = df_combined.loc[df_combined['Player'] == jugadora, metrica].iloc[0]
-                                valores_jugadora.append(valor)
-                            except Exception as e:
-                                valores_jugadora.append(0)  # Valor por defecto en caso de error
+                    # Preparar datos para el gráfico de radar
+                    try:
+                        # Configurar el gráfico de radar
+                        fig_radar = plt.figure(figsize=(10, 10))
+                        ax = fig_radar.add_subplot(111, polar=True)
                         
-                        all_values.append(valores_jugadora)
-                    
-                    # Normalizar todos los valores conjuntamente
-                    normalized_values = []
-                    for i, metrica in enumerate(relevant_metrics):
-                        # Obtener todos los valores para esta métrica
-                        metric_values = [values[i] for values in all_values]
-                        min_val = min(metric_values)
-                        max_val = max(metric_values)
+                        # Calcular el ángulo para cada métrica
+                        angulos = np.linspace(0, 2*np.pi, len(relevant_metrics), endpoint=False).tolist()
                         
-                        # Evitar división por cero
-                        if max_val > min_val:
-                            normalized_metric = [(v - min_val) / (max_val - min_val) for v in metric_values]
-                        else:
-                            normalized_metric = [0.5 for _ in metric_values]  # Valor medio si todos son iguales
+                        # Crear una paleta de colores para diferenciar las jugadoras
+                        colores = plt.cm.tab10(np.linspace(0, 1, len(jugadoras_disponibles)))
                         
-                        # Almacenar valores normalizados por métrica
-                        for j in range(len(normalized_values), len(all_values)):
-                            normalized_values.append([])
+                        # Matriz para almacenar los valores normalizados de todas las jugadoras
+                        all_values = []
                         
-                        for j in range(len(all_values)):
-                            normalized_values[j].append(normalized_metric[j])
-                    
-                    # Dibujar cada jugadora en el gráfico de radar
-                    for i, jugadora in enumerate(jugadoras_disponibles):
-                        valores = normalized_values[i]
+                        # Primero recopilamos todos los valores para normalización global
+                        for jugadora in jugadoras_disponibles:
+                            # Obtenemos datos cuidadosamente, una columna a la vez
+                            valores_jugadora = []
+                            for metrica in relevant_metrics:
+                                try:
+                                    # Extraer el valor específico para esta jugadora y métrica
+                                    valor = df_combined.loc[df_combined['Player'] == jugadora, metrica].iloc[0]
+                                    valores_jugadora.append(valor)
+                                except Exception as e:
+                                    valores_jugadora.append(0)  # Valor por defecto en caso de error
+                            
+                            all_values.append(valores_jugadora)
                         
-                        # Completar el círculo repitiendo el primer valor
-                        valores_completos = valores + [valores[0]]
-                        angulos_completos = angulos + [angulos[0]]
+                        # Normalizar todos los valores conjuntamente
+                        normalized_values = []
+                        for i, metrica in enumerate(relevant_metrics):
+                            # Obtener todos los valores para esta métrica
+                            metric_values = [values[i] for values in all_values]
+                            min_val = min(metric_values)
+                            max_val = max(metric_values)
+                            
+                            # Evitar división por cero
+                            if max_val > min_val:
+                                normalized_metric = [(v - min_val) / (max_val - min_val) for v in metric_values]
+                            else:
+                                normalized_metric = [0.5 for _ in metric_values]  # Valor medio si todos son iguales
+                            
+                            # Almacenar valores normalizados por métrica
+                            for j in range(len(all_values)):
+                                normalized_values[j].append(normalized_metric[j])
                         
-                        # Destacar la jugadora seleccionada con línea más gruesa
-                        linewidth = 3 if jugadora == jugadora_seleccionada else 1.5
-                        ax.plot(angulos_completos, valores_completos, linewidth=linewidth, linestyle='solid', label=jugadora, color=colores[i])
-                        ax.fill(angulos_completos, valores_completos, alpha=0.1, color=colores[i])
+                        # Dibujar cada jugadora en el gráfico de radar
+                        for i, jugadora in enumerate(jugadoras_disponibles):
+                            valores = normalized_values[i]
+                            
+                            # Completar el círculo repitiendo el primer valor
+                            valores_completos = valores + [valores[0]]
+                            angulos_completos = angulos + [angulos[0]]
+                            
+                            # Destacar la jugadora seleccionada con línea más gruesa
+                            linewidth = 3 if jugadora == jugadora_seleccionada else 1.5
+                            ax.plot(angulos_completos, valores_completos, linewidth=linewidth, linestyle='solid', label=jugadora, color=colores[i])
+                            ax.fill(angulos_completos, valores_completos, alpha=0.1, color=colores[i])
+                        
+                        # Añadir las etiquetas para cada métrica (usando nombres descriptivos)
+                        plt.xticks(angulos, [metric_display_names.get(m, m) for m in relevant_metrics], size=8)
+                        
+                        # Añadir las líneas de la red para cada nivel
+                        ax.set_rlabel_position(0)
+                        plt.yticks([0.2, 0.4, 0.6, 0.8], ["0.2", "0.4", "0.6", "0.8"], color="grey", size=8)
+                        plt.ylim(0, 1)
+                        
+                        # Ajustar la leyenda y el título
+                        plt.legend(loc='upper right', bbox_to_anchor=(0.1, 0.1))
+                        plt.title(f'Comparación de Métricas: {jugadora_seleccionada} vs Jugadoras Similares', size=15)
+                        
+                        # Guardar figura Radar para el PDF
+                        st.session_state.fig_radar_saved = fig_radar
+                        
+                        st.pyplot(fig_radar)
                     
-                    # Añadir las etiquetas para cada métrica (usando nombres descriptivos)
-                    plt.xticks(angulos, [metric_display_names.get(m, m) for m in relevant_metrics], size=8)
-                    
-                    # Añadir las líneas de la red para cada nivel
-                    ax.set_rlabel_position(0)
-                    plt.yticks([0.2, 0.4, 0.6, 0.8], ["0.2", "0.4", "0.6", "0.8"], color="grey", size=8)
-                    plt.ylim(0, 1)
-                    
-                    # Ajustar la leyenda y el título
-                    plt.legend(loc='upper right', bbox_to_anchor=(0.1, 0.1))
-                    plt.title(f'Comparación de Métricas: {jugadora_seleccionada} vs Jugadoras Similares', size=15)
-                    
-                    # Guardar figura Radar para el PDF
-                    st.session_state.fig_radar_saved = fig_radar
-                    
-                    st.pyplot(fig_radar)
-                
-                except Exception as e:
-                    st.error(f"Error al crear el gráfico de radar: {e}")
-                    st.write("Detalles del error:", str(e))
-                    import traceback
-                    st.code(traceback.format_exc())
+                    except Exception as e:
+                        st.error(f"Error al crear el gráfico de radar: {e}")
+                        st.write("Detalles del error:", str(e))
+                        import traceback
+                        st.code(traceback.format_exc())
+                else:
+                    st.warning(f"No se encontraron métricas definidas para la posición {position} en position_metrics")
                 
                 # Información sobre la interpretación del gráfico de radar
                 st.info("""
@@ -719,16 +749,16 @@ if df_combined is not None and not df_combined.empty:
                 """)
             
             # Pestaña 3: Gráficos de barras comparativos por métricas individuales
-            with tab3:
+            with tab4:
                 st.header("Comparativa de Métricas Individuales")
                 st.write(f"Comparando a {jugadora_seleccionada} ({position}) con las jugadoras más similares")
                 
-                # Usamos position_metrics para el análisis completo (ya definido anteriormente)
+                # Usamos position_metrics para el análisis completo 
                 
                 # Número de jugadoras a comparar (5 por defecto, ajustable)
                 num_jugadoras = st.slider("Número de jugadoras a comparar:", min_value=2, max_value=5, value=5)
                 
-                # Obtener todas las métricas relevantes según la posición
+                # Obtener todas las métricas relevantes según la posición desde position_metrics
                 if position in position_metrics:
                     metrics_to_display = position_metrics[position]
                     
@@ -738,112 +768,94 @@ if df_combined is not None and not df_combined.empty:
                     
                     # Verificar que las métricas existen en el dataframe
                     metrics_to_display = [m for m in metrics_to_display if m in df_combined.columns]
-                else:
-                    # Si la posición no está en nuestro diccionario, usar métricas genéricas
-                    metrics_to_display = df_combined.select_dtypes(include=['float64', 'int64']).columns.tolist()
-                    # Excluir columnas de identificación
-                    exclude_cols = ['Player', 'Squad', 'Born', 'Pos', 'Nation', 'Comp', 'Age', 'Born']
-                    metrics_to_display = [m for m in metrics_to_display if m not in exclude_cols]
-                
-                # Mostrar el título con la posición
-                st.subheader(f"Métricas completas para la posición: {position} ({len(metrics_to_display)} métricas)")
-                
-                # Seleccionar las jugadoras a comparar
-                jugadoras_comparar = [jugadora_seleccionada] + [nombre for nombre, _, _, _, _ in distancias_ordenadas[:num_jugadoras-1]]
-                
-                # Crear un contenedor con scroll para los gráficos
-                graph_container = st.container()
-                
-                with graph_container:
-                    # Organizar en una grid: 2 columnas
-                    col1, col2 = st.columns(2)
-                    cols = [col1, col2]
                     
-                    # Crear un gráfico para cada métrica
-                    for i, metric in enumerate(metrics_to_display):
-                        # Alternar entre columnas
-                        col = cols[i % 2]
+                    # Mostrar el título con la posición
+                    st.subheader(f"Métricas completas para la posición: {position} ({len(metrics_to_display)} métricas)")
+                    
+                    # Seleccionar las jugadoras a comparar
+                    jugadoras_comparar = [jugadora_seleccionada] + [nombre for nombre, _, _, _, _ in distancias_ordenadas[:num_jugadoras-1]]
+                    
+                    # Crear un contenedor con scroll para los gráficos
+                    graph_container = st.container()
+                    
+                    with graph_container:
+                        # Organizar en una grid: 2 columnas
+                        col1, col2 = st.columns(2)
+                        cols = [col1, col2]
                         
-                        with col:
-                            # Título descriptivo de la métrica
-                            metric_name = metric_display_names.get(metric, metric)
-                            st.write(f"### {metric_name}")
+                        # Crear un gráfico para cada métrica
+                        for i, metric in enumerate(metrics_to_display):
+                            # Alternar entre columnas
+                            col = cols[i % 2]
                             
-                            # Crear figura para el gráfico de barras
-                            fig_bar = plt.figure(figsize=(10, 5))
-                            
-                            # Extraer valores para las jugadoras seleccionadas
-                            nombres = []
-                            valores = []
-                            
-                            for jugadora in jugadoras_comparar:
-                                if jugadora in df_combined['Player'].values:
-                                    try:
-                                        valor = df_combined[df_combined['Player'] == jugadora][metric].iloc[0]
-                                        # Verificar si el valor es numérico
-                                        if not pd.isna(valor):
-                                            # Truncar los nombres largos para mejor visualización
-                                            nombre_corto = jugadora[:15] + '...' if len(jugadora) > 15 else jugadora
-                                            nombres.append(nombre_corto)
-                                            valores.append(valor)
-                                    except Exception as e:
-                                        st.error(f"Error al obtener datos para {jugadora} en la métrica {metric}: {e}")
-                            
-                            if nombres and valores:
-                                # Crear paleta de colores: destacar la jugadora seleccionada
-                                colores = ['#ff7f0e' if nombre.startswith(jugadora_seleccionada[:15]) else '#1f77b4' for nombre in nombres]
+                            with col:
+                                # Título descriptivo de la métrica
+                                metric_name = metric_display_names.get(metric, metric)
+                                st.write(f"### {metric_name}")
                                 
-                                # Crear el gráfico de barras
-                                bars = plt.bar(nombres, valores, color=colores)
+                                # Crear figura para el gráfico de barras
+                                fig_bar = plt.figure(figsize=(10, 5))
                                 
-                                # Añadir etiquetas y título
-                                plt.title(f"{metric_name}", fontsize=12)
-                                plt.ylabel(metric)
-                                plt.xticks(rotation=45, ha='right')
+                                # Extraer valores para las jugadoras seleccionadas
+                                nombres = []
+                                valores = []
                                 
-                                # Añadir valores sobre las barras
-                                for bar in bars:
-                                    height = bar.get_height()
-                                    if height != 0:  # Evitar errores con valores cero
-                                        max_value = max(valores) if max(valores) > 0 else 1
-                                        plt.text(bar.get_x() + bar.get_width()/2., height + 0.02*max_value,
-                                                f'{height:.1f}', ha='center', va='bottom', fontsize=9)
+                                for jugadora in jugadoras_comparar:
+                                    if jugadora in df_combined['Player'].values:
+                                        try:
+                                            valor = df_combined[df_combined['Player'] == jugadora][metric].iloc[0]
+                                            # Verificar si el valor es numérico
+                                            if not pd.isna(valor):
+                                                # Truncar los nombres largos para mejor visualización
+                                                nombre_corto = jugadora[:15] + '...' if len(jugadora) > 15 else jugadora
+                                                nombres.append(nombre_corto)
+                                                valores.append(valor)
+                                        except Exception as e:
+                                            st.error(f"Error al obtener datos para {jugadora} en la métrica {metric}: {e}")
                                 
-                                plt.tight_layout()
-                                plt.grid(axis='y', alpha=0.3)
-                                
-                                # Mostrar el gráfico
-                                st.pyplot(fig_bar)
-                            else:
-                                st.warning(f"No hay datos disponibles para la métrica {metric}")
-                
-                # Información sobre la interpretación
-                st.info("""
-                **Comparación de métricas individuales:**
-                - Las barras naranjas representan a la jugadora seleccionada
-                - Las barras azules representan a las jugadoras similares
-                - Estas comparaciones te permiten identificar fortalezas y debilidades específicas
-                - Puedes usar esta información para decidir qué jugadoras podrían ser buenas alternativas o complementos
-                """)
-                
-                # Tabla con la descripción de las métricas mostradas
-                st.subheader("Descripción de las métricas")
-                
-                # Crear diccionario para la tabla de descripciones
-                descripcion_data = {
-                    "Métrica": [m for m in metrics_to_display],
-                    "Nombre": [metric_display_names.get(m, m) for m in metrics_to_display],
-                    "Descripción": [f"Descripción de {metric_display_names.get(m, m)}" for m in metrics_to_display]
-                }
-                
-                # Mostrar tabla con descripciones
-                st.dataframe(pd.DataFrame(descripcion_data), use_container_width=True)
-
+                                if nombres and valores:
+                                    # Crear paleta de colores: destacar la jugadora seleccionada
+                                    colores = ['#ff7f0e' if nombre.startswith(jugadora_seleccionada[:15]) else '#1f77b4' for nombre in nombres]
+                                    
+                                    # Crear el gráfico de barras
+                                    bars = plt.bar(nombres, valores, color=colores)
+                                    
+                                    # Añadir etiquetas y título
+                                    plt.title(f"{metric_name}", fontsize=12)
+                                    plt.ylabel(metric)
+                                    plt.xticks(rotation=45, ha='right')
+                                    
+                                    # Añadir valores sobre las barras
+                                    for bar in bars:
+                                        height = bar.get_height()
+                                        if height != 0:  # Evitar errores con valores cero
+                                            max_value = max(valores) if max(valores) > 0 else 1
+                                            plt.text(bar.get_x() + bar.get_width()/2., height + 0.02*max_value,
+                                                    f'{height:.1f}', ha='center', va='bottom', fontsize=9)
+                                    
+                                    plt.tight_layout()
+                                    plt.grid(axis='y', alpha=0.3)
+                                    
+                                    # Mostrar el gráfico
+                                    st.pyplot(fig_bar)
+                                else:
+                                    st.warning(f"No hay datos disponibles para la métrica {metric}")
+                    
+                    # Información sobre la interpretación
+                    st.info("""
+                    **Comparación de métricas individuales:**
+                    - Las barras naranjas representan a la jugadora seleccionada
+                    - Las barras azules representan a las jugadoras similares
+                    - Estas comparaciones te permiten identificar fortalezas y debilidades específicas
+                    - Puedes usar esta información para decidir qué jugadoras podrían ser buenas alternativas o complementos
+                    """)
+                else:
+                    st.warning(f"No se encontraron métricas definidas para la posición {position} en position_metrics")
+            
             # Pestaña 4: Análisis IA con DAFO y recomendaciones
-            with tab4:
-                st.header(f"Análisis IA para {jugadora_seleccionada}")
-                st.subheader("Informe generado por IA")
-                
+            with tab3:
+                st.header(f"Análisis para {jugadora_seleccionada}")
+            
                 # Contenedor para el análisis DAFO
                 dafo_container = st.container()
                 
@@ -875,7 +887,7 @@ if df_combined is not None and not df_combined.empty:
                             metricas_posicion = [m for m in position_metrics[posicion] 
                                     if m not in ['Player', 'Squad', 'Born', 'Pos', 'Nation', 'Comp', 'Age']]
                             
-                            # Analizamos fortalezas y debilidades
+                            # Analizamos fortalezas y debilidades basadas en métricas específicas de posición
                             for metrica in metricas_posicion:
                                 if metrica in metricas_jugadora and metrica in metricas_promedio:
                                     # Obtenemos el valor de la jugadora y el promedio del equipo
@@ -912,7 +924,7 @@ if df_combined is not None and not df_combined.empty:
                                             if (valor_jugadora - mejor_similar) / mejor_similar > 0.3:
                                                 amenazas.append(f"**{metrica_nombre}**: Rendimiento actual de {valor_jugadora:.2f} podría ser difícil de mantener (un {((valor_jugadora - mejor_similar) / mejor_similar * 100):.1f}% superior a jugadoras similares)")
                         
-                        # Agregar análisis específicos por posición
+                        # Agregar análisis específicos por posición basados en position_metrics
                         if posicion == 'GK':
                             if 'GA90' in metricas_jugadora and 'Save%' in metricas_jugadora:
                                 if metricas_jugadora['GA90'] > 1.2:
@@ -963,7 +975,13 @@ if df_combined is not None and not df_combined.empty:
                     
                     # Obtener métricas de la jugadora
                     metricas_jugadora = {}
-                    metricas_numericas = jugadora_info.select_dtypes(include=['float64', 'int64']).columns.tolist()
+                    # Usar las métricas específicas de la posición
+                    if position in position_metrics:
+                        metricas_numericas = [m for m in position_metrics[position] 
+                                            if m in jugadora_info.select_dtypes(include=['float64', 'int64']).columns]
+                    else:
+                        metricas_numericas = jugadora_info.select_dtypes(include=['float64', 'int64']).columns.tolist()
+                    
                     for metrica in metricas_numericas:
                         if metrica in jugadora_info.columns:
                             metricas_jugadora[metrica] = jugadora_info[metrica].iloc[0]
@@ -1034,7 +1052,9 @@ if df_combined is not None and not df_combined.empty:
                         st.info("Intenta con otra jugadora o verifica los datos disponibles.")
                     
                     # Separador para la siguiente sección
-                    st.divider()
+                    st.divider() range(len(normalized_values), len(all_values)):
+                                normalized_values.append([])
+
                 
                         
                 # Información de interpretación
