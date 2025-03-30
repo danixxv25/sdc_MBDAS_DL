@@ -270,7 +270,8 @@ if df_combined is not None and not df_combined.empty:
                         'Mn/Start',
                         'Mn/Sub'
                         'Mn/MP', 
-                        'Gls', 'Ast',
+                        'Gls',
+                        'Ast',
                         'G+A',
                         'SoT/90',
                         'G/Sh',
@@ -304,6 +305,7 @@ if df_combined is not None and not df_combined.empty:
                         '2CrdY',
                         'Off.1'
                     ],
+
                     'FW': ['MP',
                         'Starts',
                         'Min',
@@ -319,8 +321,8 @@ if df_combined is not None and not df_combined.empty:
                         'Dist',
                         'xG',
                         'G-xG',
-                        'SCA/90',
-                        'GCA/90',
+                        'SCA90',
+                        'GCA90',
                         'touch_Mid 3rd', 
                         'touch_Att 3rd', 
                         'touch_Att Pen', 
