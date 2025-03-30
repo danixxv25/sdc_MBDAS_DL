@@ -568,7 +568,7 @@ if df_combined is not None and not df_combined.empty:
                             squad = df_combined[df_combined['Player'] == nombre ]['Squad'].iloc[0]
                             st.write(squad)
                             team_logo_url = None
-                            if df_teams_info is not None and squad in df_teams_info.columns and 'Shield URL' in df_teams_info.columns:
+                            if df_teams_info is not None and 'Squad' in df_teams_info.columns and 'Shield URL' in df_teams_info.columns:
                                 club_team = df_teams_info[df_teams_info['Squad'] == squad]
                                 if not club_team.empty and not pd.isna(club_team['Shield URL'].iloc[0]):
                                     team_logo_url = club_team['Shield URL'].iloc[0]
