@@ -96,13 +96,13 @@ def calcular_comparativa(df, metric, player_value, player_position, competition)
     # Métricas donde un valor más bajo es mejor (invertir comparación)
     lower_is_better = ['GA', 'GA90', 'Err', 'CrdY', 'CrdR', '2CrdY', 'Off.1']
     
-    # Calcular media de la liga
-    liga_df = df[df['League'] == competition]
-    liga_metric_values = liga_df[metric].dropna()
-    
+   
     # Calcular media de jugadoras de la misma posición en todas las ligas
     position_df = df[df['Posición Principal'] == player_position]
+    liga_df = position_df[position_df['League'] == competition]
     position_metric_values = position_df[metric].dropna()
+    liga_metric_values = liga_df[metric].dropna()
+
     
     # Obtener las medias
     liga_mean = liga_metric_values.mean() if not liga_metric_values.empty else 0
