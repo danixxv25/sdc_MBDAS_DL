@@ -331,19 +331,7 @@ if df_combined is not None and not df_combined.empty:
                     st.markdown("</div>", unsafe_allow_html=True)
                 
                 with col2:
-                    # Centrar logo horizontalmente
-                    st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
-                    
-                    # Buscar el logo del club
-                    team_logo_url = None
-                    if df_teams_info is not None and 'Squad' in df_teams_info.columns and 'Shield URL' in df_teams_info.columns:
-                        club = df_view['Squad'].iloc[0] if not df_view.empty else selected_club
-                        club_team = df_teams_info[df_teams_info['Squad'] == club]
-                        if not club_team.empty and not pd.isna(club_team['Shield URL'].iloc[0]):
-                            team_logo_url = club_team['Shield URL'].iloc[0]
-                            st.image(team_logo_url, width=150)
-                    
-                    st.markdown("</div>", unsafe_allow_html=True)
+                    display_logo(150)
 
                 with col3:
                     # Datos básicos de la jugadora seleccionada

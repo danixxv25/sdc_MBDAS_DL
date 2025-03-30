@@ -328,18 +328,8 @@ if df_combined is not None and not df_combined.empty:
                     st.markdown("</div>", unsafe_allow_html=True)
                 
                 with col2:
-                    # Datos básicos de la jugadora seleccionada
-                    info_seleccionada = df_combined[df_combined['Player'] == jugadora_seleccionada]
-                    st.write(f"**Posición:** {info_seleccionada['Posición Principal'].iloc[0]}")
-                    st.write(f"**Club:** {info_seleccionada['Squad'].iloc[0]}")
-                    
-                    # Agregar más información disponible
-                    if 'Nation' in info_seleccionada.columns and not pd.isna(info_seleccionada['Nation'].iloc[0]):
-                        st.write(f"**Nacionalidad:** {info_seleccionada['Nation'].iloc[0]}")
-                    if 'League' in info_seleccionada.columns and not pd.isna(info_seleccionada['League'].iloc[0]):
-                        st.write(f"**Liga:** {info_seleccionada['League'].iloc[0]}")
-                    if 'Born' in info_seleccionada.columns and not pd.isna(info_seleccionada['Born'].iloc[0]):
-                        st.write(f"**Año de nacimiento:** {info_seleccionada['Born'].iloc[0]}")
+                display_logo(180)
+
                 
                 # Separador
                 st.divider()
