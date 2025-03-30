@@ -74,7 +74,7 @@ def calcular_comparativa(df, metric, player_value, player_position, competition)
     lower_is_better = ['GA', 'GA90', 'Err', 'CrdY', 'CrdR', '2CrdY', 'Off.1']
     
     # Calcular media de la liga
-    liga_df = df[df['Comp'] == competition]
+    liga_df = df_combined[df_combined['League'] == competition]
     liga_metric_values = liga_df[metric].dropna()
     
     # Calcular media de jugadoras de la misma posición en todas las ligas
