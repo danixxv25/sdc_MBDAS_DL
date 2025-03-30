@@ -550,6 +550,7 @@ if df_combined is not None and not df_combined.empty:
                 }
                 
                 # Obtener métricas relevantes para la posición
+                player_stats = df_view[df_view['Player'] == selected_player]
                 relevant_metrics = position_metrics.get(player_position, [])
                 
                 # Verificar que las métricas existan en el dataframe
