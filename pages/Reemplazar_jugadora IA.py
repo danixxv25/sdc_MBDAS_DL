@@ -233,6 +233,7 @@ if df_combined is not None and not df_combined.empty:
         with st.spinner("Realizando análisis de similitud..."):
             # Obtener posición de la jugadora seleccionada
             position = df_combined[df_combined['Player'] == jugadora_seleccionada]['Posición Principal'].iloc[0]
+            st.write(position)
             
             # Filtrar el DataFrame según la posición usando las métricas específicas
             if position in position_metrics:
