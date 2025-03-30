@@ -8,6 +8,13 @@ from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
 from sklearn.metrics.pairwise import euclidean_distances
 import time
+import base64
+from io import BytesIO
+from reportlab.lib.pagesizes import letter, A4
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib import colors
+from reportlab.lib.units import inch
 
 from utils import display_logo
 
@@ -426,12 +433,17 @@ if df_combined is not None and not df_combined.empty:
                         # Comparación directa con la jugadora seleccionada
                         st.subheader("Comparación directa con " + jugadora_seleccionada)
 
-                        # Obtener todas las métricas relevantes para la posición
+                        # Obtener todas las métricas específicas de la posición desde position_metrics
                         if pos in position_metrics:
-                            todas_metricas_posicion = [m for m in position_metrics[pos] 
-                                                if m in df_combined.columns and m not in ['Player', 'Squad', 'Born', 'Pos', 'Nation', 'Comp', 'Age']]
+                            # Usar exactamente las métricas definidas en position_metrics para esta posición
+                            metricas_posicion = position_metrics[pos]
                             
-                            # Preparar datos para el radar completo
+                            # Filtrar identificadores y mantener solo métricas numéricas
+                            metricas_posicion = [m for m in metricas_posicion 
+                                                if m not in ['Player', 'Squad', 'Born', 'Pos', 'Nation', 'Comp', 'Age']
+                                                and m in df_combined.select_dtypes(include=['float64', 'int64']).columns]
+                            
+                            # Preparar datos para el radar
                             fig_radar_full = plt.figure(figsize=(10, 10))
                             ax_full = fig_radar_full.add_subplot(111, polar=True)
                             
@@ -441,24 +453,23 @@ if df_combined is not None and not df_combined.empty:
                                 datos_similar = []
                                 metricas_validas = []
                                 
-                                # Filtrar solo métricas numéricas disponibles para ambas jugadoras
-                                for metrica in todas_metricas_posicion:
+                                # Filtrar solo métricas disponibles para ambas jugadoras
+                                for metrica in metricas_posicion:
                                     try:
-                                        # Verificar que la métrica es numérica y está disponible
-                                        if metrica in df_combined.select_dtypes(include=['float64', 'int64']).columns:
-                                            val_original = df_combined[df_combined['Player'] == jugadora_seleccionada][metrica].iloc[0]
-                                            val_similar = info_jugadora[metrica].iloc[0]
-                                            
-                                            if pd.notna(val_original) and pd.notna(val_similar):
-                                                datos_seleccionada.append(val_original)
-                                                datos_similar.append(val_similar)
-                                                metricas_validas.append(metrica)
+                                        # Verificar que la métrica está disponible para ambas jugadoras
+                                        val_original = df_combined[df_combined['Player'] == jugadora_seleccionada][metrica].iloc[0]
+                                        val_similar = info_jugadora[metrica].iloc[0]
+                                        
+                                        if pd.notna(val_original) and pd.notna(val_similar):
+                                            datos_seleccionada.append(val_original)
+                                            datos_similar.append(val_similar)
+                                            metricas_validas.append(metrica)
                                     except:
                                         # Si hay error, ignoramos esta métrica
                                         pass
                                 
                                 if len(metricas_validas) > 0:
-                                    # Normalizar datos (usando valores máximos generales)
+                                    # Normalizar datos (usando valores máximos de todas las jugadoras)
                                     max_valores = []
                                     for m in metricas_validas:
                                         max_val = df_combined[m].max() if df_combined[m].max() > 0 else 1
@@ -468,7 +479,7 @@ if df_combined is not None and not df_combined.empty:
                                     datos_similar_norm = [datos_similar[i]/max_valores[i] for i in range(len(datos_similar))]
                                     
                                     # Mostrar cantidad de métricas en gráfico
-                                    st.caption(f"Comparando {len(metricas_validas)} métricas relevantes para {pos}")
+                                    st.caption(f"Comparando {len(metricas_validas)} métricas definidas para posición {pos}")
                                     
                                     # Calcular ángulos
                                     angulos = np.linspace(0, 2*np.pi, len(metricas_validas), endpoint=False).tolist()
@@ -477,7 +488,7 @@ if df_combined is not None and not df_combined.empty:
                                     datos_similar_norm = np.append(datos_similar_norm, datos_similar_norm[0])
                                     angulos += angulos[:1]
                                     
-                                    # Dibujar el radar completo
+                                    # Dibujar el radar
                                     ax_full.plot(angulos, datos_seleccionada_norm, color='red', linewidth=2, label=jugadora_seleccionada)
                                     ax_full.fill(angulos, datos_seleccionada_norm, color='red', alpha=0.1)
                                     ax_full.plot(angulos, datos_similar_norm, color='blue', linewidth=2, label=nombre)
@@ -488,13 +499,13 @@ if df_combined is not None and not df_combined.empty:
                                     plt.yticks([0.2, 0.4, 0.6, 0.8], ["0.2", "0.4", "0.6", "0.8"], color="grey", size=7)
                                     plt.ylim(0, 1)
                                     plt.legend(loc='upper right', bbox_to_anchor=(0.1, 0.1), fontsize=8)
-                                    plt.title(f"Comparación completa: {jugadora_seleccionada} vs {nombre}", size=12)
+                                    plt.title(f"Comparación de métricas de {pos}: {jugadora_seleccionada} vs {nombre}", size=12)
                                     plt.tight_layout()
                                     
                                     st.pyplot(fig_radar_full)
                                     
                                     # Incluir tabla con los valores exactos de todas las métricas
-                                    st.write("#### Valores exactos de todas las métricas")
+                                    st.write(f"#### Valores exactos de las métricas para posición {pos}")
                                     
                                     # Crear lista de métricas con sus valores y descripciones
                                     datos_tabla_completa = {
@@ -508,10 +519,13 @@ if df_combined is not None and not df_combined.empty:
                                     st.dataframe(pd.DataFrame(datos_tabla_completa), use_container_width=True)
                                     
                                 else:
-                                    st.warning(f"No hay suficientes métricas válidas disponibles para la comparación completa")
+                                    st.warning(f"No hay suficientes métricas válidas disponibles para la comparación")
                             
                             except Exception as e:
                                 st.error(f"Error al generar la comparación: {e}")
+                                st.write("Detalles:", str(e))
+                        else:
+                            st.warning(f"No se encontraron métricas definidas para la posición {pos}")
                 
                 # Información adicional sobre la interpretación
                 st.info("""
@@ -566,6 +580,7 @@ if df_combined is not None and not df_combined.empty:
                 plt.tight_layout()
                 
                 st.pyplot(fig_pca)
+                st.session_state.fig_pca_saved = fig_pca
                 
                 # Explicación de los componentes principales
                 st.markdown("### Explicación de la Varianza")
@@ -686,6 +701,8 @@ if df_combined is not None and not df_combined.empty:
                     plt.title(f'Comparación de Métricas: {jugadora_seleccionada} vs Jugadoras Similares', size=15)
                     
                     st.pyplot(fig_radar)
+                    st.session_state.fig_radar_saved = fig_radar
+
                 
                 except Exception as e:
                     st.error(f"Error al crear el gráfico de radar: {e}")
@@ -855,73 +872,75 @@ if df_combined is not None and not df_combined.empty:
                         amenazas = []
                         
                         # Creamos un diccionario para mapear las métricas clave por posición
-                        metricas_importantes = {
-                            'GK': {
-                                'defensivas': ['Save%', 'CS%', 'PSxG-GA', 'Stp%'], 
-                                'tecnicas': ['Pass_Cmp_+40y%', '#OPA/90'],
-                                'fisicas': ['AvgDist']
-                            },
-                            'DF': {
-                                'defensivas': ['Tkl%', 'Blocks', 'Int', 'Tkl+Int', 'Recov'], 
-                                'tecnicas': ['Cmp%_short', 'Cmp%_med', 'Cmp%_long', 'TotDist'],
-                                'fisicas': ['touch_Def 3rd', 'touch_Mid 3rd']
-                            },
-                            'MF': {
-                                'defensivas': ['Tkl%', 'Int', 'Recov'], 
-                                'ofensivas': ['G+A', 'Ast', 'SCA90', 'GCA90', 'KP'],
-                                'tecnicas': ['Cmp%_short', 'Cmp%_med', 'Cmp%_long', 'PPA', 'pass_1/3'],
-                                'fisicas': ['touch_Mid 3rd', 'touch_Att 3rd', 'PrgR']
-                            },
-                            'FW': {
-                                'defensivas': ['Recov'], 
-                                'ofensivas': ['Gls', 'G+A', 'SoT/90', 'G/Sh', 'xG', 'G-xG'],
-                                'tecnicas': ['TO_Succ%', 'KP', 'SCA90', 'GCA90'],
-                                'fisicas': ['touch_Att 3rd', 'touch_Att Pen', 'PrgR']
-                            }
-                        }
-                        
+                        metricas_importantes = position_metrics
+    
                         # Verificamos si la posición existe en nuestro mapeo
                         if posicion in metricas_importantes:
-                            categorias = metricas_importantes[posicion]
+                            metricas_posicion = [m for m in metricas_importantes[posicion] 
+                                            if m not in ['Player', 'Squad', 'Born', 'Pos', 'Nation', 'Comp', 'Age']]
                             
-                            # Analizamos fortalezas y debilidades
-                            for categoria, metricas in categorias.items():
-                                for metrica in metricas:
-                                    if metrica in metricas_jugadora and metrica in metricas_promedio:
-                                        # Obtenemos el valor de la jugadora y el promedio del equipo
-                                        valor_jugadora = metricas_jugadora.get(metrica)
-                                        promedio_posicion = metricas_promedio.get(metrica)
+                            # Clasificar métricas por categoría para un análisis más ordenado
+                            categorias_metricas = {
+                                'GK': {
+                                    'defensivas': ['Save%', 'CS%', 'PSxG-GA', 'Stp%'], 
+                                    'tecnicas': ['Pass_Cmp_+40y%', '#OPA/90'],
+                                    'fisicas': ['AvgDist']
+                                },
+                                'DF': {
+                                    'defensivas': ['Tkl%', 'Blocks', 'Int', 'Tkl+Int', 'Recov'], 
+                                    'tecnicas': ['Cmp%_short', 'Cmp%_med', 'Cmp%_long', 'TotDist'],
+                                    'fisicas': ['touch_Def 3rd', 'touch_Mid 3rd']
+                                },
+                                'MF': {
+                                    'defensivas': ['Tkl%', 'Int', 'Recov'], 
+                                    'ofensivas': ['G+A', 'Ast', 'SCA90', 'GCA90', 'KP'],
+                                    'tecnicas': ['Cmp%_short', 'Cmp%_med', 'Cmp%_long', 'PPA', 'pass_1/3'],
+                                    'fisicas': ['touch_Mid 3rd', 'touch_Att 3rd', 'PrgR']
+                                },
+                                'FW': {
+                                    'defensivas': ['Recov'], 
+                                    'ofensivas': ['Gls', 'G+A', 'SoT/90', 'G/Sh', 'xG', 'G-xG'],
+                                    'tecnicas': ['TO_Succ%', 'KP', 'SCA90', 'GCA90'],
+                                    'fisicas': ['touch_Att 3rd', 'touch_Att Pen', 'PrgR']
+                                }
+                            }
+                            
+                            # Analizamos fortalezas y debilidades para todas las métricas de la posición
+                            for metrica in metricas_posicion:
+                                if metrica in metricas_jugadora and metrica in metricas_promedio:
+                                    # Obtenemos el valor de la jugadora y el promedio del equipo
+                                    valor_jugadora = metricas_jugadora.get(metrica)
+                                    promedio_posicion = metricas_promedio.get(metrica)
+                                    
+                                    if pd.notna(valor_jugadora) and pd.notna(promedio_posicion) and promedio_posicion > 0:
+                                        # Calculamos el porcentaje de diferencia
+                                        diff_porcentaje = ((valor_jugadora - promedio_posicion) / promedio_posicion) * 100
+                                        metrica_nombre = metric_display_names.get(metrica, metrica)
                                         
-                                        if pd.notna(valor_jugadora) and pd.notna(promedio_posicion) and promedio_posicion > 0:
-                                            # Calculamos el porcentaje de diferencia
-                                            diff_porcentaje = ((valor_jugadora - promedio_posicion) / promedio_posicion) * 100
-                                            metrica_nombre = metric_display_names.get(metrica, metrica)
-                                            
-                                            # Determinamos si es una fortaleza o debilidad
-                                            if diff_porcentaje >= 15:  # 15% mejor que el promedio
-                                                fortalezas.append(f"**{metrica_nombre}**: Destaca con un {valor_jugadora:.2f} (un {abs(diff_porcentaje):.1f}% superior al promedio de su posición)")
-                                            elif diff_porcentaje <= -15:  # 15% peor que el promedio
-                                                debilidades.append(f"**{metrica_nombre}**: Por debajo con un {valor_jugadora:.2f} (un {abs(diff_porcentaje):.1f}% inferior al promedio de su posición)")
+                                        # Determinamos si es una fortaleza o debilidad
+                                        if diff_porcentaje >= 15:  # 15% mejor que el promedio
+                                            fortalezas.append(f"**{metrica_nombre}**: Destaca con un {valor_jugadora:.2f} (un {abs(diff_porcentaje):.1f}% superior al promedio de su posición)")
+                                        elif diff_porcentaje <= -15:  # 15% peor que el promedio
+                                            debilidades.append(f"**{metrica_nombre}**: Por debajo con un {valor_jugadora:.2f} (un {abs(diff_porcentaje):.1f}% inferior al promedio de su posición)")
                             
                             # Analizamos oportunidades y amenazas basadas en comparaciones y tendencias
-                            for categoria, metricas in categorias.items():
-                                for metrica in metricas:
-                                    if metrica in metricas_jugadora:
-                                        valores_similares = [s.get(metrica, 0) for s in metricas_similares if metrica in s]
-                                        if valores_similares:
-                                            mejor_similar = max(valores_similares)
-                                            valor_jugadora = metricas_jugadora.get(metrica)
+                            for metrica in metricas_posicion:
+                                if metrica in metricas_jugadora:
+                                    valores_similares = [s.get(metrica, 0) for s in metricas_similares if metrica in s]
+                                    if valores_similares:
+                                        mejor_similar = max(valores_similares)
+                                        valor_jugadora = metricas_jugadora.get(metrica)
+                                        
+                                        if pd.notna(valor_jugadora) and pd.notna(mejor_similar) and mejor_similar > 0 and valor_jugadora > 0:
+                                            diff_porcentaje = ((mejor_similar - valor_jugadora) / valor_jugadora) * 100
+                                            metrica_nombre = metric_display_names.get(metrica, metrica)
                                             
-                                            if pd.notna(valor_jugadora) and pd.notna(mejor_similar) and mejor_similar > 0 and valor_jugadora > 0:
-                                                diff_porcentaje = ((mejor_similar - valor_jugadora) / valor_jugadora) * 100
-                                                metrica_nombre = metric_display_names.get(metrica, metrica)
-                                                
-                                                if diff_porcentaje >= 20:  # 20% mejor que nuestra jugadora
-                                                    oportunidades.append(f"**{metrica_nombre}**: Potencial para mejorar un {abs(diff_porcentaje):.1f}% hasta {mejor_similar:.2f} (referencia de jugadoras similares)")
-                                                
-                                                # Identificar métricas donde está muy por encima de similares (posible riesgo de regresión)
-                                                if (valor_jugadora - mejor_similar) / mejor_similar > 0.3:
-                                                    amenazas.append(f"**{metrica_nombre}**: Rendimiento actual de {valor_jugadora:.2f} podría ser difícil de mantener (un {((valor_jugadora - mejor_similar) / mejor_similar * 100):.1f}% superior a jugadoras similares)")
+                                            if diff_porcentaje >= 20:  # 20% mejor que nuestra jugadora
+                                                oportunidades.append(f"**{metrica_nombre}**: Potencial para mejorar un {abs(diff_porcentaje):.1f}% hasta {mejor_similar:.2f} (referencia de jugadoras similares)")
+                                            
+                                            # Identificar métricas donde está muy por encima de similares (posible riesgo de regresión)
+                                            if (valor_jugadora - mejor_similar) / mejor_similar > 0.3:
+                                                amenazas.append(f"**{metrica_nombre}**: Rendimiento actual de {valor_jugadora:.2f} podría ser difícil de mantener (un {((valor_jugadora - mejor_similar) / mejor_similar * 100):.1f}% superior a jugadoras similares)")
                         
                         # Agregar análisis específicos por posición
                         if posicion == 'GK':
@@ -1083,15 +1102,20 @@ if df_combined is not None and not df_combined.empty:
                 # Función para generar recomendaciones de mejora
                 def generar_recomendaciones(jugadora, posicion, metricas_jugadora, metricas_similares, metricas_promedio):
                     """
-                    Genera recomendaciones específicas para mejorar basadas en las métricas de la jugadora.
+                    Genera recomendaciones específicas para mejorar basadas en las métricas definidas en position_metrics.
                     """
                     recomendaciones = []
                     
                     # Si la posición existe en nuestros umbrales
-                    if posicion in umbrales_mejora:
-                        # Para cada métrica importante en esa posición
-                        for metrica, datos in umbrales_mejora[posicion].items():
-                            if metrica in metricas_jugadora:
+                    if posicion in umbrales_mejora and posicion in position_metrics:
+                        # Obtener solo las métricas que están en position_metrics para esta posición
+                        metricas_posicion = [m for m in position_metrics[posicion] 
+                                        if m not in ['Player', 'Squad', 'Born', 'Pos', 'Nation', 'Comp', 'Age']]
+                        
+                        # Para cada métrica en position_metrics que también está en umbrales_mejora
+                        for metrica in metricas_posicion:
+                            if metrica in umbrales_mejora[posicion] and metrica in metricas_jugadora:
+                                datos = umbrales_mejora[posicion][metrica]
                                 valor_jugadora = metricas_jugadora[metrica]
                                 umbral = datos['umbral']
                                 
@@ -1308,6 +1332,266 @@ if df_combined is not None and not df_combined.empty:
                     st.markdown('</div>', unsafe_allow_html=True)
                 except Exception as e:
                     st.error(f"Error al generar el resumen ejecutivo: {e}")
+
+                def crear_pdf_analisis(jugadora_seleccionada, position, datos_jugadora, dafo, recomendaciones, resumen, 
+                       fig_pca, fig_radar, distancias_ordenadas, df_combined, metric_display_names):
+                    """
+                    Crea un informe PDF completo con todas las secciones del análisis
+                    """
+                    # Configurar el documento
+                    buffer = BytesIO()
+                    doc = SimpleDocTemplate(buffer, pagesize=A4, 
+                                        rightMargin=72, leftMargin=72,
+                                        topMargin=72, bottomMargin=72)
+                    
+                    # Estilos
+                    styles = getSampleStyleSheet()
+                    styles.add(ParagraphStyle(name='Titulo', 
+                                            fontName='Helvetica-Bold',
+                                            fontSize=18, 
+                                            alignment=1,  # Centrado
+                                            spaceAfter=12))
+                    
+                    styles.add(ParagraphStyle(name='Subtitulo', 
+                                            fontName='Helvetica-Bold',
+                                            fontSize=16, 
+                                            spaceAfter=10))
+                    
+                    styles.add(ParagraphStyle(name='Seccion', 
+                                            fontName='Helvetica-Bold',
+                                            fontSize=14, 
+                                            spaceAfter=8,
+                                            spaceBefore=12))
+                    
+                    styles.add(ParagraphStyle(name='Normal', 
+                                            fontName='Helvetica',
+                                            fontSize=12, 
+                                            spaceAfter=6))
+                    
+                    # Contenido del documento
+                    contenido = []
+                    
+                    # 1. Portada y título
+                    contenido.append(Paragraph(f"Análisis de Reemplazo de Jugadora", styles['Titulo']))
+                    contenido.append(Spacer(1, 0.25*inch))
+                    contenido.append(Paragraph(f"Informe generado: {time.strftime('%d/%m/%Y')}", styles['Normal']))
+                    contenido.append(Spacer(1, 0.5*inch))
+                    
+                    # 2. Información de la jugadora a reemplazar
+                    contenido.append(Paragraph("1. Información de la Jugadora a Reemplazar", styles['Subtitulo']))
+                    contenido.append(Paragraph(f"<b>Nombre:</b> {jugadora_seleccionada}", styles['Normal']))
+                    contenido.append(Paragraph(f"<b>Posición:</b> {position}", styles['Normal']))
+                    
+                    # Datos básicos adicionales si están disponibles
+                    if 'Squad' in datos_jugadora:
+                        contenido.append(Paragraph(f"<b>Equipo:</b> {datos_jugadora['Squad']}", styles['Normal']))
+                    if 'Nation' in datos_jugadora:
+                        contenido.append(Paragraph(f"<b>Nacionalidad:</b> {datos_jugadora['Nation']}", styles['Normal']))
+                    if 'Born' in datos_jugadora:
+                        contenido.append(Paragraph(f"<b>Año de nacimiento:</b> {datos_jugadora['Born']}", styles['Normal']))
+                    
+                    contenido.append(Spacer(1, 0.25*inch))
+                    
+                    # 3. Métricas destacadas de la jugadora
+                    contenido.append(Paragraph("Métricas destacadas:", styles['Seccion']))
+                    
+                    # Seleccionamos métricas relevantes según posición
+                    metricas_destacar = []
+                    if position == 'GK':
+                        metricas_destacar = ['Save%', 'CS%', 'GA90', 'PSxG-GA']
+                    elif position == 'DF':
+                        metricas_destacar = ['Tkl+Int', 'Blocks', 'Recov', 'Cmp%_long']
+                    elif position == 'MF':
+                        metricas_destacar = ['G+A', 'SCA90', 'KP', 'Tkl+Int']
+                    elif position == 'FW':
+                        metricas_destacar = ['Gls', 'G/Sh', 'xG', 'SCA90']
+                    
+                    # Crear tabla para las métricas destacadas
+                    if metricas_destacar:
+                        tabla_datos = [["Métrica", "Valor"]]
+                        for metrica in metricas_destacar:
+                            if metrica in datos_jugadora:
+                                nombre_mostrar = metric_display_names.get(metrica, metrica)
+                                valor = datos_jugadora[metrica]
+                                if pd.notna(valor):
+                                    tabla_datos.append([nombre_mostrar, f"{valor:.2f}"])
+                        
+                        if len(tabla_datos) > 1:
+                            tabla = Table(tabla_datos, colWidths=[3*inch, 1.5*inch])
+                            tabla.setStyle(TableStyle([
+                                ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
+                                ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+                                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                                ('GRID', (0, 0), (-1, -1), 1, colors.black)
+                            ]))
+                            contenido.append(tabla)
+                            contenido.append(Spacer(1, 0.25*inch))
+                    
+                    # Añadir un salto de página
+                    contenido.append(Spacer(1, 1*inch))
+                    
+                    # 4. Informe generado por IA - Análisis DAFO
+                    contenido.append(Paragraph("2. Informe DAFO Generado por IA", styles['Subtitulo']))
+                    
+                    # Añadir cada sección del DAFO
+                    contenido.append(Paragraph("Fortalezas:", styles['Seccion']))
+                    for fortaleza in dafo["fortalezas"]:
+                        contenido.append(Paragraph(f"• {fortaleza}", styles['Normal']))
+                    contenido.append(Spacer(1, 0.25*inch))
+                    
+                    contenido.append(Paragraph("Debilidades:", styles['Seccion']))
+                    for debilidad in dafo["debilidades"]:
+                        contenido.append(Paragraph(f"• {debilidad}", styles['Normal']))
+                    contenido.append(Spacer(1, 0.25*inch))
+                    
+                    contenido.append(Paragraph("Oportunidades:", styles['Seccion']))
+                    for oportunidad in dafo["oportunidades"]:
+                        contenido.append(Paragraph(f"• {oportunidad}", styles['Normal']))
+                    contenido.append(Spacer(1, 0.25*inch))
+                    
+                    contenido.append(Paragraph("Amenazas:", styles['Seccion']))
+                    for amenaza in dafo["amenazas"]:
+                        contenido.append(Paragraph(f"• {amenaza}", styles['Normal']))
+                    
+                    # Plan de mejora basado en métricas
+                    contenido.append(Paragraph("Plan de Mejora Recomendado:", styles['Seccion']))
+                    
+                    if recomendaciones:
+                        for i, rec in enumerate(recomendaciones[:3], 1):
+                            contenido.append(Paragraph(
+                                f"<b>Prioridad {i}:</b> Mejorar {rec['nombre_metrica']} - Actual: {rec['valor_actual']:.2f}, Objetivo: {rec['objetivo']:.2f}", 
+                                styles['Normal']))
+                            contenido.append(Paragraph(f"<i>{rec['recomendacion']}</i>", styles['Normal']))
+                            contenido.append(Spacer(1, 0.1*inch))
+                    else:
+                        contenido.append(Paragraph("No se han identificado áreas específicas de mejora.", styles['Normal']))
+                    
+                    # Resumen ejecutivo
+                    contenido.append(Paragraph("Resumen Ejecutivo:", styles['Seccion']))
+                    contenido.append(Paragraph(resumen, styles['Normal']))
+                    
+                    # Añadir un salto de página
+                    contenido.append(Spacer(1, 1*inch))
+                    
+                    # 5. Clustering y Radar
+                    contenido.append(Paragraph("3. Clustering y Análisis de Similitud", styles['Subtitulo']))
+                    
+                    # Si tenemos las figuras guardadas, las añadimos
+                    # Nota: Para que esto funcione, necesitamos convertir las figuras a formato imagen
+                    if fig_pca:
+                        buffer_img = BytesIO()
+                        fig_pca.savefig(buffer_img, format='png', dpi=100)
+                        buffer_img.seek(0)
+                        
+                        img_pca = Image(buffer_img, width=6*inch, height=4*inch)
+                        contenido.append(img_pca)
+                        contenido.append(Spacer(1, 0.25*inch))
+                        contenido.append(Paragraph("Visualización PCA: Muestra la jugadora seleccionada (estrella roja) y las jugadoras similares", styles['Normal']))
+                    
+                    contenido.append(Spacer(1, 0.25*inch))
+                    
+                    if fig_radar:
+                        buffer_img = BytesIO()
+                        fig_radar.savefig(buffer_img, format='png', dpi=100)
+                        buffer_img.seek(0)
+                        
+                        img_radar = Image(buffer_img, width=6*inch, height=4*inch)
+                        contenido.append(img_radar)
+                        contenido.append(Spacer(1, 0.1*inch))
+                        contenido.append(Paragraph("Gráfico Radar: Comparación de métricas clave entre la jugadora seleccionada y sus similares", styles['Normal']))
+                    
+                    # Añadir un salto de página
+                    contenido.append(Spacer(1, 0.75*inch))
+                    
+                    # 6. Lista de jugadoras similares
+                    contenido.append(Paragraph("4. Jugadoras Similares Recomendadas", styles['Subtitulo']))
+                    
+                    for i, (nombre, distancia, cluster, squad, pos) in enumerate(distancias_ordenadas[:5], 1):
+                        contenido.append(Paragraph(f"{i}. {nombre} ({pos}) - {squad}", styles['Seccion']))
+                        contenido.append(Paragraph(f"<b>Distancia:</b> {distancia:.4f} (menor distancia indica mayor similitud)", styles['Normal']))
+                        
+                        # Añadir algunas métricas clave para esta jugadora
+                        info_jugadora = df_combined[df_combined['Player'] == nombre]
+                        
+                        if not info_jugadora.empty:
+                            # Seleccionar métricas clave según posición
+                            metricas_clave = []
+                            if pos == 'GK':
+                                metricas_clave = ['Save%', 'CS%', 'GA90', 'PSxG-GA']
+                            elif pos == 'DF':
+                                metricas_clave = ['Tkl+Int', 'Blocks', 'Recov', 'Cmp%_long']
+                            elif pos == 'MF':
+                                metricas_clave = ['G+A', 'SCA90', 'KP', 'Tkl+Int']
+                            elif pos == 'FW':
+                                metricas_clave = ['Gls', 'G/Sh', 'xG', 'SCA90']
+                            
+                            # Crear tabla para las métricas
+                            if metricas_clave:
+                                tabla_datos = [["Métrica", nombre, jugadora_seleccionada]]
+                                for metrica in metricas_clave:
+                                    if metrica in info_jugadora.columns:
+                                        try:
+                                            nombre_mostrar = metric_display_names.get(metrica, metrica)
+                                            valor_similar = info_jugadora[metrica].iloc[0]
+                                            valor_original = df_combined[df_combined['Player'] == jugadora_seleccionada][metrica].iloc[0]
+                                            
+                                            if pd.notna(valor_similar) and pd.notna(valor_original):
+                                                tabla_datos.append([
+                                                    nombre_mostrar, 
+                                                    f"{valor_similar:.2f}", 
+                                                    f"{valor_original:.2f}"
+                                                ])
+                                        except:
+                                            pass
+                                
+                                if len(tabla_datos) > 1:
+                                    tabla = Table(tabla_datos, colWidths=[2*inch, 1.25*inch, 1.25*inch])
+                                    tabla.setStyle(TableStyle([
+                                        ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
+                                        ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+                                        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                                        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                                        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                                        ('GRID', (0, 0), (-1, -1), 1, colors.black)
+                                    ]))
+                                    contenido.append(tabla)
+                            
+                            contenido.append(Spacer(1, 0.25*inch))
+                    
+                    # 7. Conclusión
+                    contenido.append(Paragraph("Conclusión y Próximos Pasos", styles['Seccion']))
+                    contenido.append(Paragraph(
+                        "Este informe presenta un análisis objetivo basado en datos estadísticos disponibles. "
+                        "Se recomienda complementar este análisis con la observación directa de las jugadoras "
+                        "y considerar factores cualitativos como liderazgo, comunicación y encaje táctico en el equipo.", 
+                        styles['Normal']))
+                    
+                    # Generar el PDF
+                    doc.build(contenido)
+                    buffer.seek(0)
+                    
+                    return buffer
+
+
+                # Reemplazar la sección de opciones de exportación actual por esta:
+                st.divider()
+                st.write("### Opciones de exportación")
+
+                # Para guardar figuras para el informe PDF
+                if 'fig_pca_saved' not in st.session_state:
+                    st.session_state.fig_pca_saved = None
+                if 'fig_radar_saved' not in st.session_state:
+                    st.session_state.fig_radar_saved = None
+
+                # Guardar las figuras relevantes para el PDF
+                # Este código debe estar antes de mostrar las figuras en sus respectivas pestañas
+                # En la pestaña 2 (Clustering y Radar), después de crear fig_pca:
+                # st.session_state.fig_pca_saved = fig_pca
+
+                # En la pestaña 2, después de crear fig_radar:
+                # st.session_state.fig_radar_saved = fig_radar    
                 
                 # Opciones para exportar el informe
                 st.divider()
@@ -1316,11 +1600,41 @@ if df_combined is not None and not df_combined.empty:
                 col1, col2 = st.columns(2)
                 with col1:
                     if st.button("📄 Exportar como PDF"):
-                        st.info("Función de exportación a PDF no implementada en esta versión. Esta funcionalidad requeriría integración con librerías externas como ReportLab o WeasyPrint.")
-                
-                with col2:
-                    if st.button("📊 Exportar como presentación"):
-                        st.info("Función de exportación a presentación no implementada en esta versión. Esta funcionalidad requeriría integración con librerías para generar PowerPoint o similares.")
+                        try:
+                            # Obtener datos necesarios para el informe
+                            datos_jugadora = {}
+                            jugadora_info = df_combined[df_combined['Player'] == jugadora_seleccionada]
+                            
+                            for col in jugadora_info.columns:
+                                try:
+                                    datos_jugadora[col] = jugadora_info[col].iloc[0]
+                                except:
+                                    continue
+                            
+                            # Generar el PDF
+                            pdf_buffer = crear_pdf_analisis(
+                                jugadora_seleccionada=jugadora_seleccionada,
+                                position=position,
+                                datos_jugadora=datos_jugadora,
+                                dafo=dafo,
+                                recomendaciones=recomendaciones,
+                                resumen=resumen,
+                                fig_pca=st.session_state.fig_pca_saved if 'fig_pca_saved' in st.session_state else None,
+                                fig_radar=st.session_state.fig_radar_saved if 'fig_radar_saved' in st.session_state else None,
+                                distancias_ordenadas=distancias_ordenadas,
+                                df_combined=df_combined,
+                                metric_display_names=metric_display_names
+                            )
+                            
+                            # Convertir a base64 para descarga
+                            b64 = base64.b64encode(pdf_buffer.read()).decode()
+                            href = f'<a href="data:application/pdf;base64,{b64}" download="Analisis_{jugadora_seleccionada.replace(" ", "_")}.pdf">Descargar Informe PDF</a>'
+                            st.markdown(href, unsafe_allow_html=True)
+                            st.success("¡Informe PDF generado exitosamente!")
+                            
+                        except Exception as e:
+                            st.error(f"Error al generar el PDF: {e}")
+                            st.info("Asegúrate de tener instaladas todas las dependencias necesarias (reportlab).")
                 
             # Información de interpretación (continuación)
                 st.info("""
