@@ -234,6 +234,114 @@ if df_combined is not None and not df_combined.empty:
     def get_position_metrics():
         # Métricas para cada posición
         position_metrics = {
+                    'GK': ['MP','Starts','Min','Min%','Mn/Start','Mn/Sub','Mn/MP', 'GA','GA90','SoTA','Save%','CS%','Save%_PK','PSxG','PSxG/SoT','PSxG-GA','Pass_Cmp_+40y%','Pass_AvgLen','Stp%','#OPA/90','AvgDist'],
+                    'DF': ['MP',
+                        'Starts',
+                        'Min',
+                        'Min%',
+                        'Mn/Start',
+                        'Mn/Sub'
+                        'Mn/MP', 
+                        'Gls',
+                        'Cmp%_short',
+                        'Cmp%_med',
+                        'Cmp%_long',
+                        'TotDist',
+                        'PrgDist',
+                        'touch_Def Pen',
+                        'touch_Def 3rd', 
+                        'touch_Mid 3rd',
+                        'TO_Succ%',
+                        'Tkl/90',
+                        'Tkl%',
+                        'Blocks',
+                        'Int', 
+                        'Tkl+Int',
+                        'Recov',
+                        'CrdY', 
+                        'CrdR',
+                        '2CrdY',
+                        'Off.1'
+                    ],
+                    'MF': ['MP',
+                        'Starts',
+                        'Min',
+                        'Min%',
+                        'Mn/Start',
+                        'Mn/Sub'
+                        'Mn/MP', 
+                        'Gls', 'Ast',
+                        'G+A',
+                        'SoT/90',
+                        'G/Sh',
+                        'Dist', 
+                        'SCA90',
+                        'GCA90',
+                        'Cmp%_short',
+                        'Cmp%_med',
+                        'Cmp%_long',
+                        'TotDist',
+                        'PrgDist',
+                        'xA',
+                        'KP',
+                        'pass_1/3',
+                        'crsPA',
+                        'touch_Mid 3rd', 
+                        'touch_Att 3rd', 
+                        'touch_Att Pen',
+                        'TO_Succ%',
+                        'carries_TotDist',
+                        'carries_PrgDist',
+                        'PrgR', 
+                        'Tkl/90',
+                        'Tkl%',
+                        'Blocks',
+                        'Int', 
+                        'Tkl+Int',
+                        'Recov',
+                        'CrdY', 
+                        'CrdR',
+                        '2CrdY',
+                        'Off.1'
+                    ],
+                    'FW': ['MP',
+                        'Starts',
+                        'Min',
+                        'Min%',
+                        'Mn/Start',
+                        'Mn/Sub'
+                        'Mn/MP',
+                        'Gls',
+                        'Ast',
+                        'G+A',
+                        'SoT/90',
+                        'G/Sh',
+                        'Dist',
+                        'xG',
+                        'G-xG',
+                        'SCA/90',
+                        'GCA/90',
+                        'touch_Mid 3rd', 
+                        'touch_Att 3rd', 
+                        'touch_Att Pen', 
+                        'TO_Succ%',
+                        'carries_TotDist',
+                        'carries_PrgDist',
+                        'PrgR', 
+                        'Tkl/90',
+                        'Tkl%',
+                        'Blocks',
+                        'Int', 
+                        'Tkl+Int',
+                        'Recov',
+                        'CrdY', 
+                        'CrdR',
+                        '2CrdY',
+                        'Off.1'
+                    ]
+                }
+        
+        position_metrics_lev = {
             'GK': {
                 'macro': ['MP', 'Starts', 'Min', 'Min%', 'GA', 'GA90', 'SoTA', 'Save%', 'CS%'],
                 'meso': ['Save%_PK', 'PSxG', 'PSxG/SoT', 'PSxG-GA', 'Pass_Cmp_+40y%', 'Pass_AvgLen'],
@@ -302,7 +410,7 @@ if df_combined is not None and not df_combined.empty:
             position = df_combined[df_combined['Player'] == jugadora_seleccionada]['Posición Principal'].iloc[0]
             st.write(position)
 
-            position_metrics = obtener_metricas_jugadora(df_view)
+            position_metrics = get_position_metrics()
             st.write(position_metrics)
             
             # Filtrar el DataFrame según la posición usando las métricas específicas
