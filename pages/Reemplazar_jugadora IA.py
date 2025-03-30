@@ -228,6 +228,73 @@ if df_combined is not None and not df_combined.empty:
         index=0
     )
     
+    df_view = df_combined[df_combined['Player'] == jugadora_seleccionada]
+
+
+    def get_position_metrics():
+        # Métricas para cada posición
+        position_metrics = {
+            'GK': {
+                'macro': ['MP', 'Starts', 'Min', 'Min%', 'GA', 'GA90', 'SoTA', 'Save%', 'CS%'],
+                'meso': ['Save%_PK', 'PSxG', 'PSxG/SoT', 'PSxG-GA', 'Pass_Cmp_+40y%', 'Pass_AvgLen'],
+                'micro': ['Stp%', '#OPA/90', 'AvgDist', 'Mn/Start', 'Mn/Sub', 'Mn/MP']
+            },
+            'DF': {
+                'macro': ['MP', 'Starts', 'Min', 'Min%', 'Gls', 'CrdY', 'CrdR', 'Tkl+Int', 'Recov'],
+                'meso': ['Tkl/90', 'Tkl%', 'Blocks', 'Int', 'touch_Def Pen', 'touch_Def 3rd', 'touch_Mid 3rd'],
+                'micro': ['TO_Succ%', 'Cmp%_short', 'Cmp%_med', 'Cmp%_long', 'TotDist', 'PrgDist', '2CrdY', 'Off.1']
+            },
+            'MF': {
+                'macro': ['MP', 'Starts', 'Min', 'Min%', 'Gls', 'Ast', 'G+A', 'SCA90', 'GCA90'],
+                'meso': ['SoT/90', 'G/Sh', 'Dist', 'xA', 'KP', 'pass_1/3', 'crsPA', 'touch_Mid 3rd', 'touch_Att 3rd'],
+                'micro': ['Cmp%_short', 'Cmp%_med', 'Cmp%_long', 'TotDist', 'PrgDist', 'TO_Succ%', 'carries_TotDist', 
+                        'carries_PrgDist', 'PrgR', 'Tkl/90', 'Tkl%', 'CrdY', 'CrdR']
+            },
+            'FW': {
+                'macro': ['MP', 'Starts', 'Min', 'Min%', 'Gls', 'Ast', 'G+A', 'SoT/90', 'xG'],
+                'meso': ['G/Sh', 'Dist', 'G-xG', 'SCA/90', 'GCA/90', 'touch_Att 3rd', 'touch_Att Pen'],
+                'micro': ['TO_Succ%', 'carries_TotDist', 'carries_PrgDist', 'PrgR', 'Tkl/90', 'CrdY', 'CrdR', 'Off.1']
+            }
+        }
+        return position_metrics
+    
+    # Función para obtener métricas del jugador
+    def obtener_metricas_jugadora(df_view):
+        if df_view is None or df_view.empty:
+            return None, None, None
+        
+        # Obtener la posición de la jugadora
+        player_position = df_view['Posición Principal'].iloc[0] if 'Posición Principal' in df_view.columns else ""
+        
+        # Obtener métricas por posición
+        position_metrics = get_position_metrics()
+        
+        # Obtener métricas para cada nivel basado en la posición
+        metrics_by_level = {
+            'macro': position_metrics.get(player_position, {}).get('macro', []),
+            'meso': position_metrics.get(player_position, {}).get('meso', []),
+            'micro': position_metrics.get(player_position, {}).get('micro', [])
+        }
+        
+        # Verificar que las métricas existan en el dataframe
+        existing_metrics = {}
+        for level, metrics in metrics_by_level.items():
+            existing_metrics[level] = [metric for metric in metrics if metric in df_view.columns]
+        
+        # Obtener todas las métricas existentes juntas
+        all_metrics = []
+        for metrics in existing_metrics.values():
+            all_metrics.extend(metrics)
+        
+        # Crear un diccionario con los valores de las métricas
+        metrics_data = {}
+        
+        for metric in all_metrics:
+            if metric in df_view.columns:
+                metrics_data[metric] = df_view[metric].iloc[0]
+        
+        return metrics_data, existing_metrics, player_position
+    
     # Ejecutar análisis al hacer clic en el botón
     if st.sidebar.button("Analizar Similitudes"):
         with st.spinner("Realizando análisis de similitud..."):
