@@ -423,21 +423,6 @@ if df_combined is not None and not df_combined.empty:
                                         f"{valor:.2f}"
                                     )
                         
-                        # Incluir tabla con los valores exactos de todas las métricas
-                        st.write("#### Valores exactos de todas las métricas")
-                        
-                        # Crear lista de métricas con sus valores y descripciones
-                        datos_tabla_completa = {
-                            "Métrica": [metric_display_names.get(m, m) for m in metricas_validas],
-                            jugadora_seleccionada: [round(float(df_combined[df_combined['Player'] == jugadora_seleccionada][m].iloc[0]), 2) 
-                                                for m in metricas_validas],
-                            nombre: [round(float(info_jugadora[m].iloc[0]), 2) for m in metricas_validas]
-                        }
-                        
-                        # Mostrar tabla completa
-                        st.dataframe(pd.DataFrame(datos_tabla_completa), use_container_width=True)
-
-
                         # Comparación directa con la jugadora seleccionada
                         st.subheader("Comparación directa con " + jugadora_seleccionada)
 
