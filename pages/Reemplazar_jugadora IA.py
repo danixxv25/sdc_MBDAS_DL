@@ -892,7 +892,7 @@ if df_combined is not None and not df_combined.empty:
                 # Usamos position_metrics para el análisis completo 
                 
                 # Número de jugadoras a comparar (5 por defecto, ajustable)
-                num_jugadoras = st.slider("Número de jugadoras a comparar:", min_value=2, max_value=5, value=5)
+                #num_jugadoras = st.slider("Número de jugadoras a comparar:", min_value=2, max_value=5, value=5)
                 
                 # Obtener todas las métricas relevantes según la posición desde position_metrics
                 if position in position_metrics:
