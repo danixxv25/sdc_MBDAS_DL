@@ -709,6 +709,10 @@ if df_combined is not None and not df_combined.empty:
     # Obtener métricas si se seleccionaron jugadoras
     if df_player1 is not None and player1:
         metrics1_data, existing_metrics1, player1_position = obtener_metricas_jugadora(df_player1)
+        st.write(metrics1_data)
+        st.write(existing_metrics1)
+        st.write(player1_position)
+
     
     if df_player2 is not None and player2:
         metrics2_data, existing_metrics2, player2_position = obtener_metricas_jugadora(df_player2)
