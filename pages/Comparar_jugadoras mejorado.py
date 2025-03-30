@@ -63,7 +63,19 @@ st.markdown("""
     .similarity-value {
         font-size: 36px;
         font-weight: bold;
-        color: #1d3557;
+    }
+    
+    /* Colores para el índice de similitud según rango */
+    .similarity-high {
+        color: #2ecc71; /* Verde para >85% */
+    }
+    
+    .similarity-medium {
+        color: #f1c40f; /* Amarillo para 60-84.9% */
+    }
+    
+    .similarity-low {
+        color: #e67e22; /* Naranja para <60% */
     }
     
     .similarity-label {
@@ -755,14 +767,23 @@ if df_combined is not None and not df_combined.empty:
             # Calcular similitud coseno
             similarity = calcular_similitud(metrics1_data, metrics2_data, position_metrics, player1_position)
             
-            # Mostrar porcentaje de similitud
-            st.markdown("""
+            # Determinar la clase CSS según el valor de similitud
+            similarity_class = ""
+            if similarity > 85:
+                similarity_class = "similarity-high"
+            elif similarity >= 60:
+                similarity_class = "similarity-medium"
+            else:
+                similarity_class = "similarity-low"
+            
+            # Mostrar porcentaje de similitud con la clase correspondiente
+            st.markdown(f"""
             <div class='similarity-container'>
                 <div class='similarity-label'>Índice de Similitud</div>
-                <div class='similarity-value'>{:.1f}%</div>
+                <div class='similarity-value {similarity_class}'>{similarity:.1f}%</div>
                 <div>Las jugadoras tienen un perfil similar en cuanto a sus métricas de rendimiento</div>
             </div>
-            """.format(similarity), unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
             
             # Crear gráfico radar para visualizar similitudes
             # Obtener todas las métricas para la posición
