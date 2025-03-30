@@ -896,6 +896,9 @@ if df_combined is not None and not df_combined.empty:
                     """, unsafe_allow_html=True)
         st.empty()
         st.empty()
+        st.empty()
+        st.empty()
+        st.empty()
         
         if metrics1_data and metrics2_data and player1_position == player2_position:
             # Crear gráfico radar para visualizar similitudes
