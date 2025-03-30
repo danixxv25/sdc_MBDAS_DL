@@ -881,15 +881,15 @@ if df_combined is not None and not df_combined.empty:
                     # Mostrar porcentaje de similitud con la clase correspondiente
                     st.markdown(f"""
                     <div class='similarity-container {similarity_class}'>
-                        <div class='similarity-label'>Índice de Similitud</div>
+                        <div class='similarity-label'>Índice de Similitud euclidea</div>
                         <div class='similarity-value'>{similarity1:.1f}%</div>
-                        <div style="font-size: 12px;">Basado en distancia euclidiana normalizada</div>
+                        <div style="font-size: 12px;">Basado en distancia euclidea normalizada</div>
                     </div>
                     """, unsafe_allow_html=True)
                 with col2:
                     st.markdown(f"""
                     <div class='similarity-container {similarity_class}'>
-                        <div class='similarity-label'>Índice de Similitud</div>
+                        <div class='similarity-label'>Índice de Similitud percentiles</div>
                         <div class='similarity-value'>{similarity2:.1f}%</div>
                         <div style="font-size: 12px;">Basado en similitud de percentiles</div>
                     </div>
