@@ -89,7 +89,7 @@ st.markdown("""
     
     /* Estilos para percentiles */
     .percentile-container {
-        padding: 10px;
+        padding: 1px;
         margin: 5px 0;
         border-radius: 2px;
     }
