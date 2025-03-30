@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 import math
-from utils import display_logo
+from utils import display_logo, calcular_percentiles
 from scipy.spatial.distance import euclidean
 from sklearn.metrics.pairwise import cosine_similarity
 from scipy import stats
