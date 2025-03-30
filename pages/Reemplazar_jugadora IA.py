@@ -8,7 +8,6 @@ from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
 from sklearn.metrics.pairwise import euclidean_distances
 import time
-from utils import
 
 from utils import display_logo
 
