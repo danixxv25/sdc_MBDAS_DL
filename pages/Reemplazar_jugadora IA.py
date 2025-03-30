@@ -303,6 +303,7 @@ if df_combined is not None and not df_combined.empty:
             st.write(position)
 
             position_metrics = get_position_metrics()
+            st.write(position_metrics)
             
             # Filtrar el DataFrame según la posición usando las métricas específicas
             if position in position_metrics:
