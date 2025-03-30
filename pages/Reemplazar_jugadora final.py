@@ -547,19 +547,17 @@ if df_combined is not None and not df_combined.empty:
                                     if not jugadora_foto.empty and 'url_photo' in jugadora_foto.columns:
                                         photo_url_atm = jugadora_foto['url_photo'].iloc[0]
                                         st.image(photo_url_atm, width=150)
-                                except:
-                                    pass
+                                    else:
+                                        if df_players_info is not None:
+                                            try:
+                                                jugadora_info_adicional = df_players_info[df_players_info['Player'] == nombre]
+                                                if not jugadora_info_adicional.empty and 'Photo' in jugadora_info_adicional.columns:
+                                                    if not pd.isna(jugadora_info_adicional['Photo'].iloc[0]):
+                                                        photo_url = jugadora_info_adicional['Photo'].iloc[0]
+                                                        st.image(photo_url, width=150)
+                                            except:
+                                                pass
                             
-                            # Si hay información disponible en df_players_info
-                            if df_players_info is not None:
-                                try:
-                                    jugadora_info_adicional = df_players_info[df_players_info['Player'] == nombre]
-                                    if not jugadora_info_adicional.empty and 'Photo' in jugadora_info_adicional.columns:
-                                        if not pd.isna(jugadora_info_adicional['Photo'].iloc[0]):
-                                            photo_url = jugadora_info_adicional['Photo'].iloc[0]
-                                            st.image(photo_url, width=150)
-                                except:
-                                    pass
                             st.markdown("</div>", unsafe_allow_html=True)
                         
                         with col2:
