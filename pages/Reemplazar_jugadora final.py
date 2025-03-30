@@ -1473,44 +1473,6 @@ if df_combined is not None and not df_combined.empty:
                             'Valores': list(valores.values())
                         }
                     
-                    # Visualizar los índices en gráficos de barras
-                    for nombre_indice, datos in datos_visualizacion.items():
-                        st.write(f"#### {nombre_indice}")
-                        st.write(indices_por_posicion[position][nombre_indice]['descripcion'])
-                        
-                        # Crear el gráfico
-                        fig = plt.figure(figsize=(10, 5))
-                        
-                        # Ordenar los datos de mayor a menor valor
-                        indices_ordenados = sorted(zip(datos['Jugadoras'], datos['Valores']), 
-                                                key=lambda x: x[1], reverse=True)
-                        
-                        nombres_ordenados = [n[:15] + '...' if len(n) > 15 else n for n, _ in indices_ordenados]
-                        valores_ordenados = [v for _, v in indices_ordenados]
-                        
-                        # Crear colores, destacando la jugadora seleccionada
-                        colores = ['#ff7f0e' if nombre.startswith(jugadora_seleccionada[:15]) else '#1f77b4' 
-                                for nombre in nombres_ordenados]
-                        
-                        # Crear gráfico de barras
-                        bars = plt.bar(nombres_ordenados, valores_ordenados, color=colores)
-                        
-                        # Añadir valores sobre las barras
-                        for bar in bars:
-                            height = bar.get_height()
-                            plt.text(bar.get_x() + bar.get_width()/2., height + 1,
-                                    f'{height:.1f}', ha='center', va='bottom', fontsize=9)
-                        
-                        plt.title(nombre_indice)
-                        plt.ylabel("Puntuación (0-100)")
-                        plt.xticks(rotation=45, ha='right')
-                        plt.ylim(0, 105)  # Espacio para las etiquetas
-                        plt.grid(axis='y', alpha=0.3)
-                        plt.tight_layout()
-                        
-                        # Mostrar el gráfico
-                        st.pyplot(fig)
-                    
                     # 1. VISUALIZACIÓN EN GRÁFICO RADAR
                     st.write("### Visualización en Radar de Índices Compuestos")
                     st.write(f"Comparando el perfil completo de {jugadora_seleccionada} con jugadoras similares")
