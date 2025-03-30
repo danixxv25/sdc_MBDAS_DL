@@ -11,7 +11,7 @@ import time
 
 from utils import display_logo
 
-display_logo(180)
+display_logo(100)
 
 # Configuración de la página y tema
 #st.set_page_config(
@@ -885,7 +885,7 @@ if df_combined is not None and not df_combined.empty:
                 """)
             
             # Pestaña 4: Gráficos de barras comparativos por métricas individuales
-            with tab4:
+            with tab5:
                 st.header("Comparativa de Métricas Individuales")
                 st.write(f"Comparando a {jugadora_seleccionada} ({position}) con las jugadoras más similares")
                 
@@ -1250,8 +1250,10 @@ if df_combined is not None and not df_combined.empty:
                     La visualización periódica de estos informes puede ayudar tanto al cuerpo técnico como a la jugadora a entender mejor su evolución y potencial.
             
                     """)
+
             # Pestaña 5: Análisis de Índices Compuestos
-            with tab5:
+
+            with tab4:
                 st.header("Análisis por Índices Compuestos")
                 st.write(f"Comparando a {jugadora_seleccionada} ({position}) con jugadoras similares utilizando índices especializados")
                 
@@ -1509,23 +1511,7 @@ if df_combined is not None and not df_combined.empty:
                         # Mostrar el gráfico
                         st.pyplot(fig)
                     
-                    # Mostrar datos de índices en forma de tabla para comparación fácil
-                    st.write("### Tabla Comparativa de Índices")
-                    
-                    # Preparar datos para la tabla
-                    tabla_datos = {'Jugadora': jugadoras_a_comparar}
-                    
-                    for nombre_indice, valores in indices_calculados.items():
-                        tabla_datos[nombre_indice] = [valores.get(j, float('nan')) for j in jugadoras_a_comparar]
-                    
-                    # Crear DataFrame
-                    df_tabla = pd.DataFrame(tabla_datos)
-                    
-                    # Mostrar tabla con formato
-                    st.dataframe(df_tabla.style.format({col: "{:.1f}" for col in df_tabla.columns if col != 'Jugadora'}), 
-                                use_container_width=True)
-                    
-                    # Visualización en gráfico radar (similar a otras pestañas)
+                    # 1. VISUALIZACIÓN EN GRÁFICO RADAR
                     st.write("### Visualización en Radar de Índices Compuestos")
                     st.write(f"Comparando el perfil completo de {jugadora_seleccionada} con jugadoras similares")
                     
@@ -1592,82 +1578,80 @@ if df_combined is not None and not df_combined.empty:
                             - La forma del polígono revela el perfil de fortalezas y debilidades
                             - Perfiles similares indican jugadoras con características parecidas
                             """)
-                            
-                            # Añadir gráfico radar individual por cada jugadora
-                            st.write("### Perfiles Individuales")
-                            st.write("Visualiza el perfil individual de cada jugadora")
-                            
-                            # Crear un selector para elegir a qué jugadora visualizar
-                            jugadora_individual = st.selectbox("Selecciona una jugadora para ver su perfil detallado:", 
-                                                            jugadoras_a_comparar)
-                            
-                            if jugadora_individual:
-                                # Crear figura para el radar individual
-                                fig_ind = plt.figure(figsize=(8, 8))
-                                ax_ind = fig_ind.add_subplot(111, polar=True)
-                                
-                                # Obtener valores de los índices para esta jugadora
-                                valores_ind = []
-                                for indice in nombres_indices:
-                                    valor_ind = indices_calculados[indice].get(jugadora_individual, 0)
-                                    valores_ind.append(valor_ind / 100)  # Normalizar a escala 0-1
-                                
-                                # Completar el círculo
-                                valores_ind_completos = valores_ind + [valores_ind[0]]
-                                angulos_completos = angulos + [angulos[0]]
-                                
-                                # Dibujar el radar individual
-                                color = '#ff7f0e' if jugadora_individual == jugadora_seleccionada else '#1f77b4'
-                                ax_ind.plot(angulos_completos, valores_ind_completos, linewidth=2.5, 
-                                        linestyle='solid', color=color)
-                                ax_ind.fill(angulos_completos, valores_ind_completos, alpha=0.2, color=color)
-                                
-                                # Añadir las etiquetas y líneas
-                                plt.xticks(angulos, nombres_indices, size=10)
-                                ax_ind.set_rlabel_position(0)
-                                plt.yticks([0.2, 0.4, 0.6, 0.8], ["20", "40", "60", "80"], color="grey", size=9)
-                                plt.ylim(0, 1)
-                                
-                                # Añadir valores en cada eje
-                                for i, valor in enumerate(valores_ind):
-                                    plt.text(angulos[i], valor + 0.05, f"{valor*100:.0f}", 
-                                            horizontalalignment='center', size=9, 
-                                            verticalalignment='center', 
-                                            bbox=dict(facecolor='white', alpha=0.5, edgecolor='none'))
-                                
-                                plt.title(f'Perfil de Índices Compuestos: {jugadora_individual}', size=15)
-                                
-                                # Mostrar el gráfico individual
-                                st.pyplot(fig_ind)
-                                
-                                # Identificar fortalezas y debilidades
-                                indices_ordenados = sorted([(indice, indices_calculados[indice].get(jugadora_individual, 0)) 
-                                                        for indice in nombres_indices], key=lambda x: x[1], reverse=True)
-                                
-                                col1, col2 = st.columns(2)
-                                
-                                with col1:
-                                    st.write("#### Fortalezas")
-                                    st.markdown('<div style="background-color: #d4edda; padding: 15px; border-radius: 5px;">', unsafe_allow_html=True)
-                                    for indice, valor in indices_ordenados[:2]:  # Las 2 mejores
-                                        st.markdown(f"✅ **{indice}**: {valor:.1f} puntos")
-                                        st.markdown(f"*{indices_por_posicion[position][indice]['descripcion']}*")
-                                    st.markdown('</div>', unsafe_allow_html=True)
-                                
-                                with col2:
-                                    st.write("#### Áreas de mejora")
-                                    st.markdown('<div style="background-color: #f8d7da; padding: 15px; border-radius: 5px;">', unsafe_allow_html=True)
-                                    for indice, valor in indices_ordenados[-2:]:  # Las 2 peores
-                                        st.markdown(f"❌ **{indice}**: {valor:.1f} puntos")
-                                        st.markdown(f"*{indices_por_posicion[position][indice]['descripcion']}*")
-                                    st.markdown('</div>', unsafe_allow_html=True)
-                            
                         else:
                             st.warning("Se necesitan al menos 3 índices para crear un gráfico radar. Algunos índices no pudieron calcularse con los datos disponibles.")
                     
                     except Exception as e:
                         st.error(f"Error al generar el gráfico radar: {e}")
                         st.info("Este error puede deberse a falta de datos suficientes para algunos índices. Intenta con otra jugadora o posición.")
+                    
+                    # 2. TABLA COMPARATIVA DE ÍNDICES
+                    st.write("### Tabla Comparativa de Índices")
+                    
+                    # Preparar datos para la tabla
+                    tabla_datos = {'Jugadora': jugadoras_a_comparar}
+                    
+                    for nombre_indice, valores in indices_calculados.items():
+                        tabla_datos[nombre_indice] = [valores.get(j, float('nan')) for j in jugadoras_a_comparar]
+                    
+                    # Crear DataFrame
+                    df_tabla = pd.DataFrame(tabla_datos)
+                    
+                    # Mostrar tabla con formato
+                    st.dataframe(df_tabla.style.format({col: "{:.1f}" for col in df_tabla.columns if col != 'Jugadora'}), 
+                                use_container_width=True)
+                    
+                    # 3. GRÁFICOS DE BARRAS (EN DESPLEGABLE)
+                    with st.expander("Ver comparativas detalladas por índice (gráficos de barras)", expanded=False):
+                        # Sección para visualizar resultados
+                        st.write("### Índices Compuestos para " + position)
+                        
+                        # Preparar datos para visualización
+                        datos_visualizacion = {}
+                        
+                        for nombre_indice, valores in indices_calculados.items():
+                            datos_visualizacion[nombre_indice] = {
+                                'Jugadoras': list(valores.keys()),
+                                'Valores': list(valores.values())
+                            }
+                        
+                        # Visualizar los índices en gráficos de barras
+                        for nombre_indice, datos in datos_visualizacion.items():
+                            st.write(f"#### {nombre_indice}")
+                            st.write(indices_por_posicion[position][nombre_indice]['descripcion'])
+                            
+                            # Crear el gráfico
+                            fig = plt.figure(figsize=(10, 5))
+                            
+                            # Ordenar los datos de mayor a menor valor
+                            indices_ordenados = sorted(zip(datos['Jugadoras'], datos['Valores']), 
+                                                    key=lambda x: x[1], reverse=True)
+                            
+                            nombres_ordenados = [n[:15] + '...' if len(n) > 15 else n for n, _ in indices_ordenados]
+                            valores_ordenados = [v for _, v in indices_ordenados]
+                            
+                            # Crear colores, destacando la jugadora seleccionada
+                            colores = ['#ff7f0e' if nombre.startswith(jugadora_seleccionada[:15]) else '#1f77b4' 
+                                    for nombre in nombres_ordenados]
+                            
+                            # Crear gráfico de barras
+                            bars = plt.bar(nombres_ordenados, valores_ordenados, color=colores)
+                            
+                            # Añadir valores sobre las barras
+                            for bar in bars:
+                                height = bar.get_height()
+                                plt.text(bar.get_x() + bar.get_width()/2., height + 1,
+                                        f'{height:.1f}', ha='center', va='bottom', fontsize=9)
+                            
+                            plt.title(nombre_indice)
+                            plt.ylabel("Puntuación (0-100)")
+                            plt.xticks(rotation=45, ha='right')
+                            plt.ylim(0, 105)  # Espacio para las etiquetas
+                            plt.grid(axis='y', alpha=0.3)
+                            plt.tight_layout()
+                            
+                            # Mostrar el gráfico
+                            st.pyplot(fig)
                     
                     # Explicación específica por posición
                     st.write("## Interpretación de Índices para " + position)
