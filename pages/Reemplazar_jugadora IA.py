@@ -448,7 +448,7 @@ if df_combined is not None and not df_combined.empty:
             distancias_ordenadas = sorted(distancias, key=lambda x: x[1])
             
             # Creamos tres pestañas para mostrar diferentes visualizaciones
-            tab1, tab2, tab3, tab4 = st.tabs(["Información Básica", "Clustering y Radar", "Comparativa de Métricas", "Análisis IA"])
+            tab1, tab2, tab3, tab4 = st.tabs(["Información Básica", "Clustering y Radar", "Análisis IA", "Comparativa de Métricas"])
             
             # Pestaña 1: Información básica de las jugadoras similares
             with tab1:
@@ -886,15 +886,28 @@ if df_combined is not None and not df_combined.empty:
                 - Diferentes formas en el radar indican diferentes estilos de juego
                 """)
             
-            # Pestaña 3: Gráficos de barras comparativos por métricas individuales
+            # Pestaña 4: Gráficos de barras comparativos por métricas individuales
             with tab4:
                 st.header("Comparativa de Métricas Individuales")
                 st.write(f"Comparando a {jugadora_seleccionada} ({position}) con las jugadoras más similares")
                 
                 # Usamos position_metrics para el análisis completo 
                 
-                # Número de jugadoras a comparar (5 por defecto, ajustable)
-                num_jugadoras = st.slider("Número de jugadoras a comparar:", min_value=2, max_value=5, value=5)
+                # Obtener las 10 jugadoras más similares de la clusterización en tab1
+                jugadoras_similares = [nombre for nombre, _, _, _, _ in distancias_ordenadas[:10]]
+                
+                # Widget de selección múltiple para elegir jugadoras
+                jugadoras_seleccionadas = st.multiselect(
+                    "Selecciona las jugadoras a comparar:",
+                    options=jugadoras_similares,
+                    default=[jugadoras_similares[0]] if jugadoras_similares else []
+                )
+                
+                # Asegurarse de que la jugadora principal siempre esté incluida
+                if jugadora_seleccionada not in jugadoras_seleccionadas:
+                    jugadoras_comparar = [jugadora_seleccionada] + jugadoras_seleccionadas
+                else:
+                    jugadoras_comparar = jugadoras_seleccionadas
                 
                 # Obtener todas las métricas relevantes según la posición desde position_metrics
                 if position in position_metrics:
@@ -910,74 +923,75 @@ if df_combined is not None and not df_combined.empty:
                     # Mostrar el título con la posición
                     st.subheader(f"Métricas completas para la posición: {position} ({len(metrics_to_display)} métricas)")
                     
-                    # Seleccionar las jugadoras a comparar
-                    jugadoras_comparar = [jugadora_seleccionada] + [nombre for nombre, _, _, _, _ in distancias_ordenadas[:num_jugadoras-1]]
-                    
-                    # Crear un contenedor con scroll para los gráficos
-                    graph_container = st.container()
-                    
-                    with graph_container:
-                        # Organizar en una grid: 2 columnas
-                        col1, col2 = st.columns(2)
-                        cols = [col1, col2]
+                    # Solo proceder si hay jugadoras seleccionadas
+                    if jugadoras_comparar:
+                        # Crear un contenedor con scroll para los gráficos
+                        graph_container = st.container()
                         
-                        # Crear un gráfico para cada métrica
-                        for i, metric in enumerate(metrics_to_display):
-                            # Alternar entre columnas
-                            col = cols[i % 2]
+                        with graph_container:
+                            # Organizar en una grid: 2 columnas
+                            col1, col2 = st.columns(2)
+                            cols = [col1, col2]
                             
-                            with col:
-                                # Título descriptivo de la métrica
-                                metric_name = metric_display_names.get(metric, metric)
-                                st.write(f"### {metric_name}")
+                            # Crear un gráfico para cada métrica
+                            for i, metric in enumerate(metrics_to_display):
+                                # Alternar entre columnas
+                                col = cols[i % 2]
                                 
-                                # Crear figura para el gráfico de barras
-                                fig_bar = plt.figure(figsize=(10, 5))
-                                
-                                # Extraer valores para las jugadoras seleccionadas
-                                nombres = []
-                                valores = []
-                                
-                                for jugadora in jugadoras_comparar:
-                                    if jugadora in df_combined['Player'].values:
-                                        try:
-                                            valor = df_combined[df_combined['Player'] == jugadora][metric].iloc[0]
-                                            # Verificar si el valor es numérico
-                                            if not pd.isna(valor):
-                                                # Truncar los nombres largos para mejor visualización
-                                                nombre_corto = jugadora[:15] + '...' if len(jugadora) > 15 else jugadora
-                                                nombres.append(nombre_corto)
-                                                valores.append(valor)
-                                        except Exception as e:
-                                            st.error(f"Error al obtener datos para {jugadora} en la métrica {metric}: {e}")
-                                
-                                if nombres and valores:
-                                    # Crear paleta de colores: destacar la jugadora seleccionada
-                                    colores = ['#ff7f0e' if nombre.startswith(jugadora_seleccionada[:15]) else '#1f77b4' for nombre in nombres]
+                                with col:
+                                    # Título descriptivo de la métrica
+                                    metric_name = metric_display_names.get(metric, metric)
+                                    st.write(f"### {metric_name}")
                                     
-                                    # Crear el gráfico de barras
-                                    bars = plt.bar(nombres, valores, color=colores)
+                                    # Crear figura para el gráfico de barras
+                                    fig_bar = plt.figure(figsize=(10, 5))
                                     
-                                    # Añadir etiquetas y título
-                                    plt.title(f"{metric_name}", fontsize=12)
-                                    plt.ylabel(metric)
-                                    plt.xticks(rotation=45, ha='right')
+                                    # Extraer valores para las jugadoras seleccionadas
+                                    nombres = []
+                                    valores = []
                                     
-                                    # Añadir valores sobre las barras
-                                    for bar in bars:
-                                        height = bar.get_height()
-                                        if height != 0:  # Evitar errores con valores cero
-                                            max_value = max(valores) if max(valores) > 0 else 1
-                                            plt.text(bar.get_x() + bar.get_width()/2., height + 0.02*max_value,
-                                                    f'{height:.1f}', ha='center', va='bottom', fontsize=9)
+                                    for jugadora in jugadoras_comparar:
+                                        if jugadora in df_combined['Player'].values:
+                                            try:
+                                                valor = df_combined[df_combined['Player'] == jugadora][metric].iloc[0]
+                                                # Verificar si el valor es numérico
+                                                if not pd.isna(valor):
+                                                    # Truncar los nombres largos para mejor visualización
+                                                    nombre_corto = jugadora[:15] + '...' if len(jugadora) > 15 else jugadora
+                                                    nombres.append(nombre_corto)
+                                                    valores.append(valor)
+                                            except Exception as e:
+                                                st.error(f"Error al obtener datos para {jugadora} en la métrica {metric}: {e}")
                                     
-                                    plt.tight_layout()
-                                    plt.grid(axis='y', alpha=0.3)
-                                    
-                                    # Mostrar el gráfico
-                                    st.pyplot(fig_bar)
-                                else:
-                                    st.warning(f"No hay datos disponibles para la métrica {metric}")
+                                    if nombres and valores:
+                                        # Crear paleta de colores: destacar la jugadora seleccionada
+                                        colores = ['#ff7f0e' if nombre.startswith(jugadora_seleccionada[:15]) else '#1f77b4' for nombre in nombres]
+                                        
+                                        # Crear el gráfico de barras
+                                        bars = plt.bar(nombres, valores, color=colores)
+                                        
+                                        # Añadir etiquetas y título
+                                        plt.title(f"{metric_name}", fontsize=12)
+                                        plt.ylabel(metric)
+                                        plt.xticks(rotation=45, ha='right')
+                                        
+                                        # Añadir valores sobre las barras
+                                        for bar in bars:
+                                            height = bar.get_height()
+                                            if height != 0:  # Evitar errores con valores cero
+                                                max_value = max(valores) if max(valores) > 0 else 1
+                                                plt.text(bar.get_x() + bar.get_width()/2., height + 0.02*max_value,
+                                                        f'{height:.1f}', ha='center', va='bottom', fontsize=9)
+                                        
+                                        plt.tight_layout()
+                                        plt.grid(axis='y', alpha=0.3)
+                                        
+                                        # Mostrar el gráfico
+                                        st.pyplot(fig_bar)
+                                    else:
+                                        st.warning(f"No hay datos disponibles para la métrica {metric}")
+                    else:
+                        st.warning("Por favor, selecciona al menos una jugadora para comparar.")
                     
                     # Información sobre la interpretación
                     st.info("""
@@ -990,7 +1004,7 @@ if df_combined is not None and not df_combined.empty:
                 else:
                     st.warning(f"No se encontraron métricas definidas para la posición {position} en position_metrics")
             
-            # Pestaña 4: Análisis IA con DAFO y recomendaciones
+            # Pestaña 3: Análisis IA con DAFO y recomendaciones
             with tab3:
                 st.header(f"Análisis para {jugadora_seleccionada}")
             
