@@ -887,41 +887,69 @@ if df_combined is not None and not df_combined.empty:
                 """)
             
             # Pestaña 4: Gráficos de barras comparativos por métricas individuales
+            # Pestaña 4: Gráficos de barras comparativos por métricas individuales
             with tab4:
                 st.header("Comparativa de Métricas Individuales")
                 st.write(f"Comparando a {jugadora_seleccionada} ({position}) con las jugadoras más similares")
                 
-                # Obtener las 10 jugadoras más similares de la clusterización en tab1
-                jugadoras_similares = [nombre for nombre, _, _, _, _ in distancias_ordenadas[:10]]
+                # Inicialización de variables en session_state
+                # Esto se debe hacer FUERA de cualquier callback o función para evitar reinicios
+                key_jugadoras_similares = "tab4_jugadoras_similares"
+                key_jugadoras_seleccionadas = "tab4_jugadoras_seleccionadas"
                 
-                # Usar checkboxes individuales para cada jugadora - esto evita reinicios
+                # Inicializar las jugadoras similares solo si no existen en session_state
+                if key_jugadoras_similares not in st.session_state:
+                    st.session_state[key_jugadoras_similares] = [nombre for nombre, _, _, _, _ in distancias_ordenadas[:10]]
+                
+                # Inicializar las jugadoras seleccionadas solo si no existen en session_state
+                if key_jugadoras_seleccionadas not in st.session_state:
+                    # Por defecto, seleccionar solo la primera jugadora similar
+                    st.session_state[key_jugadoras_seleccionadas] = []
+                    if st.session_state[key_jugadoras_similares]:
+                        st.session_state[key_jugadoras_seleccionadas].append(st.session_state[key_jugadoras_similares][0])
+                
+                # Función para manejar cambios en los checkboxes de manera controlada
+                def toggle_jugadora(jugadora):
+                    if jugadora in st.session_state[key_jugadoras_seleccionadas]:
+                        st.session_state[key_jugadoras_seleccionadas].remove(jugadora)
+                    else:
+                        st.session_state[key_jugadoras_seleccionadas].append(jugadora)
+                
+                # Mostrar las opciones de selección
                 st.write("### Selecciona las jugadoras a comparar:")
                 
-                # Crear contenedor para los checkboxes en una disposición horizontal
-                checkbox_cols = st.columns(5)  # 5 columnas para distribuir mejor los checkboxes
+                # Contenedor para los botones
+                button_container = st.container()
                 
-                # Diccionario para almacenar las selecciones
-                selecciones = {}
+                # Crear un botón para cada jugadora
+                with button_container:
+                    cols = st.columns(5)  # Distribuir en 5 columnas
+                    
+                    for i, jugadora in enumerate(st.session_state[key_jugadoras_similares]):
+                        col_idx = i % 5
+                        with cols[col_idx]:
+                            # Mostrar el estado actual con un emoji
+                            is_selected = jugadora in st.session_state[key_jugadoras_seleccionadas]
+                            emoji = "✅" if is_selected else "⬜"
+                            
+                            # Nombre corto para el botón
+                            nombre_corto = jugadora[:15] + '...' if len(jugadora) > 15 else jugadora
+                            button_label = f"{emoji} {nombre_corto}"
+                            
+                            # Si se hace clic en el botón, alternar la selección
+                            if st.button(button_label, key=f"btn_{i}_{jugadora[:5]}"):
+                                toggle_jugadora(jugadora)
+                                st.experimental_rerun()
                 
-                # Distribuir los checkboxes en las columnas
-                for idx, nombre in enumerate(jugadoras_similares):
-                    col_idx = idx % 5  # Distribuir en 5 columnas
-                    with checkbox_cols[col_idx]:
-                        # Nombre corto para mostrar en el checkbox
-                        nombre_corto = nombre[:20] + '...' if len(nombre) > 20 else nombre
-                        selecciones[nombre] = st.checkbox(nombre_corto, value=(idx == 0))  # Primera jugadora seleccionada por defecto
-                
-                # Crear lista de jugadoras seleccionadas basada en los checkboxes
-                jugadoras_seleccionadas = [nombre for nombre, seleccionado in selecciones.items() if seleccionado]
-                
-                # Asegurarse de que la jugadora principal esté incluida
-                if jugadora_seleccionada not in jugadoras_seleccionadas:
-                    jugadoras_comparar = [jugadora_seleccionada] + jugadoras_seleccionadas
-                else:
-                    jugadoras_comparar = jugadoras_seleccionadas
-                
-                # Añadir un espaciador para separar la selección de los gráficos
+                # Línea divisoria
                 st.write("---")
+                
+                # Asegurarse de que la jugadora principal esté incluida si no está ya
+                jugadoras_comparar = []
+                if jugadora_seleccionada not in st.session_state[key_jugadoras_seleccionadas]:
+                    jugadoras_comparar = [jugadora_seleccionada] + st.session_state[key_jugadoras_seleccionadas]
+                else:
+                    jugadoras_comparar = st.session_state[key_jugadoras_seleccionadas]
                 
                 # Obtener todas las métricas relevantes según la posición desde position_metrics
                 if position in position_metrics:
