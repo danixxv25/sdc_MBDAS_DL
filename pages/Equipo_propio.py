@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import os
-from utils import display_logo
+from utils import display_logo, calcular_comparativa
 
 
 # Aplicar estilos personalizados para los scorecards
@@ -16,6 +16,7 @@ st.markdown("""
         padding: 15px;
         border-radius: 5px;
         box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        margin-bottom: 10px;
     }
     
     /* Color rojo para las etiquetas de métricas */
@@ -26,14 +27,107 @@ st.markdown("""
     
     /* Color azul oscuro y negrita para los valores */
     .stMetric [data-testid="stMetricValue"] {
-        color: #1d3557 !important;
         font-weight: bold !important;
         font-size: 1.4rem;
+    }
+    
+    /* Valor mejor que ambas medias - Verde */
+    .metric-better [data-testid="stMetricValue"] {
+        color: #2e8b57 !important;
+    }
+    
+    /* Valor mejor que una media pero peor que otra - Amarillo */
+    .metric-mixed [data-testid="stMetricValue"] {
+        color: #ffa500 !important;
+    }
+    
+    /* Valor peor que ambas medias - Rojo */
+    .metric-worse [data-testid="stMetricValue"] {
+        color: #dc3545 !important;
+    }
+    
+    /* Estilo para las medias de comparación */
+    .metric-comparison {
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin-top: 5px;
+    }
+            
+    /* Tamaño fijo para los scorecards */
+    .stMetric {
+        height: 165px;
+        width: 100%;
+        min-width: 150px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    /* Asegurar que el contenedor de valor tenga altura fija */
+    .stMetric [data-testid="stMetricValue"] {
+        margin: 8px 0;
+        height: 30px;
+        display: flex;
+        align-items: center;
+    }
+
+    /* Asegurar que la sección de comparativas tenga altura fija */
+    .metric-comparison {
+        height: 40px;
     }
 </style>
 """, unsafe_allow_html=True)
 
+# Función para calcular medias y comparar valores
+def calcular_comparativa(df, metric, player_value, player_position, competition):
+    """
+    Calcula las medias de comparación y determina si el valor del jugador es mejor o peor.
+    
+    Args:
+        df: DataFrame con todas las jugadoras
+        metric: Nombre de la métrica a comparar
+        player_value: Valor de la métrica para la jugadora seleccionada
+        player_position: Posición de la jugadora
+        competition: Competición de la jugadora
+    
+    Returns:
+        dict: Diccionario con las medias y el estado de comparación
+    """
+    # Métricas donde un valor más bajo es mejor (invertir comparación)
+    lower_is_better = ['GA', 'GA90', 'Err', 'CrdY', 'CrdR', '2CrdY', 'Off.1']
+    
+   
+    # Calcular media de jugadoras de la misma posición en todas las ligas
+    position_df = df[df['Posición Principal'] == player_position]
+    liga_df = position_df[position_df['League'] == competition]
+    position_metric_values = position_df[metric].dropna()
+    liga_metric_values = liga_df[metric].dropna()
 
+    
+    # Obtener las medias
+    liga_mean = liga_metric_values.mean() if not liga_metric_values.empty else 0
+    position_mean = position_metric_values.mean() if not position_metric_values.empty else 0
+    
+    # Determinar si el valor es mejor que las medias
+    if metric in lower_is_better:
+        better_than_liga = player_value < liga_mean
+        better_than_position = player_value < position_mean
+    else:
+        better_than_liga = player_value > liga_mean
+        better_than_position = player_value > position_mean
+    
+    # Determinar el estado de comparación
+    if better_than_liga and better_than_position:
+        comparison_state = "better"
+    elif better_than_liga or better_than_position:
+        comparison_state = "mixed"
+    else:
+        comparison_state = "worse"
+    
+    return {
+        'liga_mean': liga_mean,
+        'position_mean': position_mean,
+        'comparison_state': comparison_state}
 
 #display_logo(100)
 #st.title("Atlético de Madrid Femenino")
@@ -438,6 +532,9 @@ else:
                 existing_metrics = [metric for metric in relevant_metrics if metric in player_stats.columns]
                 
                 if existing_metrics:
+                    # Obtener la competición de la jugadora seleccionada
+                    player_competition = player_stats['League'].iloc[0] if 'League' in player_stats.columns else None
+                    
                     # Calcular el número de columnas necesarias (máximo 5 columnas)
                     num_metrics = len(existing_metrics)
                     num_columns = min(5, num_metrics)
@@ -451,22 +548,54 @@ else:
                             # Obtener el valor de la métrica para esta jugadora
                             value = player_stats[metric].iloc[0]
                             
+                            # Calcular comparativas
+                            comparativa = calcular_comparativa(
+                                df_combined, 
+                                metric, 
+                                value, 
+                                player_position, 
+                                player_competition
+                            )
+                            
                             # Formatear el valor según el tipo de métrica
-                            if 'percentage' in metric or 'rate' in metric or 'completion' in metric:
+                            if 'percentage' in metric or 'rate' in metric or 'completion' in metric or '%' in metric:
                                 formatted_value = f"{value:.1f}%"
+                                formatted_liga = f"{comparativa['liga_mean']:.1f}%"
+                                formatted_position = f"{comparativa['position_mean']:.1f}%"
                             elif 'distance' in metric:
                                 formatted_value = f"{value:.1f} km"
-                            elif metric in ['xg', 'goals_conceded_per90']:
+                                formatted_liga = f"{comparativa['liga_mean']:.1f} km"
+                                formatted_position = f"{comparativa['position_mean']:.1f} km"
+                            elif metric in ['xg', 'goals_conceded_per90', 'G/Sh', 'G/SoT', 'PSxG/SoT', 'PSxG-GA']:
                                 formatted_value = f"{value:.2f}"
+                                formatted_liga = f"{comparativa['liga_mean']:.2f}"
+                                formatted_position = f"{comparativa['position_mean']:.2f}"
                             else:
-                                # Para valores enteros o conteos
-                                formatted_value = f"{value:.1f}"
+                                try:
+                                    formatted_value = f"{value:.1f}"
+                                    formatted_liga = f"{comparativa['liga_mean']:.1f}"
+                                    formatted_position = f"{comparativa['position_mean']:.1f}"
+                                except:
+                                    formatted_value = str(value)
+                                    formatted_liga = str(comparativa['liga_mean'])
+                                    formatted_position = str(comparativa['position_mean'])
                             
-                            # Mostrar la scorecard sin delta
-                            st.metric(
-                                label=metric_display_names.get(metric, metric),
-                                value=formatted_value,
-                                delta=None
+                            # Crear un div contenedor con la clase según la comparación
+                            comparison_class = f"metric-{comparativa['comparison_state']}"
+                            
+                            # Mostrar la métrica con HTML personalizado
+                            st.markdown(
+                                f"""
+                                <div class="stMetric {comparison_class}">
+                                    <label>{metric_display_names.get(metric, metric)}</label>
+                                    <div data-testid="stMetricValue">{formatted_value}</div>
+                                    <div class="metric-comparison">
+                                        Media Liga: {formatted_liga}<br>
+                                        Media Top 5 Ligas: {formatted_position}
+                                    </div>
+                                </div>
+                                """,
+                                unsafe_allow_html=True
                             )
                     
                     # Si hay más de 5 métricas, crear filas adicionales
@@ -487,25 +616,57 @@ else:
                             # Llenar las columnas con métricas
                             for i, metric in enumerate(existing_metrics[start_idx:end_idx]):
                                 with cols_row[i]:
+                                    # Obtener el valor de la métrica para esta jugadora
                                     value = player_stats[metric].iloc[0]
                                     
-                                    # Formatear valor según el tipo de métrica
+                                    # Calcular comparativas
+                                    comparativa = calcular_comparativa(
+                                        df_combined, 
+                                        metric, 
+                                        value, 
+                                        player_position, 
+                                        player_competition
+                                    )
+                                    
+                                    # Formatear el valor según el tipo de métrica
                                     if 'percentage' in metric or 'rate' in metric or 'completion' in metric or '%' in metric:
                                         formatted_value = f"{value:.1f}%"
+                                        formatted_liga = f"{comparativa['liga_mean']:.1f}%"
+                                        formatted_position = f"{comparativa['position_mean']:.1f}%"
                                     elif 'distance' in metric:
                                         formatted_value = f"{value:.1f} km"
-                                    elif metric in ['xg', 'goals_conceded_per90', 'G/Sh', 'G/SoT']:
+                                        formatted_liga = f"{comparativa['liga_mean']:.1f} km"
+                                        formatted_position = f"{comparativa['position_mean']:.1f} km"
+                                    elif metric in ['xg', 'goals_conceded_per90', 'G/Sh', 'G/SoT', 'PSxG/SoT', 'PSxG-GA']:
                                         formatted_value = f"{value:.2f}"
+                                        formatted_liga = f"{comparativa['liga_mean']:.2f}"
+                                        formatted_position = f"{comparativa['position_mean']:.2f}"
                                     else:
                                         try:
                                             formatted_value = f"{value:.1f}"
+                                            formatted_liga = f"{comparativa['liga_mean']:.1f}"
+                                            formatted_position = f"{comparativa['position_mean']:.1f}"
                                         except:
                                             formatted_value = str(value)
+                                            formatted_liga = str(comparativa['liga_mean'])
+                                            formatted_position = str(comparativa['position_mean'])
                                     
-                                    st.metric(
-                                        label=metric_display_names.get(metric, metric),
-                                        value=formatted_value,
-                                        delta=None
+                                    # Crear un div contenedor con la clase según la comparación
+                                    comparison_class = f"metric-{comparativa['comparison_state']}"
+                                    
+                                    # Mostrar la métrica con HTML personalizado
+                                    st.markdown(
+                                        f"""
+                                        <div class="stMetric {comparison_class}">
+                                            <label>{metric_display_names.get(metric, metric)}</label>
+                                            <div data-testid="stMetricValue">{formatted_value}</div>
+                                            <div class="metric-comparison">
+                                                Media Liga: {formatted_liga}<br>
+                                                Media Top 5 Ligas: {formatted_position}
+                                            </div>
+                                        </div>
+                                        """,
+                                        unsafe_allow_html=True
                                     )
                 else:
                     st.warning(f"No se encontraron métricas relevantes para la posición {player_position}.")

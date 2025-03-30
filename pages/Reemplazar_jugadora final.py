@@ -446,7 +446,7 @@ if df_combined is not None and not df_combined.empty:
             distancias_ordenadas = sorted(distancias, key=lambda x: x[1])
             
             # Creamos tres pestañas para mostrar diferentes visualizaciones
-            tab1, tab2, tab3, tab4 = st.tabs(["Información Básica", "Clustering y Radar", "Análisis IA", "Comparativa de Métricas"])
+            tab1, tab2, tab3, tab4, tab5 = st.tabs(["Información Básica", "Clustering y Radar", "Análisis", "Índices Compuestos", "Comparativa de Métricas"])
             
             # Pestaña 1: Información básica de las jugadoras similares
             with tab1:
@@ -1248,7 +1248,577 @@ if df_combined is not None and not df_combined.empty:
                     - **Autoevaluación**: Percepción de la propia jugadora sobre su rendimiento
                     
                     La visualización periódica de estos informes puede ayudar tanto al cuerpo técnico como a la jugadora a entender mejor su evolución y potencial.
+            
                     """)
+            # Pestaña 5: Análisis de Índices Compuestos
+            with tab5:
+                st.header("Análisis por Índices Compuestos")
+                st.write(f"Comparando a {jugadora_seleccionada} ({position}) con jugadoras similares utilizando índices especializados")
+                
+                # Obtener las 10 jugadoras más similares de la clusterización inicial
+                jugadoras_similares = [nombre for nombre, _, _, _, _ in distancias_ordenadas[:10]]
+                
+                # Definir índices compuestos por posición
+                indices_por_posicion = {
+                    'GK': {
+                        'Índice de Paradas': {
+                            'metricas': ['Save%', 'CS%', 'PSxG-GA'],
+                            'pesos': [0.5, 0.3, 0.2],
+                            'descripcion': 'Evalúa la capacidad de evitar goles combinando porcentaje de paradas, porterías a cero y rendimiento vs. expectativa'
+                        },
+                        'Índice de Juego Aéreo': {
+                            'metricas': ['Stp%', '#OPA/90'],
+                            'pesos': [0.6, 0.4],
+                            'descripcion': 'Mide la dominancia en el juego aéreo y salidas de portería'
+                        },
+                        'Índice de Distribución': {
+                            'metricas': ['Pass_Cmp_+40y%', 'Pass_AvgLen'],
+                            'pesos': [0.7, 0.3],
+                            'descripcion': 'Evalúa la capacidad para distribuir el balón con precisión y rango de pase'
+                        },
+                        'Índice de Rendimiento Bajo Presión': {
+                            'metricas': ['Save%_PK', 'PSxG-GA', 'GA90'],
+                            'pesos': [0.4, 0.4, 0.2],
+                            'descripcion': 'Evalúa el rendimiento en situaciones de alta presión como penaltis y momentos críticos'
+                        }
+                    },
+                    'DF': {
+                        'Índice de Solidez Defensiva': {
+                            'metricas': ['Tkl%', 'Blocks', 'Int', 'Recov'],
+                            'pesos': [0.3, 0.2, 0.3, 0.2],
+                            'descripcion': 'Evalúa la capacidad para interceptar ataques y recuperar balones'
+                        },
+                        'Índice de Construcción': {
+                            'metricas': ['Cmp%_short', 'Cmp%_med', 'Cmp%_long', 'PrgDist'],
+                            'pesos': [0.2, 0.3, 0.2, 0.3],
+                            'descripcion': 'Mide la contribución al juego ofensivo desde posiciones defensivas'
+                        },
+                        'Índice de Posicionamiento': {
+                            'metricas': ['touch_Def Pen', 'touch_Def 3rd', 'touch_Mid 3rd'],
+                            'pesos': [0.3, 0.4, 0.3],
+                            'descripcion': 'Evalúa el posicionamiento y cobertura de espacios en campo'
+                        },
+                        'Índice de Seguridad': {
+                            'metricas': ['CrdY', 'CrdR', 'Tkl%', 'Recov'],
+                            'pesos': [0.25, 0.25, 0.25, 0.25],
+                            'descripcion': 'Mide la fiabilidad y disciplina defensiva, minimizando errores y amonestaciones'
+                        },
+                        'Índice de Juego Aéreo': {
+                            'metricas': ['Blocks', 'Int', 'Recov'],
+                            'pesos': [0.4, 0.3, 0.3],
+                            'descripcion': 'Evalúa específicamente la dominancia en el juego aéreo y situaciones de balón alto'
+                        }
+                    },
+                    'MF': {
+                        'Índice de Control': {
+                            'metricas': ['Cmp%_short', 'Cmp%_med', 'Cmp%_long', 'PrgDist', 'pass_1/3'],
+                            'pesos': [0.15, 0.25, 0.20, 0.15, 0.25],
+                            'descripcion': 'Mide la capacidad para controlar el juego y hacer progresar el balón'
+                        },
+                        'Índice de Presión': {
+                            'metricas': ['Tkl/90', 'Tkl%', 'Int', 'Recov'],
+                            'pesos': [0.25, 0.25, 0.25, 0.25],
+                            'descripcion': 'Evalúa la contribución defensiva y capacidad de recuperación'
+                        },
+                        'Índice de Creación': {
+                            'metricas': ['xA', 'KP', 'SCA90', 'GCA90'],
+                            'pesos': [0.3, 0.2, 0.25, 0.25],
+                            'descripcion': 'Mide la contribución a la creación de oportunidades de gol'
+                        },
+                        'Índice de Versatilidad': {
+                            'metricas': ['G+A', 'Tkl+Int', 'pass_1/3', 'Recov'],
+                            'pesos': [0.25, 0.25, 0.25, 0.25],
+                            'descripcion': 'Identifica mediocampistas completas que contribuyen en ambas fases del juego'
+                        },
+                        'Índice de Progresión': {
+                            'metricas': ['carries_PrgDist', 'PrgDist', 'TO_Succ%', 'PrgR'],
+                            'pesos': [0.3, 0.3, 0.2, 0.2],
+                            'descripcion': 'Mide la capacidad para hacer avanzar al equipo hacia posiciones ofensivas'
+                        }
+                    },
+                    'FW': {
+                        'Índice de Efectividad Ofensiva': {
+                            'metricas': ['Gls', 'G/Sh', 'xG', 'G-xG'],
+                            'pesos': [0.3, 0.25, 0.25, 0.2],
+                            'descripcion': 'Evalúa la capacidad goleadora y eficiencia en la finalización'
+                        },
+                        'Índice de Creación': {
+                            'metricas': ['Ast', 'xA', 'SCA90', 'GCA90'],
+                            'pesos': [0.3, 0.25, 0.25, 0.2],
+                            'descripcion': 'Mide la contribución a la creación de ocasiones para compañeras'
+                        },
+                        'Índice de Movimiento Ofensivo': {
+                            'metricas': ['touch_Att 3rd', 'touch_Att Pen', 'carries_PrgDist', 'PrgR'],
+                            'pesos': [0.2, 0.3, 0.2, 0.3],
+                            'descripcion': 'Evalúa el posicionamiento y movimiento en zonas ofensivas'
+                        },
+                        'Índice de Presión Ofensiva': {
+                            'metricas': ['Tkl/90', 'Recov', 'touch_Att 3rd'],
+                            'pesos': [0.4, 0.3, 0.3],
+                            'descripcion': 'Evalúa la contribución a la presión alta y al trabajo defensivo en ataque'
+                        },
+                        'Índice de Autonomía': {
+                            'metricas': ['TO_Succ%', 'G+A', 'carries_PrgDist'],
+                            'pesos': [0.4, 0.3, 0.3],
+                            'descripcion': 'Mide la capacidad para generar peligro por sí misma sin depender de compañeras'
+                        }
+                    }
+                }
+                
+                # Índices generales para todas las posiciones
+                indices_generales = {
+                    'Índice de Impacto por Minuto': {
+                        'metricas': ['Min', 'MP', 'G+A', 'Tkl+Int', 'Recov'],
+                        'pesos': [0.2, 0.2, 0.2, 0.2, 0.2],
+                        'descripcion': 'Evalúa eficiencia y rendimiento independientemente del tiempo de juego'
+                    }
+                }
+                
+                # Añadir los índices generales a cada posición
+                for posicion in indices_por_posicion:
+                    for nombre, definicion in indices_generales.items():
+                        indices_por_posicion[posicion][nombre] = definicion
+                
+                # Función para calcular índices normalizados
+                def calcular_indices(df, jugadoras, indices_definidos, posicion):
+                    # Crear diccionario para almacenar resultados
+                    resultados_indices = {}
+                    
+                    if posicion not in indices_definidos:
+                        return {}
+                    
+                    # Iterar por cada índice definido para esta posición
+                    for nombre_indice, definicion in indices_definidos[posicion].items():
+                        metricas = definicion['metricas']
+                        pesos = definicion['pesos']
+                        
+                        # Verificar que todas las métricas existen en el dataframe
+                        metricas_disponibles = [m for m in metricas if m in df.columns]
+                        pesos_disponibles = [pesos[i] for i, m in enumerate(metricas) if m in metricas_disponibles]
+                        
+                        # Normalizar pesos si cambiaron
+                        if pesos_disponibles and sum(pesos_disponibles) != 1.0:
+                            suma_pesos = sum(pesos_disponibles)
+                            pesos_disponibles = [p/suma_pesos for p in pesos_disponibles]
+                        
+                        if not metricas_disponibles or not pesos_disponibles:
+                            continue
+                            
+                        # Calcular valores crudos del índice para todas las jugadoras
+                        resultados_indices[nombre_indice] = {}
+                        
+                        # Obtener valores máximos y mínimos para normalización
+                        maximos = {}
+                        minimos = {}
+                        
+                        for metrica in metricas_disponibles:
+                            # Filtrar jugadoras de la misma posición para obtener max y min
+                            valores_posicion = df[df['Posición Principal'] == posicion][metrica]
+                            valores_validos = valores_posicion.dropna()
+                            
+                            if not valores_validos.empty:
+                                maximos[metrica] = valores_validos.max()
+                                minimos[metrica] = valores_validos.min()
+                            else:
+                                maximos[metrica] = 1
+                                minimos[metrica] = 0
+                        
+                        # Calcular el índice para cada jugadora
+                        for jugadora in jugadoras:
+                            # Obtener datos de la jugadora
+                            datos_jugadora = df[df['Player'] == jugadora]
+                            
+                            if datos_jugadora.empty:
+                                continue
+                            
+                            # Calcular valor del índice
+                            valor_indice = 0
+                            for i, metrica in enumerate(metricas_disponibles):
+                                if metrica in datos_jugadora.columns and not pd.isna(datos_jugadora[metrica].iloc[0]):
+                                    valor_crudo = datos_jugadora[metrica].iloc[0]
+                                    
+                                    # Normalizar entre 0 y 1 (evitando división por cero)
+                                    if maximos[metrica] > minimos[metrica]:
+                                        valor_norm = (valor_crudo - minimos[metrica]) / (maximos[metrica] - minimos[metrica])
+                                    else:
+                                        valor_norm = 0.5  # Si todos los valores son iguales
+                                    
+                                    # Acumular valor ponderado
+                                    valor_indice += valor_norm * pesos_disponibles[i]
+                            
+                            # Almacenar resultado
+                            resultados_indices[nombre_indice][jugadora] = valor_indice * 100  # Escala 0-100 para facilitar interpretación
+                    
+                    return resultados_indices
+                
+                # Obtener jugadoras a comparar
+                jugadoras_a_comparar = [jugadora_seleccionada] + jugadoras_similares
+                
+                # Calcular los índices
+                indices_calculados = calcular_indices(df_combined, jugadoras_a_comparar, indices_por_posicion, position)
+                
+                # Si hay índices calculados, mostrarlos
+                if indices_calculados:
+                    # Sección para visualizar resultados
+                    st.write("### Índices Compuestos para " + position)
+                    
+                    # Preparar datos para visualización
+                    datos_visualizacion = {}
+                    
+                    for nombre_indice, valores in indices_calculados.items():
+                        datos_visualizacion[nombre_indice] = {
+                            'Jugadoras': list(valores.keys()),
+                            'Valores': list(valores.values())
+                        }
+                    
+                    # Visualizar los índices en gráficos de barras
+                    for nombre_indice, datos in datos_visualizacion.items():
+                        st.write(f"#### {nombre_indice}")
+                        st.write(indices_por_posicion[position][nombre_indice]['descripcion'])
+                        
+                        # Crear el gráfico
+                        fig = plt.figure(figsize=(10, 5))
+                        
+                        # Ordenar los datos de mayor a menor valor
+                        indices_ordenados = sorted(zip(datos['Jugadoras'], datos['Valores']), 
+                                                key=lambda x: x[1], reverse=True)
+                        
+                        nombres_ordenados = [n[:15] + '...' if len(n) > 15 else n for n, _ in indices_ordenados]
+                        valores_ordenados = [v for _, v in indices_ordenados]
+                        
+                        # Crear colores, destacando la jugadora seleccionada
+                        colores = ['#ff7f0e' if nombre.startswith(jugadora_seleccionada[:15]) else '#1f77b4' 
+                                for nombre in nombres_ordenados]
+                        
+                        # Crear gráfico de barras
+                        bars = plt.bar(nombres_ordenados, valores_ordenados, color=colores)
+                        
+                        # Añadir valores sobre las barras
+                        for bar in bars:
+                            height = bar.get_height()
+                            plt.text(bar.get_x() + bar.get_width()/2., height + 1,
+                                    f'{height:.1f}', ha='center', va='bottom', fontsize=9)
+                        
+                        plt.title(nombre_indice)
+                        plt.ylabel("Puntuación (0-100)")
+                        plt.xticks(rotation=45, ha='right')
+                        plt.ylim(0, 105)  # Espacio para las etiquetas
+                        plt.grid(axis='y', alpha=0.3)
+                        plt.tight_layout()
+                        
+                        # Mostrar el gráfico
+                        st.pyplot(fig)
+                    
+                    # Mostrar datos de índices en forma de tabla para comparación fácil
+                    st.write("### Tabla Comparativa de Índices")
+                    
+                    # Preparar datos para la tabla
+                    tabla_datos = {'Jugadora': jugadoras_a_comparar}
+                    
+                    for nombre_indice, valores in indices_calculados.items():
+                        tabla_datos[nombre_indice] = [valores.get(j, float('nan')) for j in jugadoras_a_comparar]
+                    
+                    # Crear DataFrame
+                    df_tabla = pd.DataFrame(tabla_datos)
+                    
+                    # Mostrar tabla con formato
+                    st.dataframe(df_tabla.style.format({col: "{:.1f}" for col in df_tabla.columns if col != 'Jugadora'}), 
+                                use_container_width=True)
+                    
+                    # Visualización en gráfico radar (similar a otras pestañas)
+                    st.write("### Visualización en Radar de Índices Compuestos")
+                    st.write(f"Comparando el perfil completo de {jugadora_seleccionada} con jugadoras similares")
+                    
+                    # Preparar datos para el radar
+                    try:
+                        # Seleccionar las jugadoras para el radar (limitamos a 5 para mejor visibilidad)
+                        jugadoras_radar = [jugadora_seleccionada]
+                        otras_jugadoras = [j for j in jugadoras_a_comparar if j != jugadora_seleccionada][:4]  # Las 4 más similares
+                        jugadoras_radar.extend(otras_jugadoras)
+                        
+                        # Obtener solo los nombres de los índices
+                        nombres_indices = list(indices_calculados.keys())
+                        
+                        if len(nombres_indices) >= 3:  # Necesitamos al menos 3 índices para un radar significativo
+                            # Crear figura para el radar
+                            fig_radar = plt.figure(figsize=(10, 10))
+                            ax = fig_radar.add_subplot(111, polar=True)
+                            
+                            # Calcular el ángulo para cada índice
+                            angulos = np.linspace(0, 2*np.pi, len(nombres_indices), endpoint=False).tolist()
+                            
+                            # Crear una paleta de colores para diferenciar las jugadoras
+                            colores = plt.cm.tab10(np.linspace(0, 1, len(jugadoras_radar)))
+                            
+                            # Dibujar cada jugadora en el gráfico de radar
+                            for i, jugadora in enumerate(jugadoras_radar):
+                                # Obtener valores de los índices para esta jugadora
+                                valores = []
+                                for indice in nombres_indices:
+                                    valor = indices_calculados[indice].get(jugadora, 0)
+                                    valores.append(valor / 100)  # Normalizar a escala 0-1 (ya que los índices están en 0-100)
+                                
+                                # Completar el círculo repitiendo el primer valor
+                                valores_completos = valores + [valores[0]]
+                                angulos_completos = angulos + [angulos[0]]
+                                
+                                # Destacar la jugadora seleccionada con línea más gruesa
+                                linewidth = 3 if jugadora == jugadora_seleccionada else 1.5
+                                ax.plot(angulos_completos, valores_completos, linewidth=linewidth, linestyle='solid', 
+                                    label=jugadora, color=colores[i])
+                                ax.fill(angulos_completos, valores_completos, alpha=0.1, color=colores[i])
+                            
+                            # Añadir las etiquetas para cada índice
+                            plt.xticks(angulos, nombres_indices, size=9)
+                            
+                            # Añadir las líneas de la red para cada nivel
+                            ax.set_rlabel_position(0)
+                            plt.yticks([0.2, 0.4, 0.6, 0.8], ["20", "40", "60", "80"], color="grey", size=8)
+                            plt.ylim(0, 1)
+                            
+                            # Ajustar la leyenda y el título
+                            plt.legend(loc='upper right', bbox_to_anchor=(0.1, 0.1))
+                            plt.title(f'Perfil de Índices Compuestos: {jugadora_seleccionada} vs Jugadoras Similares', size=14)
+                            
+                            # Mostrar el gráfico
+                            st.pyplot(fig_radar)
+                            
+                            # Mostrar explicación del gráfico radar
+                            st.info("""
+                            **Interpretación del gráfico radar:**
+                            - Cada eje representa un índice compuesto diferente
+                            - La jugadora seleccionada se destaca con una línea más gruesa
+                            - Mayor valor en un índice indica mejor rendimiento en ese aspecto
+                            - La forma del polígono revela el perfil de fortalezas y debilidades
+                            - Perfiles similares indican jugadoras con características parecidas
+                            """)
+                            
+                            # Añadir gráfico radar individual por cada jugadora
+                            st.write("### Perfiles Individuales")
+                            st.write("Visualiza el perfil individual de cada jugadora")
+                            
+                            # Crear un selector para elegir a qué jugadora visualizar
+                            jugadora_individual = st.selectbox("Selecciona una jugadora para ver su perfil detallado:", 
+                                                            jugadoras_a_comparar)
+                            
+                            if jugadora_individual:
+                                # Crear figura para el radar individual
+                                fig_ind = plt.figure(figsize=(8, 8))
+                                ax_ind = fig_ind.add_subplot(111, polar=True)
+                                
+                                # Obtener valores de los índices para esta jugadora
+                                valores_ind = []
+                                for indice in nombres_indices:
+                                    valor_ind = indices_calculados[indice].get(jugadora_individual, 0)
+                                    valores_ind.append(valor_ind / 100)  # Normalizar a escala 0-1
+                                
+                                # Completar el círculo
+                                valores_ind_completos = valores_ind + [valores_ind[0]]
+                                angulos_completos = angulos + [angulos[0]]
+                                
+                                # Dibujar el radar individual
+                                color = '#ff7f0e' if jugadora_individual == jugadora_seleccionada else '#1f77b4'
+                                ax_ind.plot(angulos_completos, valores_ind_completos, linewidth=2.5, 
+                                        linestyle='solid', color=color)
+                                ax_ind.fill(angulos_completos, valores_ind_completos, alpha=0.2, color=color)
+                                
+                                # Añadir las etiquetas y líneas
+                                plt.xticks(angulos, nombres_indices, size=10)
+                                ax_ind.set_rlabel_position(0)
+                                plt.yticks([0.2, 0.4, 0.6, 0.8], ["20", "40", "60", "80"], color="grey", size=9)
+                                plt.ylim(0, 1)
+                                
+                                # Añadir valores en cada eje
+                                for i, valor in enumerate(valores_ind):
+                                    plt.text(angulos[i], valor + 0.05, f"{valor*100:.0f}", 
+                                            horizontalalignment='center', size=9, 
+                                            verticalalignment='center', 
+                                            bbox=dict(facecolor='white', alpha=0.5, edgecolor='none'))
+                                
+                                plt.title(f'Perfil de Índices Compuestos: {jugadora_individual}', size=15)
+                                
+                                # Mostrar el gráfico individual
+                                st.pyplot(fig_ind)
+                                
+                                # Identificar fortalezas y debilidades
+                                indices_ordenados = sorted([(indice, indices_calculados[indice].get(jugadora_individual, 0)) 
+                                                        for indice in nombres_indices], key=lambda x: x[1], reverse=True)
+                                
+                                col1, col2 = st.columns(2)
+                                
+                                with col1:
+                                    st.write("#### Fortalezas")
+                                    st.markdown('<div style="background-color: #d4edda; padding: 15px; border-radius: 5px;">', unsafe_allow_html=True)
+                                    for indice, valor in indices_ordenados[:2]:  # Las 2 mejores
+                                        st.markdown(f"✅ **{indice}**: {valor:.1f} puntos")
+                                        st.markdown(f"*{indices_por_posicion[position][indice]['descripcion']}*")
+                                    st.markdown('</div>', unsafe_allow_html=True)
+                                
+                                with col2:
+                                    st.write("#### Áreas de mejora")
+                                    st.markdown('<div style="background-color: #f8d7da; padding: 15px; border-radius: 5px;">', unsafe_allow_html=True)
+                                    for indice, valor in indices_ordenados[-2:]:  # Las 2 peores
+                                        st.markdown(f"❌ **{indice}**: {valor:.1f} puntos")
+                                        st.markdown(f"*{indices_por_posicion[position][indice]['descripcion']}*")
+                                    st.markdown('</div>', unsafe_allow_html=True)
+                            
+                        else:
+                            st.warning("Se necesitan al menos 3 índices para crear un gráfico radar. Algunos índices no pudieron calcularse con los datos disponibles.")
+                    
+                    except Exception as e:
+                        st.error(f"Error al generar el gráfico radar: {e}")
+                        st.info("Este error puede deberse a falta de datos suficientes para algunos índices. Intenta con otra jugadora o posición.")
+                    
+                    # Explicación específica por posición
+                    st.write("## Interpretación de Índices para " + position)
+                    
+                    # Explicaciones específicas por posición
+                    explicaciones = {
+                        'GK': """
+                        ### Interpretación de Índices para Porteras
+                        
+                        Los índices compuestos para porteras evalúan cuatro aspectos fundamentales del juego:
+                        
+                        **Índice de Paradas**: Este índice refleja la capacidad fundamental de una portera para evitar goles. 
+                        Combina el porcentaje de paradas realizadas, la frecuencia de porterías a cero (clean sheets) y el rendimiento 
+                        respecto a los goles esperados. Un valor alto indica una portera que constantemente realiza más paradas de las 
+                        esperadas y mantiene su portería imbatida.
+                        
+                        **Índice de Juego Aéreo**: Evalúa el dominio de la portera en situaciones aéreas, particularmente en centros 
+                        y balones colgados. Combina el porcentaje de centros interceptados con la frecuencia de acciones fuera del área.
+                        Las porteras con valores altos son proactivas y dominantes en el juego aéreo.
+                        
+                        **Índice de Distribución**: Mide la contribución de la portera al juego ofensivo del equipo a través de su 
+                        distribución del balón. Valora tanto la precisión en pases largos como la capacidad para variar distancias.
+                        Un valor alto indica una portera moderna que participa activamente en la fase de construcción.
+                        
+                        **Índice de Rendimiento Bajo Presión**: Evalúa la capacidad de la portera para responder en situaciones críticas,
+                        como penaltis, y su rendimiento general en momentos de alta presión. Un valor alto indica una portera con temple
+                        y capacidad para decidir partidos en momentos clave.
+                        
+                        **Índice de Impacto por Minuto**: Mide la eficiencia de la portera normalizando su rendimiento respecto al tiempo
+                        jugado, permitiendo comparar jugadoras con diferente cantidad de minutos.
+                        
+                        Estos índices permiten identificar diferentes perfiles de porteras y ayudan a evaluar qué aspectos 
+                        específicos podría mejorar una jugadora para elevar su rendimiento general.
+                        """,
+                        
+                        'DF': """
+                        ### Interpretación de Índices para Defensas
+                        
+                        Los índices compuestos para defensas evalúan cinco dimensiones clave del juego defensivo:
+                        
+                        **Índice de Solidez Defensiva**: Este índice mide la eficacia de una defensa para detener ataques rivales.
+                        Combina la efectividad en entradas, bloqueos, intercepciones y recuperaciones. Las defensas con valores 
+                        altos son muy efectivas neutralizando amenazas y recuperando la posesión.
+                        
+                        **Índice de Construcción**: Evalúa la contribución de la defensa a la fase ofensiva del equipo.
+                        Combina la precisión en diferentes rangos de pase y la progresión del balón. Un valor alto indica 
+                        una defensa moderna capaz de iniciar ataques y participar en la construcción del juego.
+                        
+                        **Índice de Posicionamiento**: Mide la ocupación inteligente del espacio y la capacidad para cubrir 
+                        zonas críticas del campo. Refleja la presencia en zonas defensivas clave y la transición al mediocampo.
+                        Las defensas con valores altos demuestran excelente lectura del juego y posicionamiento.
+                        
+                        **Índice de Seguridad**: Evalúa la fiabilidad defensiva considerando disciplina (tarjetas), porcentaje de
+                        duelos ganados y recuperaciones. Las defensas con valores altos son confiables y raramente cometen errores
+                        que comprometan al equipo.
+                        
+                        **Índice de Juego Aéreo**: Mide específicamente la dominancia en situaciones de balón aéreo, un aspecto
+                        crucial para las defensas, especialmente centrales. Combina acciones defensivas en situaciones aéreas.
+                        
+                        **Índice de Impacto por Minuto**: Evalúa la eficiencia normalizando el rendimiento respecto al tiempo
+                        jugado, especialmente útil para comparar titulares con suplentes.
+                        
+                        Estos índices ayudan a identificar si una defensa tiene un perfil más orientado a la destrucción de juego 
+                        rival o a la construcción del propio, permitiendo evaluar tanto sus fortalezas como áreas de mejora.
+                        """,
+                        
+                        'MF': """
+                        ### Interpretación de Índices para Mediocampistas
+                        
+                        Los índices compuestos para mediocampistas evalúan seis facetas fundamentales del juego en el centro del campo:
+                        
+                        **Índice de Control**: Este índice refleja la capacidad de una mediocampista para gestionar el ritmo y la dirección 
+                        del juego. Combina la precisión en pases de diferentes distancias con la progresión del balón y los pases al último 
+                        tercio. Las mediocampistas con valores altos son excelentes organizadoras que dictan el tempo del partido.
+                        
+                        **Índice de Presión**: Evalúa la faceta defensiva de una mediocampista, midiendo su contribución a la recuperación 
+                        del balón y la presión sobre rivales. Combina entradas, intercepciones y recuperaciones. Un valor alto indica una 
+                        mediocampista que trabaja intensamente para reconquistar la posesión.
+                        
+                        **Índice de Creación**: Mide la capacidad para generar oportunidades ofensivas. Combina asistencias esperadas, 
+                        pases clave y acciones que conducen a tiros y goles. Las mediocampistas con valores altos son grandes generadoras 
+                        de juego ofensivo y catalizadoras de las oportunidades del equipo.
+                        
+                        **Índice de Versatilidad**: Evalúa el equilibrio entre contribuciones ofensivas y defensivas, identificando
+                        mediocampistas completas que aportan en ambas fases del juego. Un valor alto indica jugadoras "box-to-box" que
+                        participan activamente en todo el campo.
+                        
+                        **Índice de Progresión**: Mide la capacidad para hacer avanzar al equipo hacia zonas ofensivas, ya sea mediante
+                        pases, conducciones o recibiendo en zonas avanzadas. Un valor alto identifica a jugadoras que rompen líneas y
+                        hacen progresar el juego.
+                        
+                        **Índice de Impacto por Minuto**: Evalúa la eficiencia normalizando el rendimiento respecto al tiempo
+                        jugado, permitiendo comparaciones justas entre jugadoras con diferente participación.
+                        
+                        Estos índices permiten clasificar a las mediocampistas según sus perfiles (organizadoras, destructoras, creadoras, 
+                        box-to-box) y evaluar el equilibrio de sus habilidades en las diferentes facetas del juego.
+                        """,
+                        
+                        'FW': """
+                        ### Interpretación de Índices para Delanteras
+                        
+                        Los índices compuestos para delanteras evalúan seis aspectos esenciales del juego ofensivo:
+                        
+                        **Índice de Efectividad Ofensiva**: Este índice mide la capacidad goleadora y la eficiencia en la finalización. 
+                        Combina goles marcados, conversión de oportunidades y rendimiento respecto a goles esperados. Un valor alto 
+                        indica una delantera clínica que maximiza sus oportunidades de gol.
+                        
+                        **Índice de Creación**: Evalúa la contribución de la delantera a la generación de oportunidades para sus 
+                        compañeras. Combina asistencias, asistencias esperadas y acciones de creación de tiros y goles. Las delanteras 
+                        con valores altos no solo finalizan jugadas sino que también las crean.
+                        
+                        **Índice de Movimiento Ofensivo**: Mide el posicionamiento, desmarque y capacidad para ocupar espacios 
+                        peligrosos. Analiza la presencia en zonas avanzadas, especialmente el área rival, y la progresión con balón. 
+                        Un valor alto refleja una delantera con excelente inteligencia posicional y capacidad para encontrar espacios.
+                        
+                        **Índice de Presión Ofensiva**: Evalúa la contribución defensiva de la delantera en zonas avanzadas, midiendo
+                        su participación en la presión alta y recuperaciones en campo rival. Un valor alto indica delanteras que
+                        trabajan intensamente en la primera línea defensiva.
+                        
+                        **Índice de Autonomía**: Mide la capacidad de la delantera para generar peligro por sí misma, mediante regates,
+                        conducciones y finalización. Un valor alto identifica a jugadoras que pueden desequilibrar y resolver
+                        situaciones sin depender tanto del juego colectivo.
+                        
+                        **Índice de Impacto por Minuto**: Evalúa la eficiencia normalizando el rendimiento respecto al tiempo
+                        jugado, especialmente relevante para comparar titulares y suplentes o jugadoras con lesiones.
+                        
+                        Estos índices ayudan a distinguir entre diferentes tipos de delanteras (definidoras, generadoras, combinativas, 
+                        presionadoras) y proporcionan una visión integral de sus contribuciones ofensivas más allá de los simples goles marcados.
+                        """
+                    }
+                    
+                    # Mostrar la explicación correspondiente a la posición
+                    if position in explicaciones:
+                        st.markdown(explicaciones[position])
+                    
+                    # Información adicional sobre cómo se utilizan los índices
+                    st.info("""
+                    **¿Cómo utilizar estos índices en el análisis?**
+                    
+                    - **Visión integral**: Los índices combinan múltiples métricas en un solo valor, facilitando comparaciones holísticas
+                    - **Identificación de perfiles**: Permiten categorizar jugadoras según sus fortalezas específicas
+                    - **Áreas de mejora**: Diferencias significativas en ciertos índices pueden indicar aspectos a desarrollar
+                    - **Complementariedad**: Útil para identificar jugadoras que complementan las fortalezas/debilidades de otras
+                    - **Evolución temporal**: Monitorizando estos índices a lo largo del tiempo se puede evaluar el desarrollo de jugadoras
+                    
+                    Todos los índices están normalizados en una escala de 0-100 para facilitar la comparación, donde 100 representa 
+                    el rendimiento óptimo teórico en esa categoría.
+                    """)
+                    
+                else:
+                    st.warning(f"No se pudieron calcular índices para la posición {position}. Verifica que existen métricas suficientes en los datos.")
     
     else:
         # Mensaje cuando no se ha realizado el análisis
