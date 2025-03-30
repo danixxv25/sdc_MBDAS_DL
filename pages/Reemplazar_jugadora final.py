@@ -635,7 +635,7 @@ if df_combined is not None and not df_combined.empty:
                                                 and m in df_combined.select_dtypes(include=['float64', 'int64']).columns]
                             
                             # Preparar datos para el radar
-                            fig_radar_full = plt.figure(figsize=(5, 5))
+                            fig_radar_full = plt.figure(figsize=(6 ,6))
                             ax_full = fig_radar_full.add_subplot(111, polar=True)
                             
                             try:
@@ -871,7 +871,7 @@ if df_combined is not None and not df_combined.empty:
                                     ax.fill(angulos_completos, valores_completos, alpha=0.1, color=colores[i])
                             
                             # Añadir las etiquetas para cada métrica (usando nombres descriptivos)
-                            plt.xticks(angulos, [metric_display_names.get(m, m) for m in relevant_metrics], size=8)
+                            plt.xticks(angulos, [metric_display_names.get(m, m) for m in relevant_metrics], size=7)
                             
                             # Añadir las líneas de la red para cada nivel
                             ax.set_rlabel_position(0)
