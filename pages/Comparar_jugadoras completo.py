@@ -67,26 +67,6 @@ st.markdown("""
         color: #000000; /* Color negro para el texto */
     }
     
-    /* Colores de fondo para el índice de similitud según rango */
-    .similarity-high {
-        background-color: #a8e6cf; /* Verde claro para >85% */
-    }
-    
-    .similarity-medium {
-        background-color: #fdfd96; /* Amarillo claro para 60-84.9% */
-    }
-    
-    .similarity-low {
-        background-color: #ffcc99; /* Naranja claro para <60% */
-    }
-    
-    .similarity-label {
-        font-size: 14px;
-        color: #000000;
-        margin-bottom: 15px;
-        font-weight: 600;
-    }
-    
     /* Estilos para percentiles */
     .percentile-container {
         padding: 10px;
