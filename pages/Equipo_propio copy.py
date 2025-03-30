@@ -55,7 +55,7 @@ st.markdown("""
             
     /* Tamaño fijo para los scorecards */
     .stMetric {
-        height: 150px;
+        height: 165px;
         width: 100%;
         min-width: 150px;
         display: flex;
