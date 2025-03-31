@@ -262,11 +262,7 @@ if df_combined is not None and not df_combined.empty:
     
     # Selectbox final para jugadoras con todos los filtros aplicados
     selected_player = st.sidebar.selectbox("Jugadora:", [""] + list(filtered_players), index=0)
-    
-    # Botón para limpiar filtros
-    if st.sidebar.button("Limpiar filtros"):
-        st.experimental_rerun()
-    
+       
     # Mostrar información de la jugadora seleccionada
     if selected_player:
         # Filtrar datos de la jugadora
