@@ -547,7 +547,7 @@ if df_combined is not None and not df_combined.empty:
     tab1, tab2, tab3, tab4, tab5 = st.tabs(["Ranking de Talentos", "Comparativa Detallada", "Comparativa con Equipo Propio", "Visualización por Edad", "Índices de Rendimiento ℹ️"])
     
     with tab1:
-        st.header("Ranking de Talentos Emergentes")
+        st.header(f"Ranking de Talentos Emergentes en la {liga_seleccionada}")
         
         # Preparar datos para el ranking según la selección
         jugadoras_ranking = []
