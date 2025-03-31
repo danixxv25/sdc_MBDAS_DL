@@ -604,35 +604,7 @@ if df_combined is not None and not df_combined.empty:
                     mejor_posicion = max(set([j['Posición'] for j in jugadoras_ranking]), 
                                         key=lambda x: sum(1 for j in jugadoras_ranking if j['Posición'] == x))
                     st.metric("Posición con más talentos", mejor_posicion)
-            
-            # Mostrar información detallada sobre el índice seleccionado
-            if posicion_seleccionada in talent_indices and indice_seleccionado in talent_indices[posicion_seleccionada]:
-                st.info(f"**{indice_seleccionado}**: {talent_indices[posicion_seleccionada][indice_seleccionado]['descripcion']}")
-                
-                # Mostrar métricas utilizadas
-                metricas_utilizadas = talent_indices[posicion_seleccionada][indice_seleccionado]['metricas']
-                pesos = talent_indices[posicion_seleccionada][indice_seleccionado]['pesos']
-                
-                # Crear gráfico de distribución de pesos
-                fig, ax = plt.subplots(figsize=(5, 2))
-                colors = plt.cm.viridis(np.linspace(0, 0.8, len(metricas_utilizadas)))
-                bars = ax.barh(
-                    [metric_display_names.get(m, m) for m in metricas_utilizadas], 
-                    pesos, 
-                    color=colors
-                )
-                
-                # Añadir valores
-                for bar in bars:
-                    width = bar.get_width()
-                    ax.text(width + 0.01, bar.get_y() + bar.get_height()/2, f'{width:.2f}', 
-                            va='center', fontsize=9)
-                
-                ax.set_title(f'Ponderación de métricas para {indice_seleccionado}')
-                ax.set_xlabel('Peso')
-                ax.set_xlim(0, max(pesos) + 0.1)
-                plt.tight_layout()
-                st.pyplot(fig)
+
             
             # Crear tarjetas para las jugadoras del ranking
             st.subheader("Top Jugadoras")
