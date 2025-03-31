@@ -1459,10 +1459,11 @@ if df_combined is not None and not df_combined.empty:
             for bar in bars:
                 width = bar.get_width()
                 ax.text(width + 0.01, bar.get_y() + bar.get_height()/2, f'{width:.2f}', 
-                        va='center', fontsize=9)
+                        va='center', fontsize=6)
             
             ax.set_title(f'Ponderación de métricas para {indice_seleccionado}')
             ax.set_xlabel('Peso')
+            ax.tick_params(axis='both', which='major', labelsize=5)
             ax.set_xlim(0, max(pesos) + 0.1)
             plt.tight_layout()
             st.pyplot(fig)
