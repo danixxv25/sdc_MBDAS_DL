@@ -1,1 +1,39 @@
+name: Ejecutar Script Semanal
 
+on:
+  schedule:
+    # Programado para ejecutarse todos los martes a las 4 AM UTC
+    # El formato es: minuto hora día-del-mes mes día-de-la-semana
+    - cron: '0 4 * * 2'
+  
+  # También puedes añadir esta línea para probar el workflow manualmente
+  workflow_dispatch:
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout del código
+      uses: actions/checkout@v3
+      
+    - name: Configurar Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10' # Especifica la versión de Python que necesitas
+    
+    - name: Instalar dependencias
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+    
+    - name: Ejecutar script
+      run: 000_raw_to_gold.py
+      
+    # Si necesitas almacenar algún resultado o archivo generado
+    - name: Guardar resultados
+      if: success()
+      uses: actions/upload-artifact@v3
+      with:
+        name: resultados
+        path: ./resultados/  # Carpeta donde tu script guarda los resultados, si aplica
