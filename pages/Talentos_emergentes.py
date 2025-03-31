@@ -547,7 +547,31 @@ if df_combined is not None and not df_combined.empty:
     tab1, tab2, tab3, tab4, tab5 = st.tabs(["Ranking de Talentos", "Comparativa Detallada", "Comparativa con Equipo Propio", "Visualización por Edad", "Índices de Rendimiento ℹ️"])
     
     with tab1:
-        st.header(f"Ranking de Talentos Emergentes en la {liga_seleccionada}")
+        if liga_seleccionada == 'Todas':
+            st.header(f"Ranking de Talentos Emergentes en la {liga_seleccionada}")
+            col1, col2, col3, col4, col5  = st.columns([1,1,1,1,1])
+            with col1:
+                st.image("media/logos/leagues/BWSL_MASTER_HORIZONTAL_BADGE_RGB.png", width=100)
+            with col2:
+                st.image("media/logos/leagues/FIGC_Serie_A_femminile_(2020).svg.png", width=75)
+            with col3:
+                st.image("media/logos/leagues/Google_Pixel_Frauen-Bundesliga_Wordmark.svg.png", width=100)
+            with col4:
+                st.image("media/logos/leagues/liga-f-seeklogo.png", width=100)
+            with col5:
+                st.image("media/logos/leagues/Première_Ligue.png", width=75)
+        else:
+            st.header(f"Ranking de Talentos Emergentes en la {liga_seleccionada}")
+            if liga_seleccionada == 'Frauen-Bundesliga - GER':
+                st.image("media/logos/leagues/Google_Pixel_Frauen-Bundesliga_Wordmark.svg.png", width=100)
+            elif liga_seleccionada == 'Liga F - ESP':
+                st.image("media/logos/leagues/liga-f-seeklogo.png", width=100)
+            elif liga_seleccionada == 'Première Ligue - FRA':
+                st.image("media/logos/leagues/Première_Ligue.png", width=75)
+            elif liga_seleccionada == 'Serie A - ITA':
+                st.image("media/logos/leagues/FIGC_Serie_A_femminile_(2020).svg.png", width=75)
+            elif liga_seleccionada == "Women's Super League - ENG":
+                st.image("media/logos/leagues/BWSL_MASTER_HORIZONTAL_BADGE_RGB.png", width=100)
         
         # Preparar datos para el ranking según la selección
         jugadoras_ranking = []
