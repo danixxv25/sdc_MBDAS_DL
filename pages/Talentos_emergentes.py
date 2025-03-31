@@ -614,7 +614,7 @@ if df_combined is not None and not df_combined.empty:
                 pesos = talent_indices[posicion_seleccionada][indice_seleccionado]['pesos']
                 
                 # Crear gráfico de distribución de pesos
-                fig, ax = plt.subplots(figsize=(10, 4))
+                fig, ax = plt.subplots(figsize=(5, 2))
                 colors = plt.cm.viridis(np.linspace(0, 0.8, len(metricas_utilizadas)))
                 bars = ax.barh(
                     [metric_display_names.get(m, m) for m in metricas_utilizadas], 
