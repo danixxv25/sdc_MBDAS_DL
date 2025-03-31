@@ -544,7 +544,7 @@ if df_combined is not None and not df_combined.empty:
         resultados_indices = calcular_indices_talento(df_filtered, edad_maxima)
     
     # Crear pestañas para diferentes visualizaciones
-    tab1, tab2, tab3, tab4 = st.tabs(["Ranking de Talentos", "Comparativa Detallada", "Visualización por Edad", "Comparativa con Equipo Propio"])
+    tab1, tab2, tab3, tab4 = st.tabs(["Ranking de Talentos", "Comparativa Detallada", "Comparativa con Equipo Propio", "Visualización por Edad"])
     
     with tab1:
         st.header("Ranking de Talentos Emergentes")
@@ -843,7 +843,7 @@ if df_combined is not None and not df_combined.empty:
         else:
             st.warning("No hay jugadoras disponibles para comparar con los filtros actuales.")
     
-    with tab3:
+    with tab4:
         st.header("Distribución por Edad")
         
         # Crear análisis de distribución de talento por edad
@@ -959,7 +959,7 @@ if df_combined is not None and not df_combined.empty:
         else:
             st.warning("No hay suficientes datos para crear visualizaciones de distribución por edad.")
             
-    with tab4:
+    with tab3:
         st.header("Comparativa con Jugadoras del Atlético de Madrid")
         
         if jugadoras_ranking:
