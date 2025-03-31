@@ -544,7 +544,7 @@ if df_combined is not None and not df_combined.empty:
         resultados_indices = calcular_indices_talento(df_filtered, edad_maxima)
     
     # Crear pestañas para diferentes visualizaciones
-    tab1, tab2, tab3, tab4 = st.tabs(["Ranking de Talentos", "Comparativa Detallada", "Visualización por Edad", "Comparativa con Atlético"])
+    tab1, tab2, tab3, tab4 = st.tabs(["Ranking de Talentos", "Comparativa Detallada", "Visualización por Edad", "Comparativa con Equipo Propio"])
     
     with tab1:
         st.header("Ranking de Talentos Emergentes")
