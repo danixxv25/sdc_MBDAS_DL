@@ -1056,42 +1056,188 @@ if df_combined is not None and not df_combined.empty:
                                 datos_joven_completos = df_combined[df_combined['Player'] == nombre_joven]
                                 
                                 if not datos_joven_completos.empty and not jugadoras_atm[jugadoras_atm['Player'] == seleccion_atm].empty:
-                                    # Crear gráficos para cada métrica
-                                    for metrica in metricas_clave:
-                                        if metrica in datos_joven_completos.columns and metrica in jugadoras_atm.columns:
-                                            valor_joven = datos_joven_completos[metrica].iloc[0]
-                                            valor_atm = jugadoras_atm[jugadoras_atm['Player'] == seleccion_atm][metrica].iloc[0]
+                                    # Organizar los gráficos en filas de 3 columnas para ahorrar espacio
+                                    metricas_para_mostrar = [m for m in metricas_clave if m in datos_joven_completos.columns and m in jugadoras_atm.columns]
+                                    num_cols = 3
+                                    num_filas = (len(metricas_para_mostrar) + num_cols - 1) // num_cols
+                                    
+                                    for fila in range(num_filas):
+                                        cols = st.columns(num_cols)
+                                        for i in range(num_cols):
+                                            idx = fila * num_cols + i
+                                            if idx < len(metricas_para_mostrar):
+                                                metrica = metricas_para_mostrar[idx]
+                                                with cols[i]:
+                                                    valor_joven = datos_joven_completos[metrica].iloc[0]
+                                                    valor_atm = jugadoras_atm[jugadoras_atm['Player'] == seleccion_atm][metrica].iloc[0]
+                                                    
+                                                    if pd.notna(valor_joven) and pd.notna(valor_atm):
+                                                        # Crear gráfico de barras lado a lado (versión más pequeña)
+                                                        fig, ax = plt.subplots(figsize=(5, 3))
+                                                        
+                                                        # Datos para el gráfico
+                                                        nombres = [nombre_joven[:10]+"..." if len(nombre_joven)>10 else nombre_joven, 
+                                                                 seleccion_atm[:10]+"..." if len(seleccion_atm)>10 else seleccion_atm]
+                                                        valores = [valor_joven, valor_atm]
+                                                        colores = ['#ff9f1c', '#e71d36']  # Joven vs ATM
+                                                        
+                                                        # Crear barras
+                                                        bars = ax.bar(nombres, valores, color=colores, width=0.6)
+                                                        
+                                                        # Añadir etiquetas
+                                                        for bar in bars:
+                                                            height = bar.get_height()
+                                                            ax.text(bar.get_x() + bar.get_width()/2., height + 0.01 * max(valores),
+                                                                    f'{height:.2f}', ha='center', va='bottom', fontsize=8)
+                                                        
+                                                        # Configurar gráfico
+                                                        ax.set_title(f'{metric_display_names.get(metrica, metrica)}', fontsize=10)
+                                                        ax.tick_params(axis='x', labelsize=8)
+                                                        ax.tick_params(axis='y', labelsize=8)
+                                                        ax.grid(axis='y', alpha=0.3)
+                                                        
+                                                        # Ajustar límites para valores positivos y negativos
+                                                        if min(valores) < 0:
+                                                            ax.set_ylim(min(valores) * 1.1, max(valores) * 1.1)
+                                                        else:
+                                                            ax.set_ylim(0, max(valores) * 1.1)
+                                                        
+                                                        plt.tight_layout()
+                                                        st.pyplot(fig)
+                                
+                                # Crear gráfico radar con los índices de talento
+                                st.markdown("### Comparativa de Índices de Talento")
+                                
+                                # Verificar si tenemos índices calculados para ambas jugadoras
+                                indices_joven = {}
+                                
+                                # Obtener índices para la joven promesa
+                                if posicion_joven in resultados_indices:
+                                    for nombre_indice in resultados_indices[posicion_joven]:
+                                        if nombre_joven in resultados_indices[posicion_joven][nombre_indice]:
+                                            indices_joven[nombre_indice] = resultados_indices[posicion_joven][nombre_indice][nombre_joven]['valor']
+                                
+                                # Si tenemos índices para la joven, calculamos también para la jugadora ATM
+                                if indices_joven:
+                                    # Calcular índices para la jugadora del Atlético
+                                    indices_atm = {}
+                                    
+                                    # Para cada índice, calculamos el valor para la jugadora del ATM
+                                    for nombre_indice, definicion in talent_indices[posicion_joven].items():
+                                        metricas = definicion['metricas']
+                                        pesos = definicion['pesos']
+                                        
+                                        # Verificar si se cumplen los umbrales mínimos
+                                        datos_atm_row = jugadoras_atm[jugadoras_atm['Player'] == seleccion_atm].iloc[0]
+                                        cumple_umbrales = True
+                                        
+                                        for metrica, valor in definicion['min_threshold'].items():
+                                            if metrica in datos_atm_row and datos_atm_row[metrica] < valor:
+                                                cumple_umbrales = False
+                                                break
+                                        
+                                        if not cumple_umbrales:
+                                            continue
+                                        
+                                        # Calcular el índice
+                                        valor_indice = 0
+                                        valores_por_metrica = {}
+                                        
+                                        # Obtener máximos y mínimos para normalización
+                                        max_vals = {}
+                                        min_vals = {}
+                                        
+                                        for metrica in metricas:
+                                            if metrica in df_combined.columns:
+                                                # Filtrar por posición para obtener rango comparable
+                                                valores_metrica = df_combined[df_combined['Posición Principal'] == posicion_joven][metrica].dropna()
+                                                if not valores_metrica.empty:
+                                                    max_vals[metrica] = valores_metrica.max()
+                                                    min_vals[metrica] = valores_metrica.min()
+                                        
+                                        # Normalizar y calcular
+                                        for i, metrica in enumerate(metricas):
+                                            if (metrica in datos_atm_row and 
+                                                not pd.isna(datos_atm_row[metrica]) and 
+                                                metrica in max_vals and 
+                                                metrica in min_vals and 
+                                                max_vals[metrica] > min_vals[metrica]):
+                                                
+                                                # Normalizar entre 0 y 1
+                                                valor_norm = (datos_atm_row[metrica] - min_vals[metrica]) / (max_vals[metrica] - min_vals[metrica])
+                                                valores_por_metrica[metrica] = valor_norm
+                                                valor_indice += valor_norm * pesos[i]
+                                            elif metrica in pesos:
+                                                # Si no hay rango válido, usar 0.5
+                                                valor_norm = 0.5
+                                                valores_por_metrica[metrica] = valor_norm
+                                                valor_indice += valor_norm * pesos[i]
+                                        
+                                        # Escalar a 0-100
+                                        indices_atm[nombre_indice] = valor_indice * 100
+                                    
+                                    # Crear gráfico radar con los índices
+                                    if indices_atm:
+                                        # Obtener los índices comunes
+                                        indices_comunes = set(indices_joven.keys()) & set(indices_atm.keys())
+                                        
+                                        if indices_comunes:
+                                            # Convertir a lista ordenada
+                                            indices_comunes = sorted(list(indices_comunes))
                                             
-                                            if pd.notna(valor_joven) and pd.notna(valor_atm):
-                                                # Crear gráfico de barras lado a lado
-                                                fig, ax = plt.subplots(figsize=(10, 4))
-                                                
-                                                # Datos para el gráfico
-                                                nombres = [nombre_joven, seleccion_atm]
-                                                valores = [valor_joven, valor_atm]
-                                                colores = ['#ff9f1c', '#e71d36']  # Joven vs ATM
-                                                
-                                                # Crear barras
-                                                bars = ax.bar(nombres, valores, color=colores, width=0.6)
-                                                
-                                                # Añadir etiquetas
-                                                for bar in bars:
-                                                    height = bar.get_height()
-                                                    ax.text(bar.get_x() + bar.get_width()/2., height + 0.02 * max(valores),
-                                                            f'{height:.2f}', ha='center', va='bottom', fontsize=10)
-                                                
-                                                # Configurar gráfico
-                                                ax.set_title(f'{metric_display_names.get(metrica, metrica)}', fontsize=12)
-                                                ax.grid(axis='y', alpha=0.3)
-                                                
-                                                # Ajustar límites para valores positivos y negativos
-                                                if min(valores) < 0:
-                                                    ax.set_ylim(min(valores) * 1.1, max(valores) * 1.1)
-                                                else:
-                                                    ax.set_ylim(0, max(valores) * 1.1)
-                                                
-                                                plt.tight_layout()
-                                                st.pyplot(fig)
+                                            # Crear figura para el radar
+                                            fig = plt.figure(figsize=(8, 8))
+                                            ax = fig.add_subplot(111, polar=True)
+                                            
+                                            # Extraer los valores
+                                            valores_joven = [indices_joven[indice]/100 for indice in indices_comunes]  # Normalizar a 0-1
+                                            valores_atm = [indices_atm[indice]/100 for indice in indices_comunes]
+                                            
+                                            # Configurar ángulos
+                                            angulos = np.linspace(0, 2*np.pi, len(indices_comunes), endpoint=False).tolist()
+                                            
+                                            # Cerrar el círculo
+                                            valores_joven = np.concatenate((valores_joven, [valores_joven[0]]))
+                                            valores_atm = np.concatenate((valores_atm, [valores_atm[0]]))
+                                            angulos += [angulos[0]]
+                                            
+                                            # Dibujar líneas
+                                            ax.plot(angulos, valores_joven, 'o-', linewidth=2, color='#ff9f1c', label=nombre_joven)
+                                            ax.fill(angulos, valores_joven, alpha=0.1, color='#ff9f1c')
+                                            
+                                            ax.plot(angulos, valores_atm, 'o-', linewidth=2, color='#e71d36', label=seleccion_atm)
+                                            ax.fill(angulos, valores_atm, alpha=0.1, color='#e71d36')
+                                            
+                                            # Añadir etiquetas
+                                            plt.xticks(angulos[:-1], indices_comunes, size=9)
+                                            
+                                            # Configurar escala
+                                            ax.set_rlabel_position(0)
+                                            plt.yticks([0.2, 0.4, 0.6, 0.8], ["20", "40", "60", "80"], color="grey", size=8)
+                                            plt.ylim(0, 1)
+                                            
+                                            # Leyenda y título
+                                            plt.legend(loc='upper right', bbox_to_anchor=(0.1, 0.1))
+                                            plt.title(f'Comparativa de Índices de Talento', size=14)
+                                            
+                                            st.pyplot(fig)
+                                            
+                                            # Tabla comparativa de índices
+                                            data_tabla = {'Índice': indices_comunes,
+                                                         nombre_joven: [indices_joven[i] for i in indices_comunes],
+                                                         seleccion_atm: [indices_atm[i] for i in indices_comunes],
+                                                         'Diferencia': [indices_joven[i] - indices_atm[i] for i in indices_comunes]}
+                                            
+                                            df_indices = pd.DataFrame(data_tabla)
+                                            st.dataframe(df_indices.style.format({nombre_joven: '{:.1f}', 
+                                                                                seleccion_atm: '{:.1f}', 
+                                                                                'Diferencia': '{:.1f}'}))
+                                        else:
+                                            st.warning("No hay índices comunes calculados para ambas jugadoras.")
+                                    else:
+                                        st.warning("No se pudieron calcular índices para la jugadora del Atlético de Madrid.")
+                                else:
+                                    st.warning("No se encontraron índices calculados para la joven promesa seleccionada.")
                                 
                                 # Crear gráfico radar con todas las métricas disponibles
                                 st.markdown("### Perfil Completo (Radar)")
