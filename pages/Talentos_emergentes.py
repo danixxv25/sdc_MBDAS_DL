@@ -544,7 +544,7 @@ if df_combined is not None and not df_combined.empty:
         resultados_indices = calcular_indices_talento(df_filtered, edad_maxima)
     
     # Crear pestañas para diferentes visualizaciones
-    tab1, tab2, tab3, tab4 = st.tabs(["Ranking de Talentos", "Comparativa Detallada", "Comparativa con Equipo Propio", "Visualización por Edad"])
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(["Ranking de Talentos", "Comparativa Detallada", "Comparativa con Equipo Propio", "Visualización por Edad", "Índices de Rendimiento ℹ️"])
     
     with tab1:
         st.header("Ranking de Talentos Emergentes")
@@ -1437,6 +1437,185 @@ if df_combined is not None and not df_combined.empty:
                 st.info("Selecciona una joven promesa para empezar la comparación.")
         else:
             st.warning("No hay jugadoras disponibles para comparar con los filtros actuales. Ajusta los filtros para encontrar jóvenes promesas.")
+    with tab5: 
+        # Mostrar información detallada sobre el índice seleccionado
+        if posicion_seleccionada in talent_indices and indice_seleccionado in talent_indices[posicion_seleccionada]:
+            st.info(f"**{indice_seleccionado}**: {talent_indices[posicion_seleccionada][indice_seleccionado]['descripcion']}")
+            
+            # Mostrar métricas utilizadas
+            metricas_utilizadas = talent_indices[posicion_seleccionada][indice_seleccionado]['metricas']
+            pesos = talent_indices[posicion_seleccionada][indice_seleccionado]['pesos']
+            
+            # Crear gráfico de distribución de pesos
+            fig, ax = plt.subplots(figsize=(5, 2))
+            colors = plt.cm.viridis(np.linspace(0, 0.8, len(metricas_utilizadas)))
+            bars = ax.barh(
+                [metric_display_names.get(m, m) for m in metricas_utilizadas], 
+                pesos, 
+                color=colors
+            )
+            
+            # Añadir valores
+            for bar in bars:
+                width = bar.get_width()
+                ax.text(width + 0.01, bar.get_y() + bar.get_height()/2, f'{width:.2f}', 
+                        va='center', fontsize=9)
+            
+            ax.set_title(f'Ponderación de métricas para {indice_seleccionado}')
+            ax.set_xlabel('Peso')
+            ax.set_xlim(0, max(pesos) + 0.1)
+            plt.tight_layout()
+            st.pyplot(fig)
+        else:
+            st.info(f"Seleccione un índice en la barra lateral")
+
+        # Explicación específica por posición
+        st.write("## Interpretación de Índices para " + posicion_seleccionada)
+        
+        # Explicaciones específicas por posición
+        explicaciones = {
+            'GK': """
+            ### Interpretación de Índices para Porteras
+            
+            Los índices compuestos para porteras evalúan cuatro aspectos fundamentales del juego:
+            
+            **Índice de Paradas**: Este índice refleja la capacidad fundamental de una portera para evitar goles. 
+            Combina el porcentaje de paradas realizadas, la frecuencia de porterías a cero (clean sheets) y el rendimiento 
+            respecto a los goles esperados. Un valor alto indica una portera que constantemente realiza más paradas de las 
+            esperadas y mantiene su portería imbatida.
+            
+            **Índice de Juego Aéreo**: Evalúa el dominio de la portera en situaciones aéreas, particularmente en centros 
+            y balones colgados. Combina el porcentaje de centros interceptados con la frecuencia de acciones fuera del área.
+            Las porteras con valores altos son proactivas y dominantes en el juego aéreo.
+            
+            **Índice de Distribución**: Mide la contribución de la portera al juego ofensivo del equipo a través de su 
+            distribución del balón. Valora tanto la precisión en pases largos como la capacidad para variar distancias.
+            Un valor alto indica una portera moderna que participa activamente en la fase de construcción.
+            
+            **Índice de Rendimiento Bajo Presión**: Evalúa la capacidad de la portera para responder en situaciones críticas,
+            como penaltis, y su rendimiento general en momentos de alta presión. Un valor alto indica una portera con temple
+            y capacidad para decidir partidos en momentos clave.
+            
+            **Índice de Impacto por Minuto**: Mide la eficiencia de la portera normalizando su rendimiento respecto al tiempo
+            jugado, permitiendo comparar jugadoras con diferente cantidad de minutos.
+            
+            Estos índices permiten identificar diferentes perfiles de porteras y ayudan a evaluar qué aspectos 
+            específicos podría mejorar una jugadora para elevar su rendimiento general.
+            """,
+            
+            'DF': """
+            ### Interpretación de Índices para Defensas
+            
+            Los índices compuestos para defensas evalúan cinco dimensiones clave del juego defensivo:
+            
+            **Índice de Solidez Defensiva**: Este índice mide la eficacia de una defensa para detener ataques rivales.
+            Combina la efectividad en entradas, bloqueos, intercepciones y recuperaciones. Las defensas con valores 
+            altos son muy efectivas neutralizando amenazas y recuperando la posesión.
+            
+            **Índice de Construcción**: Evalúa la contribución de la defensa a la fase ofensiva del equipo.
+            Combina la precisión en diferentes rangos de pase y la progresión del balón. Un valor alto indica 
+            una defensa moderna capaz de iniciar ataques y participar en la construcción del juego.
+            
+            **Índice de Posicionamiento**: Mide la ocupación inteligente del espacio y la capacidad para cubrir 
+            zonas críticas del campo. Refleja la presencia en zonas defensivas clave y la transición al mediocampo.
+            Las defensas con valores altos demuestran excelente lectura del juego y posicionamiento.
+            
+            **Índice de Seguridad**: Evalúa la fiabilidad defensiva considerando disciplina (tarjetas), porcentaje de
+            duelos ganados y recuperaciones. Las defensas con valores altos son confiables y raramente cometen errores
+            que comprometan al equipo.
+            
+            **Índice de Juego Aéreo**: Mide específicamente la dominancia en situaciones de balón aéreo, un aspecto
+            crucial para las defensas, especialmente centrales. Combina acciones defensivas en situaciones aéreas.
+            
+            **Índice de Impacto por Minuto**: Evalúa la eficiencia normalizando el rendimiento respecto al tiempo
+            jugado, especialmente útil para comparar titulares con suplentes.
+            
+            Estos índices ayudan a identificar si una defensa tiene un perfil más orientado a la destrucción de juego 
+            rival o a la construcción del propio, permitiendo evaluar tanto sus fortalezas como áreas de mejora.
+            """,
+            
+            'MF': """
+            ### Interpretación de Índices para Mediocampistas
+            
+            Los índices compuestos para mediocampistas evalúan seis facetas fundamentales del juego en el centro del campo:
+            
+            **Índice de Control**: Este índice refleja la capacidad de una mediocampista para gestionar el ritmo y la dirección 
+            del juego. Combina la precisión en pases de diferentes distancias con la progresión del balón y los pases al último 
+            tercio. Las mediocampistas con valores altos son excelentes organizadoras que dictan el tempo del partido.
+            
+            **Índice de Presión**: Evalúa la faceta defensiva de una mediocampista, midiendo su contribución a la recuperación 
+            del balón y la presión sobre rivales. Combina entradas, intercepciones y recuperaciones. Un valor alto indica una 
+            mediocampista que trabaja intensamente para reconquistar la posesión.
+            
+            **Índice de Creación**: Mide la capacidad para generar oportunidades ofensivas. Combina asistencias esperadas, 
+            pases clave y acciones que conducen a tiros y goles. Las mediocampistas con valores altos son grandes generadoras 
+            de juego ofensivo y catalizadoras de las oportunidades del equipo.
+            
+            **Índice de Versatilidad**: Evalúa el equilibrio entre contribuciones ofensivas y defensivas, identificando
+            mediocampistas completas que aportan en ambas fases del juego. Un valor alto indica jugadoras "box-to-box" que
+            participan activamente en todo el campo.
+            
+            **Índice de Progresión**: Mide la capacidad para hacer avanzar al equipo hacia zonas ofensivas, ya sea mediante
+            pases, conducciones o recibiendo en zonas avanzadas. Un valor alto identifica a jugadoras que rompen líneas y
+            hacen progresar el juego.
+            
+            **Índice de Impacto por Minuto**: Evalúa la eficiencia normalizando el rendimiento respecto al tiempo
+            jugado, permitiendo comparaciones justas entre jugadoras con diferente participación.
+            
+            Estos índices permiten clasificar a las mediocampistas según sus perfiles (organizadoras, destructoras, creadoras, 
+            box-to-box) y evaluar el equilibrio de sus habilidades en las diferentes facetas del juego.
+            """,
+            
+            'FW': """
+            ### Interpretación de Índices para Delanteras
+            
+            Los índices compuestos para delanteras evalúan seis aspectos esenciales del juego ofensivo:
+            
+            **Índice de Efectividad Ofensiva**: Este índice mide la capacidad goleadora y la eficiencia en la finalización. 
+            Combina goles marcados, conversión de oportunidades y rendimiento respecto a goles esperados. Un valor alto 
+            indica una delantera clínica que maximiza sus oportunidades de gol.
+            
+            **Índice de Creación**: Evalúa la contribución de la delantera a la generación de oportunidades para sus 
+            compañeras. Combina asistencias, asistencias esperadas y acciones de creación de tiros y goles. Las delanteras 
+            con valores altos no solo finalizan jugadas sino que también las crean.
+            
+            **Índice de Movimiento Ofensivo**: Mide el posicionamiento, desmarque y capacidad para ocupar espacios 
+            peligrosos. Analiza la presencia en zonas avanzadas, especialmente el área rival, y la progresión con balón. 
+            Un valor alto refleja una delantera con excelente inteligencia posicional y capacidad para encontrar espacios.
+            
+            **Índice de Presión Ofensiva**: Evalúa la contribución defensiva de la delantera en zonas avanzadas, midiendo
+            su participación en la presión alta y recuperaciones en campo rival. Un valor alto indica delanteras que
+            trabajan intensamente en la primera línea defensiva.
+            
+            **Índice de Autonomía**: Mide la capacidad de la delantera para generar peligro por sí misma, mediante regates,
+            conducciones y finalización. Un valor alto identifica a jugadoras que pueden desequilibrar y resolver
+            situaciones sin depender tanto del juego colectivo.
+            
+            **Índice de Impacto por Minuto**: Evalúa la eficiencia normalizando el rendimiento respecto al tiempo
+            jugado, especialmente relevante para comparar titulares y suplentes o jugadoras con lesiones.
+            
+            Estos índices ayudan a distinguir entre diferentes tipos de delanteras (definidoras, generadoras, combinativas, 
+            presionadoras) y proporcionan una visión integral de sus contribuciones ofensivas más allá de los simples goles marcados.
+            """
+        }
+        
+        # Mostrar la explicación correspondiente a la posición
+        if posicion_seleccionada in explicaciones:
+            st.markdown(explicaciones[posicion_seleccionada])
+        
+        # Información adicional sobre cómo se utilizan los índices
+        st.info("""
+        **¿Cómo utilizar estos índices en el análisis?**
+        
+        - **Visión integral**: Los índices combinan múltiples métricas en un solo valor, facilitando comparaciones holísticas
+        - **Identificación de perfiles**: Permiten categorizar jugadoras según sus fortalezas específicas
+        - **Áreas de mejora**: Diferencias significativas en ciertos índices pueden indicar aspectos a desarrollar
+        - **Complementariedad**: Útil para identificar jugadoras que complementan las fortalezas/debilidades de otras
+        - **Evolución temporal**: Monitorizando estos índices a lo largo del tiempo se puede evaluar el desarrollo de jugadoras
+        
+        Todos los índices están normalizados en una escala de 0-100 para facilitar la comparación, donde 100 representa 
+        el rendimiento óptimo teórico en esa categoría.
+        """)
         
 else:
     st.error("""
