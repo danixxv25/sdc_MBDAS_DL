@@ -10,7 +10,7 @@ page_3 = st.Page("pages/Comparar_jugadoras completo.py", title="Comparar Jugador
 page_4 = st.Page("pages/Reemplazar_jugadora final.py", title="Reemplazar Jugadoras", icon="🔄")
 page_5 = st.Page("pages/Talentos_emergentes.py", title="Talentos emergentes", icon="🌟")
 
-pg = st.navigation([main_page, page_1, page_2, page_3, page_4])
+pg = st.navigation([main_page, page_1, page_2, page_3, page_4, page_5])
 pg.run()
 
 
